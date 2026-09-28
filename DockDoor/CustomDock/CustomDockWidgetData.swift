@@ -476,9 +476,9 @@ final class DockCalendarModel: ObservableObject {
         }
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             guard let self else { return }
-            if !Calendar.current.isDate(self.today, inSameDayAs: Date()) {
-                self.today = Date()
-                self.load()
+            if !Calendar.current.isDate(today, inSameDayAs: Date()) {
+                today = Date()
+                load()
             }
         }
     }

@@ -411,7 +411,7 @@ final class DockPopoverController: NSObject, NSWindowDelegate {
     private(set) var openKey: String?
     var isOpen: Bool { panel != nil }
 
-    func show<Content: View>(_ content: Content, size: CGSize, key: String, anchor: CGRect, screen: NSScreen, ignoringClicksIn dockWindow: NSWindow?) {
+    func show(_ content: some View, size: CGSize, key: String, anchor: CGRect, screen: NSScreen, ignoringClicksIn dockWindow: NSWindow?) {
         close()
         openKey = key
         let panel = StackPanel()
