@@ -20,7 +20,7 @@ struct DockDoorProBanner: View {
                             .background(Color.mint.opacity(0.18), in: Capsule())
                     }
 
-                    Text(String(localized: "DockDoor Free has no paywall and never will. Pro is a separate app that replaces the macOS Dock entirely for far deeper system control, and buying it is the best way to support the free project.", comment: "DockDoor Pro banner description"))
+                    Text(String(localized: "DockerDoor Free has no paywall and never will. Pro is a separate app that replaces the macOS Dock entirely for far deeper system control, and buying it is the best way to support the free project.", comment: "DockDoor Pro banner description"))
                         .font(.subheadline)
                         .foregroundStyle(.secondary)
                         .fixedSize(horizontal: false, vertical: true)

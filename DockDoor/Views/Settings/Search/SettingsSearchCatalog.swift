@@ -3,23 +3,14 @@ import Foundation
 enum SettingsSearchCatalog {
     static let items: [SettingsSearchItem] = generalItems + dockPreviewItems + windowSwitcherItems
         + cmdTabItems + dockLockingItems + appearanceItems + gesturesItems + filtersItems
-        + widgetItems + advancedItems + supportItems
+        + widgetItems + advancedItems + supportItems + customDockItems
 
     // MARK: - General
 
     private static let generalItems: [SettingsSearchItem] = [
         SettingsSearchItem(
-            id: "general.leaveReview",
-            title: String(localized: "Leave a Review"),
-            description: String(localized: "Share your experience on Product Hunt"),
-            keywords: ["review", "product hunt", "rating", "feedback"],
-            tab: "General",
-            section: String(localized: "Support & Contributions"),
-            icon: "star.bubble.fill"
-        ),
-        SettingsSearchItem(
             id: "general.launchAtLogin",
-            title: String(localized: "Launch DockDoor at login"),
+            title: String(localized: "Launch DockerDoor at login"),
             keywords: ["startup", "boot", "open", "auto"],
             tab: "General",
             section: String(localized: "Application Basics"),
@@ -1447,7 +1438,7 @@ enum SettingsSearchCatalog {
         SettingsSearchItem(
             id: "filters.appFilters",
             title: String(localized: "Application Filters"),
-            description: String(localized: "Hide specific applications from DockDoor previews."),
+            description: String(localized: "Hide specific applications from DockerDoor previews."),
             keywords: ["blacklist", "hide", "exclude", "app", "block"],
             tab: "Filters",
             section: String(localized: "Application Filters"),
@@ -1775,39 +1766,260 @@ enum SettingsSearchCatalog {
             icon: "record.circle"
         ),
         SettingsSearchItem(
-            id: "support.updateChannel",
-            title: String(localized: "Update Channel"),
-            description: String(localized: "Choose between stable releases and beta versions"),
-            keywords: ["update", "channel", "beta", "stable", "release"],
-            tab: "Support",
-            section: String(localized: "Updates"),
-            icon: "arrow.triangle.branch"
-        ),
-        SettingsSearchItem(
-            id: "support.checkForUpdates",
-            title: String(localized: "Check for Updates"),
-            keywords: ["update", "check", "new version"],
-            tab: "Support",
-            section: String(localized: "Updates"),
-            icon: "arrow.triangle.2.circlepath"
-        ),
-        SettingsSearchItem(
-            id: "support.automaticUpdates",
-            title: String(localized: "Automatic Updates"),
-            description: String(localized: "Automatically check for updates in the background"),
-            keywords: ["update", "automatic", "background", "check"],
-            tab: "Support",
-            section: String(localized: "Updates"),
-            icon: "clock.arrow.2.circlepath"
-        ),
-        SettingsSearchItem(
             id: "support.debugLogging",
             title: String(localized: "Debug Logging"),
             description: String(localized: "Capture performance metrics for troubleshooting"),
             keywords: ["debug", "log", "logging", "performance", "troubleshoot"],
             tab: "Support",
-            section: String(localized: "Updates"),
+            section: "Über DockerDoor",
             icon: "ant.fill"
+        ),
+    ]
+
+    // MARK: - Eigenes Dock
+
+    private static let customDockItems: [SettingsSearchItem] = [
+        SettingsSearchItem(
+            id: "customDock.enabled",
+            title: "Eigenes Dock verwenden",
+            description: "Ersetzt das macOS-Dock durch das DockerDoor-Dock.",
+            keywords: ["dock", "ersetzen", "aktivieren", "custom dock", "an", "aus"],
+            tab: "CustomDock",
+            section: "Eigenes Dock",
+            icon: "dock.rectangle"
+        ),
+        SettingsSearchItem(
+            id: "customDock.hideSystemDock",
+            title: "macOS-Dock ausblenden",
+            description: "Blendet das originale Dock aus, solange DockerDoor läuft.",
+            keywords: ["system dock", "verstecken", "apple dock"],
+            tab: "CustomDock",
+            section: "macOS-Dock",
+            icon: "eye.slash"
+        ),
+        SettingsSearchItem(
+            id: "customDock.position",
+            title: "Position des Docks",
+            description: "Unten, links oder rechts am Bildschirmrand.",
+            keywords: ["links", "rechts", "unten", "seite", "vertikal", "rand", "position"],
+            tab: "CustomDock",
+            section: "Größe und Layout",
+            icon: "rectangle.lefthalf.inset.filled"
+        ),
+        SettingsSearchItem(
+            id: "customDock.iconSize",
+            title: "Symbolgröße",
+            description: "Größe der Symbole im Dock.",
+            keywords: ["größe", "icon", "symbol", "klein", "groß"],
+            tab: "CustomDock",
+            section: "Größe und Layout",
+            icon: "arrow.up.left.and.arrow.down.right"
+        ),
+        SettingsSearchItem(
+            id: "customDock.magnification",
+            title: "Vergrößerung",
+            description: "Symbole beim Überfahren vergrößern.",
+            keywords: ["zoom", "lupe", "magnification", "vergrößern"],
+            tab: "CustomDock",
+            section: "Größe und Layout",
+            icon: "plus.magnifyingglass"
+        ),
+        SettingsSearchItem(
+            id: "customDock.layoutMode",
+            title: "Layout (schwebend/randlos)",
+            description: "Schwebendes Dock oder Leiste über die ganze Breite.",
+            keywords: ["schwebend", "randlos", "leiste", "layout"],
+            tab: "CustomDock",
+            section: "Größe und Layout",
+            icon: "rectangle.bottomthird.inset.filled"
+        ),
+        SettingsSearchItem(
+            id: "customDock.material",
+            title: "Material",
+            description: "Liquid Glass, Milchglas, einfarbig oder klar.",
+            keywords: ["glas", "liquid glass", "milchglas", "hintergrund", "transparenz"],
+            tab: "CustomDock",
+            section: "Material",
+            icon: "drop.fill"
+        ),
+        SettingsSearchItem(
+            id: "customDock.border",
+            title: "Rahmen anzeigen",
+            keywords: ["rand", "linie", "border"],
+            tab: "CustomDock",
+            section: "Material",
+            icon: "square.dashed"
+        ),
+        SettingsSearchItem(
+            id: "customDock.appearance",
+            title: "Erscheinungsbild",
+            description: "Hell, dunkel oder wie das System.",
+            keywords: ["hell", "dunkel", "dark mode", "modus"],
+            tab: "CustomDock",
+            section: "Material",
+            icon: "circle.lefthalf.filled"
+        ),
+        SettingsSearchItem(
+            id: "customDock.indicator",
+            title: "Laufende Apps markieren",
+            description: "Punkt, Karte oder nichts unter laufenden Apps.",
+            keywords: ["punkt", "indikator", "laufend", "anzeige"],
+            tab: "CustomDock",
+            section: "Anzeige",
+            icon: "circle.fill"
+        ),
+        SettingsSearchItem(
+            id: "customDock.names",
+            title: "Namen beim Überfahren anzeigen",
+            keywords: ["name", "titel", "label", "beschriftung"],
+            tab: "CustomDock",
+            section: "Anzeige",
+            icon: "textformat"
+        ),
+        SettingsSearchItem(
+            id: "customDock.trash",
+            title: "Papierkorb anzeigen",
+            keywords: ["papierkorb", "trash", "müll"],
+            tab: "CustomDock",
+            section: "Anzeige",
+            icon: "trash"
+        ),
+        SettingsSearchItem(
+            id: "customDock.minimized",
+            title: "Minimierte Fenster im Dock",
+            description: "Minimierte Fenster erscheinen als eigene Symbole vor dem Papierkorb.",
+            keywords: ["minimiert", "fenster", "minimieren", "ablegen"],
+            tab: "CustomDock",
+            section: "Anzeige",
+            icon: "macwindow.badge.plus"
+        ),
+        SettingsSearchItem(
+            id: "customDock.recents",
+            title: "Zuletzt benutzte Apps",
+            description: "Bis zu drei zuletzt beendete Apps hinter den laufenden Apps.",
+            keywords: ["zuletzt", "recent", "verlauf", "kürzlich"],
+            tab: "CustomDock",
+            section: "Anzeige",
+            icon: "clock.arrow.circlepath"
+        ),
+        SettingsSearchItem(
+            id: "customDock.autoHide",
+            title: "Dock automatisch ausblenden",
+            keywords: ["ausblenden", "autohide", "verstecken", "einblenden"],
+            tab: "CustomDock",
+            section: "Verhalten",
+            icon: "eye"
+        ),
+        SettingsSearchItem(
+            id: "customDock.previews",
+            title: "Fenstervorschauen im Dock",
+            keywords: ["vorschau", "preview", "fenster", "hover"],
+            tab: "CustomDock",
+            section: "Verhalten",
+            icon: "rectangle.on.rectangle"
+        ),
+        SettingsSearchItem(
+            id: "customDock.stackMode",
+            title: "Ordner anzeigen als",
+            description: "Fächer, Gitter oder Liste.",
+            keywords: ["stapel", "ordner", "fächer", "gitter", "liste", "stack"],
+            tab: "CustomDock",
+            section: "Ordner und Gruppen",
+            icon: "square.stack.3d.up"
+        ),
+        SettingsSearchItem(
+            id: "customDock.stackSort",
+            title: "Ordner sortieren nach",
+            keywords: ["sortieren", "name", "datum", "art"],
+            tab: "CustomDock",
+            section: "Ordner und Gruppen",
+            icon: "arrow.up.arrow.down"
+        ),
+        SettingsSearchItem(
+            id: "customDock.clock",
+            title: "Uhr-Widget",
+            description: "Digital oder analog.",
+            keywords: ["uhr", "zeit", "widget", "analog", "digital"],
+            tab: "CustomDock",
+            section: "Widgets",
+            icon: "clock"
+        ),
+        SettingsSearchItem(
+            id: "customDock.lyrics",
+            title: "Songtexte laden",
+            keywords: ["lyrics", "songtext", "musik", "now playing"],
+            tab: "CustomDock",
+            section: "Widgets",
+            icon: "quote.bubble"
+        ),
+        SettingsSearchItem(
+            id: "customDock.rotate",
+            title: "Widget-Stapel automatisch durchblättern",
+            keywords: ["widget", "stapel", "rotieren", "wechseln"],
+            tab: "CustomDock",
+            section: "Widgets",
+            icon: "rectangle.stack"
+        ),
+        SettingsSearchItem(
+            id: "customDock.reimport",
+            title: "Aus dem macOS-Dock übernehmen",
+            description: "Apps und Ordner erneut aus dem macOS-Dock importieren.",
+            keywords: ["import", "übernehmen", "inhalt", "zurücksetzen"],
+            tab: "CustomDock",
+            section: "Inhalt",
+            icon: "square.and.arrow.down"
+        ),
+        SettingsSearchItem(
+            id: "customDock.controlTile",
+            title: "Profil-Schalter im Dock",
+            keywords: ["profil", "kontrollzentrum", "schalter"],
+            tab: "CustomDock",
+            section: "Profile",
+            icon: "slider.horizontal.3"
+        ),
+        SettingsSearchItem(
+            id: "customDock.appSense",
+            title: "AppSense",
+            description: "Profil automatisch nach aktiver App wechseln.",
+            keywords: ["profil", "automatisch", "appsense", "wechseln"],
+            tab: "CustomDock",
+            section: "Profile",
+            icon: "wand.and.stars"
+        ),
+        SettingsSearchItem(
+            id: "customDock.displays",
+            title: "Dock auf mehreren Bildschirmen",
+            description: "Hauptbildschirm, alle Bildschirme oder dem Zeiger folgen.",
+            keywords: ["bildschirm", "monitor", "display", "mehrere", "folgen"],
+            tab: "CustomDock",
+            section: "Bildschirme",
+            icon: "display.2"
+        ),
+        SettingsSearchItem(
+            id: "customDock.letterNav",
+            title: "Buchstaben-Navigation",
+            description: "Tastenkürzel, um Dock-Einträge per Buchstabe anzusteuern.",
+            keywords: ["tastatur", "kürzel", "shortcut", "buchstabe", "navigation"],
+            tab: "CustomDock",
+            section: "Tastatur und Badges",
+            icon: "keyboard"
+        ),
+        SettingsSearchItem(
+            id: "customDock.badges",
+            title: "Benachrichtigungs-Badges",
+            keywords: ["badge", "zähler", "benachrichtigung", "mitteilung"],
+            tab: "CustomDock",
+            section: "Tastatur und Badges",
+            icon: "app.badge"
+        ),
+        SettingsSearchItem(
+            id: "customDock.backup",
+            title: "Sichern und Wiederherstellen",
+            description: "Einstellungen und Profile als Datei sichern oder wiederherstellen.",
+            keywords: ["backup", "sicherung", "export", "import", "wiederherstellen"],
+            tab: "CustomDock",
+            section: "Sichern und Wiederherstellen",
+            icon: "externaldrive"
         ),
     ]
 }

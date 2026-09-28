@@ -228,7 +228,7 @@ struct SettingsView: View {
                         Section(String(localized: "System", comment: "Settings section header")) {
                             Label(String(localized: "Advanced", comment: "Settings tab title"), systemImage: "slider.horizontal.3")
                                 .tag("Advanced")
-                            Label(String(localized: "Support", comment: "Settings tab title"), systemImage: "lifepreserver.fill")
+                            Label("Info & Rechte", systemImage: "info.circle.fill")
                                 .tag("Support")
                         }
                     }

@@ -4,11 +4,11 @@ import os.log
 
 /// Debug logger for tracking performance-critical operations
 enum DebugLogger {
-    private static let log = OSLog(subsystem: Bundle.main.bundleIdentifier ?? "DockDoor", category: "Debug")
+    private static let log = OSLog(subsystem: Bundle.main.bundleIdentifier ?? "DockerDoor", category: "Debug")
     private static let queue = DispatchQueue(label: "DebugLogger", qos: .utility)
     private static let logFileURL: URL = {
         let tempDir = FileManager.default.temporaryDirectory
-        return tempDir.appendingPathComponent("DockDoor-Debug.log")
+        return tempDir.appendingPathComponent("DockerDoor-Debug.log")
     }()
 
     private static let timestampFormatter: DateFormatter = {

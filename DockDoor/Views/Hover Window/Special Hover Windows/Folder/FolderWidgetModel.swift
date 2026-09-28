@@ -94,7 +94,7 @@ enum FolderWidgetAuthorization {
     @MainActor
     static func requestAccess(to url: URL) -> URL? {
         let panel = NSOpenPanel()
-        panel.message = String(localized: "Choose this folder to let DockDoor show its contents.")
+        panel.message = String(localized: "Choose this folder to let DockerDoor show its contents.")
         panel.prompt = String(localized: "Allow Access")
         panel.canChooseFiles = false
         panel.canChooseDirectories = true

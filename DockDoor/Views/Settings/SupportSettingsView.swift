@@ -12,9 +12,8 @@ struct SupportSettingsView: View {
     var body: some View {
         BaseSettingsView {
             VStack(alignment: .leading, spacing: 20) {
-                DockDoorProBanner()
                 permissionsSection
-                updatesSection
+                aboutSection
                 acknowledgmentsSection
             }
         }
@@ -53,7 +52,71 @@ struct SupportSettingsView: View {
         }
     }
 
-    // MARK: - Updates Section
+    // MARK: - About Section
+
+    private var appVersion: String {
+        Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? updaterState.currentVersion
+    }
+
+    private var aboutSection: some View {
+        SettingsGroup(header: "Über DockerDoor") {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 12) {
+                    SettingsIcon(systemName: "dock.rectangle", color: .blue)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("DockerDoor \(appVersion)")
+                            .font(.body)
+                        Text("Eigenes Dock für macOS. Aktualisierungen kommen über das Installationsskript, nicht automatisch aus dem Internet.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+                .settingsSearchTarget("support.about")
+
+                Divider().padding(.leading, 40)
+
+                HStack(spacing: 12) {
+                    SettingsIcon(systemName: "doc.text", color: .gray)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Open Source")
+                            .font(.body)
+                        Text("Basiert auf DockDoor von Ethan Bills und Mitwirkenden, lizenziert unter der GNU GPL v3.")
+                            .font(.caption)
+                            .foregroundColor(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+
+                Divider().padding(.leading, 40)
+
+                HStack(spacing: 12) {
+                    SettingsIcon(systemName: "doc.plaintext", color: .brown)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Protokoll")
+                            .font(.body)
+                        Text("~/Library/Logs/DockerDoor/dockerdoor.log")
+                            .font(.caption.monospaced())
+                            .foregroundColor(.secondary)
+                    }
+                    Spacer()
+                    Button("Im Finder zeigen") {
+                        let url = FileManager.default.homeDirectoryForCurrentUser
+                            .appendingPathComponent("Library/Logs/DockerDoor/dockerdoor.log")
+                        NSWorkspace.shared.activateFileViewerSelecting([url])
+                    }
+                    .buttonStyle(AccentButtonStyle(small: true))
+                }
+
+                Divider().padding(.leading, 40)
+
+                DebugLoggingRow()
+                    .settingsSearchTarget("support.debugLogging")
+            }
+        }
+    }
+
+    // MARK: - Old update UI (unused, Sparkle is never started)
 
     private var updatesSection: some View {
         SettingsGroup(header: "Updates") {

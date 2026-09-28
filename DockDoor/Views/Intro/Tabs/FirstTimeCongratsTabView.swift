@@ -20,7 +20,7 @@ struct FirstTimeCongratsTabView: View {
                 )
                 .frame(width: 64, height: 64)
 
-            Text("When you click the button below, DockDoor will restart and move to the menu bar to run in the background.")
+            Text("When you click the button below, DockerDoor will restart and move to the menu bar to run in the background.")
                 .font(.body)
                 .multilineTextAlignment(.center)
                 .padding(.horizontal)

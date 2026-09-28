@@ -594,7 +594,7 @@ struct WindowPreviewHoverContainer: View {
         Group {
             switch effectiveAppNameStyle {
             case .shadowed:
-                if trimmedAppName == "DockDoor" {
+                if trimmedAppName == "DockerDoor" {
                     FluidGradient(
                         blobs: rainbowGradientColors,
                         highlights: rainbowGradientHighlights,
@@ -656,7 +656,7 @@ struct WindowPreviewHoverContainer: View {
                         )
                 }
             case .default, .popover:
-                if trimmedAppName == "DockDoor" {
+                if trimmedAppName == "DockerDoor" {
                     FluidGradient(
                         blobs: rainbowGradientColors,
                         highlights: rainbowGradientHighlights,

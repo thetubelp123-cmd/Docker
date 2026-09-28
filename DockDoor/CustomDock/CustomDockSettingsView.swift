@@ -45,6 +45,7 @@ struct CustomDockSettingsView: View {
                     SettingsIllustratedToggle(isOn: $enabled, title: "Eigenes Dock verwenden") {
                         Text("DockerDoor zeigt ein eigenes Dock am Bildschirmrand – unten, links oder rechts.")
                     }
+                        .settingsSearchTarget("customDock.enabled")
                     .onChange(of: enabled) { _ in applyChanges() }
                 }
 
@@ -54,6 +55,7 @@ struct CustomDockSettingsView: View {
                     SettingsGroup(header: "macOS-Dock") {
                         VStack(alignment: .leading, spacing: 8) {
                             Toggle("macOS-Dock ausblenden", isOn: $hideSystemDock)
+                                .settingsSearchTarget("customDock.hideSystemDock")
                                 .onChange(of: hideSystemDock) { _ in applyChanges() }
                             Text("Beim Beenden von DockerDoor wird das macOS-Dock mit deinen alten Einstellungen wiederhergestellt.")
                                 .font(.caption)
@@ -68,9 +70,12 @@ struct CustomDockSettingsView: View {
                                     Text(item.title).tag(item)
                                 }
                             }
+                                .settingsSearchTarget("customDock.position")
                             .pickerStyle(.segmented)
                             sliderRow("Symbolgröße", value: $iconSize, range: 24 ... 96)
+                                .settingsSearchTarget("customDock.iconSize")
                             Toggle("Vergrößerung beim Überfahren", isOn: $magnification)
+                                .settingsSearchTarget("customDock.magnification")
                             if magnification {
                                 sliderRow("Vergrößert", value: $magnifiedSize, range: max(iconSize, 32) ... 192)
                             }
@@ -79,6 +84,7 @@ struct CustomDockSettingsView: View {
                                     Text(mode.title).tag(mode)
                                 }
                             }
+                                .settingsSearchTarget("customDock.layoutMode")
                             .pickerStyle(.segmented)
                             Text("Schwebend: mittig mit Abstand zum Rand. Randlos: eine Leiste über die ganze Bildschirmbreite, Ordner und Papierkorb rechts.")
                                 .font(.caption)
@@ -93,6 +99,7 @@ struct CustomDockSettingsView: View {
                                     Text(item.title).tag(item)
                                 }
                             }
+                                .settingsSearchTarget("customDock.material")
                             .pickerStyle(.segmented)
                             if material != .solid {
                                 HStack {
@@ -105,11 +112,13 @@ struct CustomDockSettingsView: View {
                                 }
                             }
                             Toggle("Rahmen anzeigen", isOn: $showBorder)
+                                .settingsSearchTarget("customDock.border")
                             Picker("Erscheinungsbild", selection: $appearance) {
                                 ForEach(CustomDockAppearance.allCases, id: \.self) { item in
                                     Text(item.title).tag(item)
                                 }
                             }
+                                .settingsSearchTarget("customDock.appearance")
                             .pickerStyle(.segmented)
                         }
                     }
@@ -121,11 +130,16 @@ struct CustomDockSettingsView: View {
                                     Text(style.title).tag(style)
                                 }
                             }
+                                .settingsSearchTarget("customDock.indicator")
                             .pickerStyle(.segmented)
                             Toggle("Namen beim Überfahren anzeigen", isOn: $showAppNames)
+                                .settingsSearchTarget("customDock.names")
                             Toggle("Papierkorb anzeigen", isOn: $showTrash)
+                                .settingsSearchTarget("customDock.trash")
                             Toggle("Minimierte Fenster im Dock zeigen", isOn: $showMinimized)
+                                .settingsSearchTarget("customDock.minimized")
                             Toggle("Zuletzt benutzte Apps zeigen", isOn: $showRecents)
+                                .settingsSearchTarget("customDock.recents")
                             Text("Minimierte Fenster erscheinen vor dem Papierkorb, bis zu drei zuletzt beendete Apps hinter den laufenden Apps. Abstände und Trennstriche fügst du per Rechtsklick auf das Dock hinzu.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -135,10 +149,12 @@ struct CustomDockSettingsView: View {
                     SettingsGroup(header: "Verhalten") {
                         VStack(alignment: .leading, spacing: 12) {
                             Toggle("Automatisch ausblenden", isOn: $autoHide)
+                                .settingsSearchTarget("customDock.autoHide")
                             Text("Das Dock gleitet an den Rand und erscheint wieder, sobald der Zeiger den Bildschirmrand berührt.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Toggle("Fenstervorschauen beim Überfahren", isOn: $showPreviews)
+                                .settingsSearchTarget("customDock.previews")
                             Text("Nutzt die Vorschau-Einstellungen aus „Dock Previews“ (Größe, Verzögerung, Aktionen, Vollbild beim Überfahren).")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -152,12 +168,14 @@ struct CustomDockSettingsView: View {
                                     Text(mode.title).tag(mode)
                                 }
                             }
+                                .settingsSearchTarget("customDock.stackMode")
                             .pickerStyle(.segmented)
                             Picker("Sortieren nach", selection: $stackSort) {
                                 ForEach(StackSortOrder.allCases, id: \.self) { sort in
                                     Text(sort.title).tag(sort)
                                 }
                             }
+                                .settingsSearchTarget("customDock.stackSort")
                             Text("Gilt für alle Ordner ohne eigene Einstellung. Pro Ordner änderst du das per Rechtsklick › „Anzeigen als“ bzw. „Sortieren nach“.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -193,6 +211,7 @@ struct CustomDockSettingsView: View {
                                     Text(style.title).tag(style)
                                 }
                             }
+                                .settingsSearchTarget("customDock.clock")
                             .pickerStyle(.segmented)
 
                             Divider()
@@ -204,9 +223,11 @@ struct CustomDockSettingsView: View {
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Toggle("Songtexte laden (LRCLIB)", isOn: $loadLyrics)
+                                .settingsSearchTarget("customDock.lyrics")
 
                             Divider()
                             Toggle("Stapel automatisch durchblättern", isOn: $autoRotate)
+                                .settingsSearchTarget("customDock.rotate")
                             if autoRotate {
                                 sliderRow("Alle", value: $rotateSeconds, range: 4 ... 60, unit: "s")
                             }
@@ -227,6 +248,7 @@ struct CustomDockSettingsView: View {
                             Button("Apps und Ordner aus dem macOS-Dock neu übernehmen …") {
                                 showReimportConfirmation = true
                             }
+                                .settingsSearchTarget("customDock.reimport")
                         }
                     }
                 }

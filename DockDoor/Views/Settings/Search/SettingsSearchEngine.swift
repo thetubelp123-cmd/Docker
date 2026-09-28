@@ -13,7 +13,7 @@ final class SettingsSearchEngine: ObservableObject {
     private let items: [SettingsSearchItem]
 
     private static let tabDisplayOrder = [
-        "General", "DockPreviews", "WindowSwitcher", "CmdTab",
+        "General", "CustomDock", "DockPreviews", "WindowSwitcher", "CmdTab",
         "DockLocking", "Appearance", "GesturesKeybinds", "Filters",
         "Widgets", "Advanced", "Support",
     ]
@@ -29,7 +29,8 @@ final class SettingsSearchEngine: ObservableObject {
         "Filters": String(localized: "Filters", comment: "Filters tab title"),
         "Widgets": String(localized: "Widgets", comment: "Widget settings tab title"),
         "Advanced": String(localized: "Advanced", comment: "Settings tab title"),
-        "Support": String(localized: "Support", comment: "Settings tab title"),
+        "Support": "Info & Rechte",
+        "CustomDock": "Eigenes Dock",
     ]
 
     init(items: [SettingsSearchItem] = SettingsSearchCatalog.items) {
@@ -100,6 +101,8 @@ final class SettingsSearchEngine: ObservableObject {
             Defaults[.dockClickAction] == .minimize
         case "widgets.folderSort", "widgets.folderSortDirection", "widgets.folderRememberSort", "widgets.folderHiddenFiles":
             Defaults[.enableFolderWidget]
+        case _ where item.id.hasPrefix("customDock.") && item.id != "customDock.enabled":
+            Defaults[.customDockEnabled]
         default:
             true
         }

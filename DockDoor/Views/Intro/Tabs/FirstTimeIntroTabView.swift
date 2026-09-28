@@ -8,7 +8,7 @@ struct FirstTimeIntroTabView: View {
             FirstTimeViewAppIcon()
 
             VStack(alignment: .leading, spacing: 20) {
-                Text("Welcome to DockDoor!")
+                Text("Welcome to DockerDoor!")
                     .font(.system(size: 28, weight: .bold, design: .default))
 
                 Button("Get Started", action: nextTab)

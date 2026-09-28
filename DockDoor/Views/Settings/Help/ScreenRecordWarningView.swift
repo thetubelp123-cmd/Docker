@@ -15,10 +15,10 @@ struct ScreenRecordingWarningView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 16))
 
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("DockDoor needs screen recording access. In macOS Sequoia, you'll see this prompt every week or month and after reboots. This is a new system-wide security policy for all screen capture apps.")
+                    Text("DockerDoor needs screen recording access. In macOS Sequoia, you'll see this prompt every week or month and after reboots. This is a new system-wide security policy for all screen capture apps.")
 
                     if displayExplanation {
-                        Text("DockDoor does not record your screen or audio. It only captures static window previews. No information is stored or shared; all processing occurs privately on your device.")
+                        Text("DockerDoor does not record your screen or audio. It only captures static window previews. No information is stored or shared; all processing occurs privately on your device.")
 
                         Text("Want to see for yourself? Review our source code")
                             .font(.caption)

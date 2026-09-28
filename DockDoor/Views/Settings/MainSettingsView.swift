@@ -12,27 +12,17 @@ struct MainSettingsView: View {
     var body: some View {
         BaseSettingsView {
             VStack(alignment: .leading, spacing: 24) {
-                DockDoorProBanner()
-                supportAndContributionsSection
                 applicationBasicsSection
                 activeAppIndicatorSection
 
                 HStack {
                     Spacer()
                     Button("Reset All Settings to Defaults") { showResetConfirmation() }
-                    Button("Quit DockDoor") { (NSApplication.shared.delegate as! AppDelegate).quitApp() }
+                    Button("Quit DockerDoor") { (NSApplication.shared.delegate as! AppDelegate).quitApp() }
                     Spacer()
                 }
                 .padding(.top, 5)
             }
-        }
-    }
-
-    // MARK: - Support & Contributions
-
-    private var supportAndContributionsSection: some View {
-        SettingsGroup(header: "Support & Contributions", compact: true) {
-            SupportLinksSection()
         }
     }
 
@@ -41,7 +31,7 @@ struct MainSettingsView: View {
     private var applicationBasicsSection: some View {
         SettingsGroup(header: "Application Basics") {
             VStack(alignment: .leading, spacing: 10) {
-                LaunchAtLogin.Toggle(String(localized: "Launch DockDoor at login"))
+                LaunchAtLogin.Toggle(String(localized: "Launch DockerDoor at login"))
                     .settingsSearchTarget("general.launchAtLogin")
 
                 Toggle(isOn: $showMenuBarIcon, label: { Text("Show menu bar icon") })

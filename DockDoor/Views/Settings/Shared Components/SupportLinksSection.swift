@@ -15,7 +15,7 @@ struct SupportLinksSection: View {
             Divider().padding(.leading, 40)
 
             SettingsLinkRow(
-                title: "Support DockDoor",
+                title: "Support DockerDoor",
                 description: "Help keep the project going with a small donation",
                 icon: "heart.fill",
                 destination: URL(string: "https://dockdoor.net/donate")!,
@@ -57,7 +57,7 @@ struct SupportLinksSection: View {
 
             SettingsLinkRow(
                 title: "Request a Feature",
-                description: "Suggest new features to make DockDoor better",
+                description: "Suggest new features to make DockerDoor better",
                 icon: "lightbulb.fill",
                 destination: URL(string: "https://github.com/ejbills/DockDoor/issues/new?assignees=&labels=enhancement&projects=&template=feature_request.md&title=%5BFR%5D")!,
                 iconColor: .yellow
@@ -67,7 +67,7 @@ struct SupportLinksSection: View {
 
             SettingsLinkRow(
                 title: "Contribute Translation",
-                description: "Help make DockDoor available in your language",
+                description: "Help make DockerDoor available in your language",
                 icon: "globe",
                 destination: URL(string: "https://crowdin.com/project/dockdoor")!,
                 iconColor: .blue
@@ -77,7 +77,7 @@ struct SupportLinksSection: View {
 
             SettingsLinkRow(
                 title: "View Source Code",
-                description: "DockDoor is open source on GitHub",
+                description: "DockerDoor is open source on GitHub",
                 icon: "chevron.left.forwardslash.chevron.right",
                 destination: URL(string: "https://github.com/ejbills/DockDoor")!,
                 iconColor: .purple

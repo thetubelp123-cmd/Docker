@@ -40,10 +40,12 @@ struct CustomDockProfilesSettings: View {
 
                 Divider()
                 Toggle("Profil-Schalter im Dock zeigen", isOn: $showControlTile)
+                    .settingsSearchTarget("customDock.controlTile")
                 Text("Klick öffnet das Kontrollzentrum, Scrollen wechselt das Profil.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Toggle("AppSense: Profil automatisch nach aktiver App wechseln", isOn: $appSense)
+                    .settingsSearchTarget("customDock.appSense")
                 Text("Kommt eine App nach vorne, die einem Profil zugeordnet ist, wechselt das Dock dorthin. Danach geht es zurück zum vorherigen Profil.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -57,6 +59,7 @@ struct CustomDockProfilesSettings: View {
                         Text(mode.title).tag(mode)
                     }
                 }
+                    .settingsSearchTarget("customDock.displays")
                 .pickerStyle(.segmented)
 
                 switch displayMode {
@@ -234,10 +237,12 @@ struct CustomDockExtrasSettings: View {
                         Text(item.title).tag(item)
                     }
                 }
+                    .settingsSearchTarget("customDock.letterNav")
                 Text("Kürzel drücken, dann Anfangsbuchstaben tippen: Das Dock springt zur passenden App. ←/→ oder Tab wechseln, ↩ öffnet, ⎋ bricht ab. Mehrmals denselben Buchstaben tippen blättert durch alle Treffer.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
                 Toggle("Benachrichtigungs-Badges anzeigen", isOn: $showBadges)
+                    .settingsSearchTarget("customDock.badges")
                 Text("Zeigt die roten Zahlen der Apps (z. B. ungelesene Mails) an den Symbolen. Bei Gruppen werden sie zusammengezählt.")
                     .font(.caption)
                     .foregroundStyle(.secondary)
@@ -262,6 +267,7 @@ struct CustomDockExtrasSettings: View {
                     }
                 }
                 Toggle("Täglich automatisch sichern (die letzten 10 bleiben erhalten)", isOn: $autoBackup)
+                    .settingsSearchTarget("customDock.backup")
                 HStack {
                     Text(lastAutoBackup > 0
                         ? "Letzte automatische Sicherung: \(Date(timeIntervalSince1970: lastAutoBackup).formatted(date: .abbreviated, time: .shortened))"
