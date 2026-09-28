@@ -84,7 +84,7 @@ struct DockLockingSettingsView: View {
                         .font(.caption)
                         .foregroundColor(.orange)
                 } else {
-                    Text("System Main Display follows whichever screen holds the menu bar. DockerDoor moves the Dock to the locked screen automatically; you can also push the cursor against that screen's Dock edge.")
+                    Text("System Main Display follows whichever screen holds the menu bar. Docker moves the Dock to the locked screen automatically; you can also push the cursor against that screen's Dock edge.")
                         .font(.caption)
                         .foregroundColor(.secondary)
                 }

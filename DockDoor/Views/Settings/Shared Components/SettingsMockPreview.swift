@@ -234,7 +234,7 @@ struct SettingsMockPreview: View {
     var body: some View {
         if !coordinator.windows.isEmpty {
             WindowPreviewHoverContainer(
-                appName: "DockerDoor (\u{2022}\u{203F}\u{2022})",
+                appName: "Docker (\u{2022}\u{203F}\u{2022})",
                 onWindowTap: nil,
                 dockPosition: context.dockPosition,
                 mouseLocation: .zero,

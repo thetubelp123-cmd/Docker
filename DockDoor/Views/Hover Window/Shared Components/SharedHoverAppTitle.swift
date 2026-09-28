@@ -87,7 +87,7 @@ struct SharedHoverAppTitle: View {
             Group {
                 switch appNameStyle {
                 case .shadowed:
-                    if trimmedAppName == "DockerDoor" {
+                    if trimmedAppName == "Docker" {
                         FluidGradient(blobs: rainbowGradientColors, highlights: rainbowGradientHighlights, speed: 0.65, blur: 0.5)
                             .frame(width: labelSize.width, height: labelSize.height)
                             .mask(baseText)
@@ -110,7 +110,7 @@ struct SharedHoverAppTitle: View {
                             .animation(showAnimations ? .easeInOut(duration: 0.2) : nil, value: trimmedAppName)
                     }
                 case .default, .popover:
-                    if trimmedAppName == "DockerDoor" {
+                    if trimmedAppName == "Docker" {
                         FluidGradient(blobs: rainbowGradientColors, highlights: rainbowGradientHighlights, speed: 0.65, blur: 0.5)
                             .frame(width: labelSize.width, height: labelSize.height)
                             .mask(baseText)

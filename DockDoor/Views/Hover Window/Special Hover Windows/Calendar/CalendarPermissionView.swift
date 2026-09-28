@@ -51,7 +51,7 @@ struct CalendarPermissionView: View {
             Text("Calendar Access Needed")
                 .font(.title2)
                 .fontWeight(.medium)
-            Text("DockerDoor needs permission to access your calendar.")
+            Text("Docker needs permission to access your calendar.")
                 .font(.callout)
                 .foregroundStyle(.secondary)
                 .multilineTextAlignment(.center)

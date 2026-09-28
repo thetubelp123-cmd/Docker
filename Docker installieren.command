@@ -1,5 +1,5 @@
 #!/bin/bash
-# DockerDoor installieren / aktualisieren
+# Docker installieren / aktualisieren
 # Baut die App (Release), signiert sie mit einem festen lokalen Zertifikat,
 # legt sie in „Programme“, speichert ZIP und DMG im Ordner „Versionen“ und startet sie.
 # Start: Doppelklick im Finder. Das erste Mal dauert es einige Minuten (Pakete laden).
@@ -9,7 +9,8 @@ HERE="$(cd "$(dirname "$0")" && pwd)"
 mkdir -p "$HERE/build"
 exec > >(tee "$HERE/build/install.log") 2>&1
 
-APP_NAME="DockerDoor"
+APP_NAME="Docker"
+OLD_APP_NAME="DockerDoor"
 BUNDLE_ID="de.leonardjaeger.DockerDoor"
 VERSION="$(tr -d '[:space:]' < "$HERE/VERSION" 2>/dev/null || true)"
 [ -n "$VERSION" ] || VERSION="0.1"
@@ -90,27 +91,47 @@ if [ -n "$SIGN_NAME" ]; then
         || echo "  Hinweis: Signieren fehlgeschlagen – Freigaben gelten dann nur bis zur nächsten Installation."
 fi
 
-if pgrep -x "$APP_NAME" >/dev/null; then
-    echo "→ Beende die laufende $APP_NAME-App …"
-    osascript -e "tell application id \"$BUNDLE_ID\" to quit" || true
-    for _ in 1 2 3 4 5 6 7 8; do pgrep -x "$APP_NAME" >/dev/null || break; sleep 1; done
-    if pgrep -x "$APP_NAME" >/dev/null; then
-        echo "  Die App hat nicht reagiert – wird per Signal beendet."
-        pkill -TERM -x "$APP_NAME" || true
-        for _ in 1 2 3 4 5; do pgrep -x "$APP_NAME" >/dev/null || break; sleep 1; done
-        pkill -9 -x "$APP_NAME" 2>/dev/null || true
-        sleep 1
+DEST="/Applications"
+if [ ! -w "$DEST" ]; then DEST="$HOME/Applications"; mkdir -p "$DEST"; fi
+
+# Nie eine fremde App gleichen Namens (z. B. Docker Desktop) überschreiben.
+if [ -d "$DEST/$APP_NAME.app" ]; then
+    EXISTING_ID="$(defaults read "$DEST/$APP_NAME.app/Contents/Info" CFBundleIdentifier 2>/dev/null || true)"
+    if [ -n "$EXISTING_ID" ] && [ "$EXISTING_ID" != "$BUNDLE_ID" ]; then
+        echo "✗ In $DEST liegt bereits eine andere „$APP_NAME.app“ ($EXISTING_ID). Abbruch, damit sie nicht überschrieben wird."
+        exit 1
     fi
 fi
 
-DEST="/Applications"
-if [ ! -w "$DEST" ]; then DEST="$HOME/Applications"; mkdir -p "$DEST"; fi
+# Laufende Instanz finden – egal ob sie noch „DockerDoor“ oder schon „Docker“ heißt.
+own_pids() {
+    pgrep -f "/($APP_NAME|$OLD_APP_NAME)\.app/Contents/MacOS/($APP_NAME|$OLD_APP_NAME)\$" || true
+}
+if [ -n "$(own_pids)" ]; then
+    echo "→ Beende die laufende App …"
+    osascript -e "tell application id \"$BUNDLE_ID\" to quit" || true
+    for _ in 1 2 3 4 5 6 7 8; do [ -n "$(own_pids)" ] || break; sleep 1; done
+    if [ -n "$(own_pids)" ]; then
+        echo "  Die App hat nicht reagiert – wird per Signal beendet."
+        kill -TERM $(own_pids) 2>/dev/null || true
+        for _ in 1 2 3 4 5; do [ -n "$(own_pids)" ] || break; sleep 1; done
+        [ -z "$(own_pids)" ] || kill -9 $(own_pids) 2>/dev/null || true
+        sleep 1
+    fi
+fi
 echo "→ Installiere nach $DEST/$APP_NAME.app …"
 rm -rf "$DEST/$APP_NAME.app"
 ditto "$APP" "$DEST/$APP_NAME.app"
 touch "$DEST/$APP_NAME.app"
 LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
 "$LSREGISTER" -f "$DEST/$APP_NAME.app" || true
+
+# Alte Version unter dem früheren Namen entfernen.
+if [ -d "$DEST/$OLD_APP_NAME.app" ]; then
+    echo "→ Entferne die alte „$OLD_APP_NAME.app“ …"
+    "$LSREGISTER" -u "$DEST/$OLD_APP_NAME.app" 2>/dev/null || true
+    rm -rf "$DEST/$OLD_APP_NAME.app"
+fi
 
 # Kopien dieser Version für das Archiv: ZIP und DMG (mit Verknüpfung zu „Programme“)
 VERSIONS="$HERE/Versionen"

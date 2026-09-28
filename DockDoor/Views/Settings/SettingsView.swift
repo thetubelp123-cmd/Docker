@@ -59,7 +59,7 @@ class SettingsManager: NSObject, ObservableObject {
         let mainMenu = NSMenu()
 
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: "DockerDoor beenden", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: "Docker beenden", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         mainMenu.addItem(NSMenuItem(submenu: appMenu))
 
         let editMenu = NSMenu(title: String(localized: "Edit"))

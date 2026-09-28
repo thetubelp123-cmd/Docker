@@ -105,7 +105,7 @@ struct FiltersSettingsView: View {
                 // App Filters Section
                 SettingsGroup(header: "Application Filters") {
                     VStack(alignment: .leading, spacing: 8) {
-                        Text("Hide specific applications from DockerDoor previews.")
+                        Text("Hide specific applications from Docker previews.")
                             .font(.footnote)
                             .foregroundColor(.secondary)
                             .padding(.bottom, 4)
@@ -307,7 +307,7 @@ struct FiltersSettingsView: View {
                 AppPickerSheet(
                     selectedApps: $appNameFilters,
                     title: "Application Filters",
-                    description: "Uncheck apps to hide them from DockerDoor previews.",
+                    description: "Uncheck apps to hide them from Docker previews.",
                     selectionMode: .exclude
                 )
             }

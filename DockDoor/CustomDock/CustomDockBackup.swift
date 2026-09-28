@@ -30,7 +30,7 @@ enum DockerDoorBackup {
 
         var errorDescription: String? {
             switch self {
-            case .notABackup: "Die Datei ist keine DockerDoor-Sicherung."
+            case .notABackup: "Die Datei ist keine Docker-Sicherung."
             case .unreadable: "Die Datei konnte nicht gelesen werden."
             }
         }
@@ -51,7 +51,7 @@ enum DockerDoorBackup {
         }
     }
 
-    static func suggestedFileName(prefix: String = "DockerDoor-Sicherung") -> String {
+    static func suggestedFileName(prefix: String = "Docker-Sicherung") -> String {
         let formatter = DateFormatter()
         formatter.dateFormat = "yyyy-MM-dd_HH-mm"
         return "\(prefix)_\(formatter.string(from: Date())).\(fileExtension)"

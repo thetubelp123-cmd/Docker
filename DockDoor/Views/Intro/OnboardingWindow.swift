@@ -95,7 +95,7 @@ private struct CinematicView: View {
                         .opacity(logoOpacity)
                         .shadow(color: .black.opacity(0.4), radius: 24, y: 8)
 
-                    Text("DockerDoor")
+                    Text("Docker")
                         .font(.system(size: 36, weight: .bold, design: .rounded))
                         .foregroundStyle(.white)
                         .shadow(color: .black.opacity(0.3), radius: 6, y: 3)

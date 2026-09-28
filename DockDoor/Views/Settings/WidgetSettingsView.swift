@@ -192,7 +192,7 @@ struct WidgetSettingsView: View {
                                 Text("Calendar Access Required")
                                     .font(.headline)
 
-                                Text("DockerDoor needs access to your calendars to show events. Please enable Calendar access in System Settings > Privacy & Security > Calendars.")
+                                Text("Docker needs access to your calendars to show events. Please enable Calendar access in System Settings > Privacy & Security > Calendars.")
                                     .font(.footnote)
                                     .foregroundColor(.secondary)
                                     .multilineTextAlignment(.center)

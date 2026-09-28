@@ -4,7 +4,7 @@ import os.log
 
 /// Debug logger for tracking performance-critical operations
 enum DebugLogger {
-    private static let log = OSLog(subsystem: Bundle.main.bundleIdentifier ?? "DockerDoor", category: "Debug")
+    private static let log = OSLog(subsystem: Bundle.main.bundleIdentifier ?? "Docker", category: "Debug")
     private static let queue = DispatchQueue(label: "DebugLogger", qos: .utility)
     private static let logFileURL: URL = {
         let tempDir = FileManager.default.temporaryDirectory

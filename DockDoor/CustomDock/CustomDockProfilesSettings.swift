@@ -305,16 +305,16 @@ struct CustomDockExtrasSettings: View {
         if let created = info.created {
             text += " durch den Stand vom \(created.formatted(date: .long, time: .shortened))"
         }
-        text += " (DockerDoor \(info.appVersion))."
+        text += " (Docker \(info.appVersion))."
         if !info.profileNames.isEmpty {
             text += " Profile: \(info.profileNames.joined(separator: ", "))."
         }
-        return text + " Vorher wird automatisch eine Sicherung des jetzigen Stands angelegt. DockerDoor startet danach neu."
+        return text + " Vorher wird automatisch eine Sicherung des jetzigen Stands angelegt. Docker startet danach neu."
     }
 
     private func exportBackup() {
         let panel = NSSavePanel()
-        panel.title = "DockerDoor sichern"
+        panel.title = "Docker sichern"
         panel.nameFieldStringValue = DockerDoorBackup.suggestedFileName()
         panel.allowedContentTypes = [DockerDoorBackup.contentType]
         panel.canCreateDirectories = true
@@ -329,7 +329,7 @@ struct CustomDockExtrasSettings: View {
 
     private func chooseRestore() {
         let panel = NSOpenPanel()
-        panel.title = "DockerDoor-Sicherung wählen"
+        panel.title = "Docker-Sicherung wählen"
         panel.allowedContentTypes = [DockerDoorBackup.contentType, .propertyList]
         panel.allowsMultipleSelection = false
         panel.directoryURL = DockerDoorBackup.backupsFolder

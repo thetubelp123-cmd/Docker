@@ -10,7 +10,7 @@ enum SettingsSearchCatalog {
     private static let generalItems: [SettingsSearchItem] = [
         SettingsSearchItem(
             id: "general.launchAtLogin",
-            title: String(localized: "Launch DockerDoor at login"),
+            title: String(localized: "Launch Docker at login"),
             keywords: ["startup", "boot", "open", "auto"],
             tab: "General",
             section: String(localized: "Application Basics"),
@@ -1438,7 +1438,7 @@ enum SettingsSearchCatalog {
         SettingsSearchItem(
             id: "filters.appFilters",
             title: String(localized: "Application Filters"),
-            description: String(localized: "Hide specific applications from DockerDoor previews."),
+            description: String(localized: "Hide specific applications from Docker previews."),
             keywords: ["blacklist", "hide", "exclude", "app", "block"],
             tab: "Filters",
             section: String(localized: "Application Filters"),
@@ -1771,7 +1771,7 @@ enum SettingsSearchCatalog {
             description: String(localized: "Capture performance metrics for troubleshooting"),
             keywords: ["debug", "log", "logging", "performance", "troubleshoot"],
             tab: "Support",
-            section: "Über DockerDoor",
+            section: "Über Docker",
             icon: "ant.fill"
         ),
     ]
@@ -1782,7 +1782,7 @@ enum SettingsSearchCatalog {
         SettingsSearchItem(
             id: "customDock.enabled",
             title: "Eigenes Dock verwenden",
-            description: "Ersetzt das macOS-Dock durch das DockerDoor-Dock.",
+            description: "Ersetzt das macOS-Dock durch das Docker-Dock.",
             keywords: ["dock", "ersetzen", "aktivieren", "custom dock", "an", "aus"],
             tab: "CustomDock",
             section: "Eigenes Dock",
@@ -1791,7 +1791,7 @@ enum SettingsSearchCatalog {
         SettingsSearchItem(
             id: "customDock.hideSystemDock",
             title: "macOS-Dock ausblenden",
-            description: "Blendet das originale Dock aus, solange DockerDoor läuft.",
+            description: "Blendet das originale Dock aus, solange Docker läuft.",
             keywords: ["system dock", "verstecken", "apple dock"],
             tab: "CustomDock",
             section: "macOS-Dock",

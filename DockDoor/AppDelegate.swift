@@ -48,7 +48,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
-        DockerDoorLog.write("DockerDoor \(version) startet")
+        DockerDoorLog.write("Docker \(version) startet")
         MainThreadWatchdog.shared.start()
         installTerminationSignalHandler()
         applyAppearanceMode(Defaults[.appAppearanceMode])
@@ -148,7 +148,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
-        DockerDoorLog.write("DockerDoor wird beendet")
+        DockerDoorLog.write("Docker wird beendet")
         wakeRecoveryTask?.cancel()
         WindowUtil.saveWindowOrderFromCache()
         URLCache.shared.removeAllCachedResponses()
@@ -156,7 +156,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if !isRestarting {
             SystemDockHider.restore()
         }
-        DockerDoorLog.write("DockerDoor beendet")
+        DockerDoorLog.write("Docker beendet")
         DockerDoorLog.flush()
     }
 
@@ -244,8 +244,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         actionsItem.submenu = windowActionsMenu.menu
         menu.addItem(actionsItem)
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: "DockerDoor neu starten", action: #selector(restartAppWrapper), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: "DockerDoor beenden", action: #selector(quitAppWrapper), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "Docker neu starten", action: #selector(restartAppWrapper), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "Docker beenden", action: #selector(quitAppWrapper), keyEquivalent: "q"))
         button.menu = menu
     }
 

@@ -352,7 +352,7 @@
 		BB04405F2C77AD27009F1D33 /* CodableColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableColor.swift; sourceTree = "<group>"; };
 		BB0440612C77AE85009F1D33 /* GradientColorPaletteSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientColorPaletteSettingsView.swift; sourceTree = "<group>"; };
 		BB0CBE392DD8179200D55437 /* MouseEventModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseEventModifier.swift; sourceTree = "<group>"; };
-		BB157B652C0E31CE00997315 /* DockDoor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DockerDoor.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB157B652C0E31CE00997315 /* DockDoor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Docker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB157B6C2C0E31CF00997315 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BB157B6F2C0E31CF00997315 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		BB157B712C0E31CF00997315 /* DockDoor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DockDoor.entitlements; sourceTree = "<group>"; };
@@ -1437,7 +1437,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.10;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DockerDoor.app/Contents/MacOS/DockerDoor";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Docker.app/Contents/MacOS/Docker";
 			};
 			name = Debug;
 		};
@@ -1456,7 +1456,7 @@
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.10;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DockerDoor.app/Contents/MacOS/DockerDoor";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Docker.app/Contents/MacOS/Docker";
 			};
 			name = Release;
 		};
@@ -1612,7 +1612,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DockDoor/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = DockerDoor;
+				INFOPLIST_KEY_CFBundleDisplayName = Docker;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "DockerDoor nutzt AppleEvents für Musik-Infos und zum Entleeren des Papierkorbs.";
@@ -1625,7 +1625,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.18.3;
 				PRODUCT_BUNDLE_IDENTIFIER = de.leonardjaeger.DockerDoor.debug;
-				PRODUCT_NAME = DockerDoor;
+				PRODUCT_NAME = Docker;
 				PRODUCT_MODULE_NAME = DockDoor;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
@@ -1665,7 +1665,7 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DockDoor/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = DockerDoor;
+				INFOPLIST_KEY_CFBundleDisplayName = Docker;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
 				INFOPLIST_KEY_NSAppleEventsUsageDescription = "DockerDoor nutzt AppleEvents für Musik-Infos und zum Entleeren des Papierkorbs.";
@@ -1678,7 +1678,7 @@
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.18.3;
 				PRODUCT_BUNDLE_IDENTIFIER = de.leonardjaeger.DockerDoor;
-				PRODUCT_NAME = DockerDoor;
+				PRODUCT_NAME = Docker;
 				PRODUCT_MODULE_NAME = DockDoor;
 				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
 				RUNTIME_EXCEPTION_ALLOW_JIT = NO;

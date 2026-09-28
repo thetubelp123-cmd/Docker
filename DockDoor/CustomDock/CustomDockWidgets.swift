@@ -783,7 +783,7 @@ private struct CalendarPopover: View {
             if model.hasAccess {
                 eventList
             } else if model.status == .notDetermined {
-                accessPrompt(text: "DockerDoor braucht Zugriff auf deine Kalender, um Termine anzuzeigen.", button: "Zugriff erlauben") {
+                accessPrompt(text: "Docker braucht Zugriff auf deine Kalender, um Termine anzuzeigen.", button: "Zugriff erlauben") {
                     model.requestAccess()
                 }
             } else {

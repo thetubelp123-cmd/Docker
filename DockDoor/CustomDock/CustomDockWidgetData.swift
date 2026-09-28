@@ -632,7 +632,7 @@ final class DockLyricsModel: ObservableObject {
     private static func request<T: Decodable>(_ url: URL) async -> T? {
         var request = URLRequest(url: url)
         request.timeoutInterval = 10
-        request.setValue("DockerDoor (privat)", forHTTPHeaderField: "User-Agent")
+        request.setValue("Docker (privat)", forHTTPHeaderField: "User-Agent")
         guard let (data, response) = try? await URLSession.shared.data(for: request),
               (response as? HTTPURLResponse)?.statusCode == 200
         else { return nil }

@@ -292,7 +292,7 @@ private struct FolderWidgetListView: View {
             stateView(
                 systemName: "lock.fill",
                 title: String(localized: "Folder Access Required"),
-                message: String(localized: "Choose this folder to let DockerDoor show its contents."),
+                message: String(localized: "Choose this folder to let Docker show its contents."),
                 buttonTitle: String(localized: "Allow Access..."),
                 action: requestFolderAccess
             )
@@ -306,7 +306,7 @@ private struct FolderWidgetListView: View {
             stateView(
                 systemName: "exclamationmark.triangle",
                 title: String(localized: "Unable to Load Folder"),
-                message: String(localized: "DockerDoor could not read this folder.")
+                message: String(localized: "Docker could not read this folder.")
             )
         }
     }

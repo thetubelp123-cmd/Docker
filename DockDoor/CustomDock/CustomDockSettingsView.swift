@@ -43,7 +43,7 @@ struct CustomDockSettingsView: View {
             VStack(alignment: .leading, spacing: 16) {
                 SettingsGroup {
                     SettingsIllustratedToggle(isOn: $enabled, title: "Eigenes Dock verwenden") {
-                        Text("DockerDoor zeigt ein eigenes Dock am Bildschirmrand – unten, links oder rechts.")
+                        Text("Docker zeigt ein eigenes Dock am Bildschirmrand – unten, links oder rechts.")
                     }
                     .settingsSearchTarget("customDock.enabled")
                     .onChange(of: enabled) { _ in applyChanges() }
@@ -57,7 +57,7 @@ struct CustomDockSettingsView: View {
                             Toggle("macOS-Dock ausblenden", isOn: $hideSystemDock)
                                 .settingsSearchTarget("customDock.hideSystemDock")
                                 .onChange(of: hideSystemDock) { _ in applyChanges() }
-                            Text("Beim Beenden von DockerDoor wird das macOS-Dock mit deinen alten Einstellungen wiederhergestellt.")
+                            Text("Beim Beenden von Docker wird das macOS-Dock mit deinen alten Einstellungen wiederhergestellt.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                         }
@@ -260,7 +260,7 @@ struct CustomDockSettingsView: View {
             }
             Button("Abbrechen", role: .cancel) {}
         } message: {
-            Text("Die angehefteten Apps und Ordner in DockerDoor werden durch die aus dem macOS-Dock ersetzt.")
+            Text("Die angehefteten Apps und Ordner in Docker werden durch die aus dem macOS-Dock ersetzt.")
         }
     }
 

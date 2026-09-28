@@ -254,7 +254,7 @@ final class DockObserver {
         guard AXIsProcessTrusted() else {
             MessageUtil.showAlert(
                 title: "Accessibility Permissions Required",
-                message: "You need to enable accessibility permissions for DockerDoor to function, click OK to open System Preferences. A restart is required after granting permissions.",
+                message: "You need to enable accessibility permissions for Docker to function, click OK to open System Preferences. A restart is required after granting permissions.",
                 actions: [.ok, .cancel],
                 completion: { _ in
                     SystemPreferencesHelper.openAccessibilityPreferences()

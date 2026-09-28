@@ -59,12 +59,12 @@ struct SupportSettingsView: View {
     }
 
     private var aboutSection: some View {
-        SettingsGroup(header: "Über DockerDoor") {
+        SettingsGroup(header: "Über Docker") {
             VStack(alignment: .leading, spacing: 12) {
                 HStack(spacing: 12) {
                     SettingsIcon(systemName: "dock.rectangle", color: .blue)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("DockerDoor \(appVersion)")
+                        Text("Docker \(appVersion)")
                             .font(.body)
                         Text("Eigenes Dock für macOS. Aktualisierungen kommen über das Installationsskript, nicht automatisch aus dem Internet.")
                             .font(.caption)

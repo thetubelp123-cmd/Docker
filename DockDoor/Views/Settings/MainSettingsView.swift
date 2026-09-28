@@ -18,7 +18,7 @@ struct MainSettingsView: View {
                 HStack {
                     Spacer()
                     Button("Reset All Settings to Defaults") { showResetConfirmation() }
-                    Button("Quit DockerDoor") { (NSApplication.shared.delegate as! AppDelegate).quitApp() }
+                    Button("Quit Docker") { (NSApplication.shared.delegate as! AppDelegate).quitApp() }
                     Spacer()
                 }
                 .padding(.top, 5)
@@ -31,7 +31,7 @@ struct MainSettingsView: View {
     private var applicationBasicsSection: some View {
         SettingsGroup(header: "Application Basics") {
             VStack(alignment: .leading, spacing: 10) {
-                LaunchAtLogin.Toggle(String(localized: "Launch DockerDoor at login"))
+                LaunchAtLogin.Toggle(String(localized: "Launch Docker at login"))
                     .settingsSearchTarget("general.launchAtLogin")
 
                 Toggle(isOn: $showMenuBarIcon, label: { Text("Show menu bar icon") })
