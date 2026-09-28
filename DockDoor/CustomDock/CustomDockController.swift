@@ -91,6 +91,7 @@ final class CustomDockController {
     private var lastPageFlip = Date.distantPast
     private var volumeClearWork: DispatchWorkItem?
     private var drag: DockDrag?
+    private var buttonReleasedAt: Date?
     private var ghost: DockDragGhost?
     static let gapID = "drag-gap"
 
@@ -320,7 +321,24 @@ final class CustomDockController {
             }
         }
         if isMenuOpen { inside = isInside }
-        if drag != nil { inside = true }
+        if drag != nil {
+            inside = true
+            // Safety net: if the mouse-up never reached us, end the drag anyway.
+            if dragging {
+                buttonReleasedAt = nil
+            } else if let released = buttonReleasedAt {
+                if Date().timeIntervalSince(released) > 0.3 {
+                    buttonReleasedAt = nil
+                    DockerDoorLog.write("Ziehen ohne Maus-Loslassen beendet (Sicherheitsnetz)")
+                    mouseUp()
+                    return
+                }
+            } else {
+                buttonReleasedAt = Date()
+            }
+        } else {
+            buttonReleasedAt = nil
+        }
 
         if panel.ignoresMouseEvents == inside {
             panel.ignoresMouseEvents = !inside

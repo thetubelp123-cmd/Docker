@@ -72,6 +72,7 @@ enum SystemDockHider {
     }
 
     private static func restartDock() {
+        DockerDoorLog.write("macOS-Dock wird neu gestartet (killall Dock)")
         run("/usr/bin/killall", ["Dock"])
     }
 

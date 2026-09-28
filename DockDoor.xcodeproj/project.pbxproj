@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		40B6869ACBC046728A19C4E8 /* DockerDoorWatchdog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53FB2C48FE3C4F5C957E34AA /* DockerDoorWatchdog.swift */; };
 		937DE6E2CF9F4A04AC7F8F69 /* CustomDockWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A8AA10DF37543C8ADD6D8E9 /* CustomDockWidgets.swift */; };
 		B5468199DCE1433687D6CF9E /* CustomDockWidgetData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F592EE1568424EBDDED43C /* CustomDockWidgetData.swift */; };
 		2CA2C31FB5DF4B00B13D7C2A /* CustomDockStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2EF7850D1E643ACA9411E16 /* CustomDockStack.swift */; };
@@ -254,6 +255,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		53FB2C48FE3C4F5C957E34AA /* DockerDoorWatchdog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockerDoorWatchdog.swift; sourceTree = "<group>"; };
 		8A8AA10DF37543C8ADD6D8E9 /* CustomDockWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockWidgets.swift; sourceTree = "<group>"; };
 		C8F592EE1568424EBDDED43C /* CustomDockWidgetData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockWidgetData.swift; sourceTree = "<group>"; };
 		D2EF7850D1E643ACA9411E16 /* CustomDockStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockStack.swift; sourceTree = "<group>"; };
@@ -500,6 +502,7 @@
 		F9EFDF417AD24010B39AD8D1 /* CustomDock */ = {
 			isa = PBXGroup;
 			children = (
+				53FB2C48FE3C4F5C957E34AA /* DockerDoorWatchdog.swift */,
 				8A8AA10DF37543C8ADD6D8E9 /* CustomDockWidgets.swift */,
 				C8F592EE1568424EBDDED43C /* CustomDockWidgetData.swift */,
 				D2EF7850D1E643ACA9411E16 /* CustomDockStack.swift */,
@@ -1171,6 +1174,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				40B6869ACBC046728A19C4E8 /* DockerDoorWatchdog.swift in Sources */,
 				937DE6E2CF9F4A04AC7F8F69 /* CustomDockWidgets.swift in Sources */,
 				B5468199DCE1433687D6CF9E /* CustomDockWidgetData.swift in Sources */,
 				2CA2C31FB5DF4B00B13D7C2A /* CustomDockStack.swift in Sources */,

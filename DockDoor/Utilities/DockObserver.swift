@@ -58,6 +58,10 @@ final class DockObserver {
     }
 
     weak static var activeInstance: DockObserver?
+    /// True while DockerDoor's own dock replaces the macOS Dock. Then the observer
+    /// must not run its HID event tap or query the hidden Dock via Accessibility:
+    /// a slow Dock would stall every click near the bottom edge system-wide.
+    static var isSuspended = false
     let previewCoordinator: SharedPreviewWindowCoordinator
 
     var axObserver: AXObserver?
@@ -156,7 +160,23 @@ final class DockObserver {
         }
     }
 
+    func setSuspended(_ suspended: Bool) {
+        guard suspended != Self.isSuspended else { return }
+        Self.isSuspended = suspended
+        if suspended {
+            teardownObserver()
+            removeEventTap()
+        } else {
+            reset()
+        }
+    }
+
     func reset() {
+        guard !Self.isSuspended else {
+            teardownObserver()
+            removeEventTap()
+            return
+        }
         teardownObserver()
         teardownCmdTabObserver()
         setupSelectedDockItemObserver()
@@ -165,6 +185,7 @@ final class DockObserver {
     }
 
     private func performHealthCheck() {
+        guard !Self.isSuspended else { return }
         guard let currentDockPID else {
             setupSelectedDockItemObserver()
             return
@@ -220,6 +241,7 @@ final class DockObserver {
     }
 
     private func setupSelectedDockItemObserver() {
+        guard !Self.isSuspended else { return }
         guard let dockApp = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.dock").first else {
             return
         }
@@ -761,7 +783,7 @@ final class DockObserver {
     }
 
     private func setupEventTap() {
-        guard eventTap == nil else { return }
+        guard eventTap == nil, !Self.isSuspended else { return }
         var eventMask: CGEventMask = (1 << CGEventType.leftMouseDown.rawValue) |
             (1 << CGEventType.rightMouseDown.rawValue) |
             (1 << CGEventType.otherMouseDown.rawValue)
@@ -794,6 +816,9 @@ final class DockObserver {
     }
 
     private func eventTapCallback(proxy: CGEventTapProxy, type: CGEventType, event: CGEvent) -> Unmanaged<CGEvent>? {
+        if Self.isSuspended {
+            return Unmanaged.passUnretained(event)
+        }
         if let passthrough = reEnableIfNeeded(tap: eventTap, type: type, event: event) {
             return passthrough
         }

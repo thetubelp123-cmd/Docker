@@ -46,6 +46,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationDidFinishLaunching(_ aNotification: Notification) {
+        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        DockerDoorLog.write("DockerDoor \(version) startet")
+        MainThreadWatchdog.shared.start()
         applyAppearanceMode(Defaults[.appAppearanceMode])
 
         reconcileImagePreviewWithPermission()
@@ -82,6 +85,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             let currentPreviewCoordinator = SharedPreviewWindowCoordinator()
             previewCoordinator = currentPreviewCoordinator
 
+            DockObserver.isSuspended = Defaults[.customDockEnabled]
             let dockObs = DockObserver(previewCoordinator: currentPreviewCoordinator)
             dockObserver = dockObs
 
@@ -91,15 +95,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 keybindHelper = KeybindHelper(previewCoordinator: currentPreviewCoordinator)
             }
 
-            if Defaults[.showActiveAppIndicator] {
-                activeAppIndicator = ActiveAppIndicatorCoordinator()
-            }
-
             NSScreen.migrateScreenIdentifier(.lockedDockScreenIdentifier)
             NSScreen.migrateScreenIdentifier(.pinnedScreenIdentifier)
-            if Defaults[.enableDockLocking] {
-                dockLocker = DockLocker()
-            }
+            startSystemDockHelpersIfNeeded()
         }
 
         updateCustomDock()
@@ -148,6 +146,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func applicationWillTerminate(_ notification: Notification) {
+        DockerDoorLog.write("DockerDoor wird beendet")
         wakeRecoveryTask?.cancel()
         WindowUtil.saveWindowOrderFromCache()
         URLCache.shared.removeAllCachedResponses()
@@ -157,7 +156,27 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
     }
 
+    /// Helpers that only make sense for the macOS Dock. They stay off while the own dock is active.
+    private func startSystemDockHelpersIfNeeded() {
+        guard !Defaults[.customDockEnabled] else {
+            activeAppIndicator = nil
+            dockLocker = nil
+            return
+        }
+        if Defaults[.showActiveAppIndicator], activeAppIndicator == nil {
+            activeAppIndicator = ActiveAppIndicatorCoordinator()
+        }
+        if Defaults[.enableDockLocking], dockLocker == nil {
+            dockLocker = DockLocker()
+        }
+    }
+
     func updateCustomDock() {
+        dockObserver?.setSuspended(Defaults[.customDockEnabled])
+        if previewCoordinator != nil {
+            startSystemDockHelpersIfNeeded()
+        }
+        DockerDoorLog.write("Eigenes Dock: \(Defaults[.customDockEnabled] ? "an" : "aus")")
         if Defaults[.customDockEnabled] {
             if customDockController == nil {
                 customDockController = CustomDockController()
