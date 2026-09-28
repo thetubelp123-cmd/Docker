@@ -100,7 +100,6 @@ class AppDelegate: NSObject, NSApplicationDelegate {
             if Defaults[.enableDockLocking] {
                 dockLocker = DockLocker()
             }
-
         }
 
         updateCustomDock()

@@ -36,7 +36,9 @@ struct CustomDockView: View {
                 .frame(width: max(0, ui.layout.barRect.width), height: max(0, ui.layout.barRect.height))
                 .onDrop(of: [UTType.fileURL], isTargeted: $barIsDropTarget) { providers in
                     DockDropLoader.loadURLs(from: providers) { urls in
-                        for url in urls { store.pin(url: url) }
+                        for url in urls {
+                            store.pin(url: url)
+                        }
                     }
                     return true
                 }

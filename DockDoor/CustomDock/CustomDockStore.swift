@@ -179,13 +179,12 @@ final class CustomDockStore: ObservableObject {
         let key = tile.url?.path ?? tile.id
         if let cached = iconCache[key] { return cached }
 
-        let image: NSImage
-        if let url = tile.url {
-            image = NSWorkspace.shared.icon(forFile: url.path)
+        let image: NSImage = if let url = tile.url {
+            NSWorkspace.shared.icon(forFile: url.path)
         } else if let pid = tile.pid, let app = NSRunningApplication(processIdentifier: pid), let appIcon = app.icon {
-            image = appIcon
+            appIcon
         } else {
-            image = NSWorkspace.shared.icon(for: .applicationBundle)
+            NSWorkspace.shared.icon(for: .applicationBundle)
         }
         image.size = NSSize(width: 256, height: 256)
         iconCache[key] = image
