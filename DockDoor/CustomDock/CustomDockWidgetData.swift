@@ -10,8 +10,12 @@ import IOKit.ps
 final class DockWidgetHub {
     static let shared = DockWidgetHub()
     private var active: Set<DockWidgetKind> = []
+    private var byOwner: [ObjectIdentifier: Set<DockWidgetKind>] = [:]
 
-    func update(activeKinds: Set<DockWidgetKind>) {
+    /// Every dock reports its widgets; the data sources run while any dock needs them.
+    func update(activeKinds: Set<DockWidgetKind>, owner: ObjectIdentifier) {
+        byOwner[owner] = activeKinds.isEmpty ? nil : activeKinds
+        let activeKinds = byOwner.values.reduce(into: Set<DockWidgetKind>()) { $0.formUnion($1) }
         guard activeKinds != active else { return }
         active = activeKinds
         activeKinds.contains(.weather) ? DockWeatherModel.shared.start() : DockWeatherModel.shared.stop()

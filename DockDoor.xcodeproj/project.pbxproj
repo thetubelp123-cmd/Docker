@@ -7,6 +7,10 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		FA203B2EFC714F56A6CB5872 /* CustomDockProfilesSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5AFFA7769C145A09CF4D3B1 /* CustomDockProfilesSettings.swift */; };
+		6B8C0A3BAE8B4BC78D8423AA /* CustomDockControlCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74F44AFF172D4C4CAF7F8128 /* CustomDockControlCenter.swift */; };
+		2819E2A9541C4E8CB14CC6A9 /* CustomDockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A4B04340D124DF1ADB56EF5 /* CustomDockManager.swift */; };
+		A00B0F9743FB40B197D4691F /* CustomDockProfiles.swift in Sources */ = {isa = PBXBuildFile; fileRef = 932862EB36604064A54B1F7B /* CustomDockProfiles.swift */; };
 		40B6869ACBC046728A19C4E8 /* DockerDoorWatchdog.swift in Sources */ = {isa = PBXBuildFile; fileRef = 53FB2C48FE3C4F5C957E34AA /* DockerDoorWatchdog.swift */; };
 		937DE6E2CF9F4A04AC7F8F69 /* CustomDockWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A8AA10DF37543C8ADD6D8E9 /* CustomDockWidgets.swift */; };
 		B5468199DCE1433687D6CF9E /* CustomDockWidgetData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F592EE1568424EBDDED43C /* CustomDockWidgetData.swift */; };
@@ -255,6 +259,10 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		C5AFFA7769C145A09CF4D3B1 /* CustomDockProfilesSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockProfilesSettings.swift; sourceTree = "<group>"; };
+		74F44AFF172D4C4CAF7F8128 /* CustomDockControlCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockControlCenter.swift; sourceTree = "<group>"; };
+		6A4B04340D124DF1ADB56EF5 /* CustomDockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockManager.swift; sourceTree = "<group>"; };
+		932862EB36604064A54B1F7B /* CustomDockProfiles.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockProfiles.swift; sourceTree = "<group>"; };
 		53FB2C48FE3C4F5C957E34AA /* DockerDoorWatchdog.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockerDoorWatchdog.swift; sourceTree = "<group>"; };
 		8A8AA10DF37543C8ADD6D8E9 /* CustomDockWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockWidgets.swift; sourceTree = "<group>"; };
 		C8F592EE1568424EBDDED43C /* CustomDockWidgetData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockWidgetData.swift; sourceTree = "<group>"; };
@@ -502,6 +510,10 @@
 		F9EFDF417AD24010B39AD8D1 /* CustomDock */ = {
 			isa = PBXGroup;
 			children = (
+				C5AFFA7769C145A09CF4D3B1 /* CustomDockProfilesSettings.swift */,
+				74F44AFF172D4C4CAF7F8128 /* CustomDockControlCenter.swift */,
+				6A4B04340D124DF1ADB56EF5 /* CustomDockManager.swift */,
+				932862EB36604064A54B1F7B /* CustomDockProfiles.swift */,
 				53FB2C48FE3C4F5C957E34AA /* DockerDoorWatchdog.swift */,
 				8A8AA10DF37543C8ADD6D8E9 /* CustomDockWidgets.swift */,
 				C8F592EE1568424EBDDED43C /* CustomDockWidgetData.swift */,
@@ -1174,6 +1186,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				FA203B2EFC714F56A6CB5872 /* CustomDockProfilesSettings.swift in Sources */,
+				6B8C0A3BAE8B4BC78D8423AA /* CustomDockControlCenter.swift in Sources */,
+				2819E2A9541C4E8CB14CC6A9 /* CustomDockManager.swift in Sources */,
+				A00B0F9743FB40B197D4691F /* CustomDockProfiles.swift in Sources */,
 				40B6869ACBC046728A19C4E8 /* DockerDoorWatchdog.swift in Sources */,
 				937DE6E2CF9F4A04AC7F8F69 /* CustomDockWidgets.swift in Sources */,
 				B5468199DCE1433687D6CF9E /* CustomDockWidgetData.swift in Sources */,

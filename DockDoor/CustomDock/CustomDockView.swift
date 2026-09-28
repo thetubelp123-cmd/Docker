@@ -125,6 +125,10 @@ struct CustomDockView: View {
             .animation(.spring(response: 0.25, dampingFraction: 0.7), value: ui.dropTargetID == tile.id)
             .position(x: frame.midX, y: frame.midY)
             .transition(.scale(scale: 0.3).combined(with: .opacity))
+        } else if tile.kind == .control {
+            ControlTileView(symbol: tile.bundleIdentifier ?? "slider.horizontal.3", size: frame.size)
+                .position(x: frame.midX, y: frame.midY)
+                .transition(.opacity)
         } else {
             iconTileView(tile, frame: frame)
         }
@@ -184,7 +188,7 @@ struct CustomDockView: View {
                 }
             }
             return true
-        case .file, .widget:
+        case .file, .widget, .control:
             return false
         }
     }

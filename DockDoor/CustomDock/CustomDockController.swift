@@ -65,7 +65,10 @@ final class CustomDockHostingView<Content: View>: NSHostingView<Content> {
 /// Owns the DockerDoor dock window: lays out the icons (including magnification),
 /// lets clicks outside the dock pass through, handles auto-hide, previews and menus.
 final class CustomDockController {
-    let store = CustomDockStore()
+    let store: CustomDockStore
+    /// Identifier of the screen this dock lives on (NSScreen.uniqueIdentifier()); nil = main screen.
+    private(set) var screenID: String?
+    private var cachedScreen: NSScreen?
     let ui = CustomDockUIState()
 
     private let panel = CustomDockPanel()
@@ -95,7 +98,10 @@ final class CustomDockController {
     private var ghost: DockDragGhost?
     static let gapID = "drag-gap"
 
-    init() {
+    init(screenID: String? = nil, profileID: String? = nil) {
+        self.screenID = screenID
+        store = CustomDockStore(profileID: profileID)
+        cachedScreen = Self.resolveScreen(screenID)
         ui.metrics = metrics
         let hostingView = CustomDockHostingView(rootView: CustomDockView(store: store, ui: ui))
         hostingView.autoresizingMask = [.width, .height]
@@ -180,7 +186,7 @@ final class CustomDockController {
         rotateTimer?.invalidate()
         rotateTimer = nil
         rotationTask?.cancel()
-        DockWidgetHub.shared.update(activeKinds: [])
+        DockWidgetHub.shared.update(activeKinds: [], owner: ObjectIdentifier(self))
         ghost?.close()
         ghost = nil
         drag = nil
@@ -195,7 +201,28 @@ final class CustomDockController {
     }
 
     var dockScreen: NSScreen? {
-        NSScreen.screens.first ?? NSScreen.main
+        cachedScreen ?? NSScreen.screens.first ?? NSScreen.main
+    }
+
+    private static func resolveScreen(_ id: String?) -> NSScreen? {
+        guard let id else { return NSScreen.screens.first }
+        return NSScreen.screens.first { $0.uniqueIdentifier() == id } ?? NSScreen.screens.first
+    }
+
+    /// Moves this dock to another screen.
+    func setScreen(_ id: String?) {
+        guard id != screenID || cachedScreen == nil else { return }
+        screenID = id
+        cachedScreen = Self.resolveScreen(id)
+        stackController.close()
+        popoverController.close()
+        CustomDockPreviews.hide()
+        updatePanelFrame()
+        relayout()
+    }
+
+    func setProfile(_ id: String?) {
+        if store.profileID != id { store.profileID = id }
     }
 
     private static func currentMetrics() -> CustomDockMetrics {
@@ -228,6 +255,9 @@ final class CustomDockController {
     }
 
     private func updatePanelFrame() {
+        if cachedScreen == nil || !NSScreen.screens.contains(where: { $0 === cachedScreen }) {
+            cachedScreen = Self.resolveScreen(screenID)
+        }
         guard let screen = dockScreen else { return }
         let frame = NSRect(
             x: screen.frame.minX,
@@ -248,7 +278,7 @@ final class CustomDockController {
         var otherIDs = store.otherTiles.map(\.id)
         var magnifyX = mouseX
         var widthFactors: [String: CGFloat] = [:]
-        for tile in store.otherTiles where tile.kind == .widget && tile.widthFactor != 1 {
+        for tile in store.allTiles where tile.widthFactor != 1 {
             widthFactors[tile.id] = tile.widthFactor
         }
         if let drag, drag.isActive {
@@ -258,7 +288,8 @@ final class CustomDockController {
             otherIDs.removeAll { $0 == drag.tile.id }
             if !drag.isRemoving {
                 if drag.isAppSection {
-                    appIDs.insert(Self.gapID, at: min(drag.insertionIndex, appIDs.count))
+                    let offset = appIDs.first == CustomDockStore.controlTileID ? 1 : 0
+                    appIDs.insert(Self.gapID, at: min(drag.insertionIndex + offset, appIDs.count))
                 } else {
                     let movable = store.otherTiles.filter { $0.kind != .trash && $0.id != drag.tile.id }.count
                     otherIDs.insert(Self.gapID, at: min(drag.insertionIndex, movable))
@@ -398,6 +429,8 @@ final class CustomDockController {
         menuBuilder.onOpenStack = { [weak self] tile in
             if tile.kind == .widget {
                 self?.togglePopover(for: tile)
+            } else if tile.kind == .control {
+                self?.toggleControlCenter(for: tile)
             } else {
                 self?.toggleStack(for: tile)
             }
@@ -417,6 +450,8 @@ final class CustomDockController {
             toggleStack(for: tile)
         case .widget:
             togglePopover(for: tile)
+        case .control:
+            toggleControlCenter(for: tile)
         default:
             stackController.close()
             popoverController.close()
@@ -464,7 +499,7 @@ final class CustomDockController {
     // MARK: - Widgets
 
     private func widgetsChanged() {
-        DockWidgetHub.shared.update(activeKinds: Set(store.otherTiles.flatMap(\.widgets)))
+        DockWidgetHub.shared.update(activeKinds: Set(store.otherTiles.flatMap(\.widgets)), owner: ObjectIdentifier(self))
     }
 
     private func currentWidget(of tile: DockTile) -> DockWidgetKind? {
@@ -546,9 +581,12 @@ final class CustomDockController {
     private func handleScroll(_ event: NSEvent) -> Bool {
         let point = viewPoint(fromScreen: NSEvent.mouseLocation)
         guard let id = ui.layout.tileID(at: point, spacing: metrics.spacing),
-              let tile = store.allTiles.first(where: { $0.id == id }),
-              tile.kind == .widget, let current = currentWidget(of: tile)
+              let tile = store.allTiles.first(where: { $0.id == id })
         else { return false }
+        if tile.kind == .control {
+            return handleProfileScroll(event)
+        }
+        guard tile.kind == .widget, let current = currentWidget(of: tile) else { return false }
         guard event.momentumPhase.isEmpty else { return true }
 
         var delta = abs(event.scrollingDeltaY) >= abs(event.scrollingDeltaX) ? event.scrollingDeltaY : -event.scrollingDeltaX
@@ -583,6 +621,44 @@ final class CustomDockController {
         let work = DispatchWorkItem { [weak self] in self?.ui.volumeOverlay = nil }
         volumeClearWork = work
         DispatchQueue.main.asyncAfter(deadline: .now() + 1.1, execute: work)
+    }
+
+    // MARK: - Control center (profiles)
+
+    func toggleControlCenter(for tile: DockTile) {
+        let key = "control"
+        if popoverController.openKey == key {
+            popoverController.close()
+            return
+        }
+        guard let screen = dockScreen, let frame = ui.layout.frames[tile.id] else { return }
+        stackController.close()
+        CustomDockPreviews.hide()
+        let popover = popoverController
+        popoverController.show(
+            ControlCenterView(close: { [weak popover] in popover?.close() }),
+            size: ControlCenterView.size,
+            key: key,
+            anchor: screenRect(fromView: frame),
+            screen: screen,
+            ignoringClicksIn: panel
+        )
+    }
+
+    private func handleProfileScroll(_ event: NSEvent) -> Bool {
+        guard event.momentumPhase.isEmpty else { return true }
+        var delta = abs(event.scrollingDeltaY) >= abs(event.scrollingDeltaX) ? event.scrollingDeltaY : -event.scrollingDeltaX
+        if event.isDirectionInvertedFromDevice { delta = -delta }
+        if event.phase == .began { scrollAccumulator = 0 }
+        scrollAccumulator += delta
+        let threshold: CGFloat = event.hasPreciseScrollingDeltas ? 30 : 0.5
+        if abs(scrollAccumulator) >= threshold, Date().timeIntervalSince(lastPageFlip) > 0.45 {
+            ProfileManager.activateNeighbour(scrollAccumulator > 0 ? -1 : 1)
+            scrollAccumulator = 0
+            lastPageFlip = Date()
+        }
+        if event.phase == .ended || event.phase == .cancelled { scrollAccumulator = 0 }
+        return true
     }
 
     // MARK: - Dragging icons
@@ -643,7 +719,7 @@ final class CustomDockController {
 
     /// Tiles of the dragged tile's section in dock order (without the trash).
     private func sectionTiles(for drag: DockDrag, includingDragged: Bool) -> [DockTile] {
-        let tiles = drag.isAppSection ? store.appTiles : store.otherTiles.filter { $0.kind != .trash }
+        let tiles = drag.isAppSection ? store.appTiles.filter { $0.kind != .control } : store.otherTiles.filter { $0.kind != .trash }
         return includingDragged ? tiles : tiles.filter { $0.id != drag.tile.id }
     }
 

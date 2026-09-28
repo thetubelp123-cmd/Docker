@@ -53,6 +53,13 @@ final class CustomDockMenuBuilder: NSObject {
             add(menu, "Aus dem Dock entfernen", "minus.circle", #selector(unpinTile))
         case .widget:
             buildWidgetMenu(menu, tile: tile)
+        case .control:
+            add(menu, "Kontrollzentrum öffnen", "slider.horizontal.3", #selector(openStack))
+            menu.addItem(.separator())
+            addProfileItems(to: menu)
+            menu.addItem(.separator())
+            add(menu, "Profil-Schalter ausblenden", "eye.slash", #selector(hideControlTile))
+            add(menu, "Profile verwalten …", "gearshape", #selector(openSettings))
         case .trash:
             add(menu, "Öffnen", "trash", #selector(openTile))
             let empty = add(menu, "Papierkorb entleeren …", "trash.slash", #selector(emptyTrash))
@@ -256,7 +263,28 @@ final class CustomDockMenuBuilder: NSObject {
         menu.addItem(item)
     }
 
+    private func addProfileItems(to menu: NSMenu) {
+        let header = NSMenuItem(title: "Profil", action: nil, keyEquivalent: "")
+        header.isEnabled = false
+        menu.addItem(header)
+        let active = Defaults[.customDockActiveProfile]
+        for profile in ProfileManager.profiles {
+            let item = NSMenuItem(title: profile.name, action: #selector(activateProfile(_:)), keyEquivalent: "")
+            item.target = self
+            item.representedObject = profile.id
+            item.image = NSImage(systemSymbolName: profile.symbol, accessibilityDescription: nil)
+            item.state = profile.id == active ? .on : .off
+            item.indentationLevel = 1
+            menu.addItem(item)
+        }
+    }
+
     private func addDockOptions(to menu: NSMenu) {
+        addProfileItems(to: menu)
+        if !Defaults[.customDockShowControlTile] {
+            add(menu, "Profil-Schalter im Dock zeigen", "slider.horizontal.3", #selector(showControlTile))
+        }
+        menu.addItem(.separator())
         addWidgetMenu(to: menu)
         menu.addItem(.separator())
         let magnification = add(menu, "Vergrößerung", nil, #selector(toggleMagnification))
@@ -290,6 +318,19 @@ final class CustomDockMenuBuilder: NSObject {
     @objc private func unhideApp() { runningApp?.unhide() }
     @objc private func quitApp() { runningApp?.terminate() }
     @objc private func forceQuitApp() { runningApp?.forceTerminate() }
+
+    @objc private func activateProfile(_ sender: NSMenuItem) {
+        guard let id = sender.representedObject as? String else { return }
+        ProfileManager.activate(id)
+    }
+
+    @objc private func hideControlTile() {
+        Defaults[.customDockShowControlTile] = false
+    }
+
+    @objc private func showControlTile() {
+        Defaults[.customDockShowControlTile] = true
+    }
 
     @objc private func addWidget(_ sender: NSMenuItem) {
         guard let raw = sender.representedObject as? String, let kind = DockWidgetKind(rawValue: raw) else { return }

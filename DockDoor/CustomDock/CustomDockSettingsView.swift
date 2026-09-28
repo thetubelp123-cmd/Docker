@@ -46,6 +46,8 @@ struct CustomDockSettingsView: View {
                 }
 
                 if enabled {
+                    CustomDockProfilesSettings()
+
                     SettingsGroup(header: "macOS-Dock") {
                         VStack(alignment: .leading, spacing: 8) {
                             Toggle("macOS-Dock ausblenden", isOn: $hideSystemDock)

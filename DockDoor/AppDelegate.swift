@@ -12,7 +12,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var keybindHelper: KeybindHelper?
     private var activeAppIndicator: ActiveAppIndicatorCoordinator?
     private var dockLocker: DockLocker?
-    private var customDockController: CustomDockController?
+    private var customDockManager: CustomDockManager?
     private var isRestarting = false
     private var customDockMenuItem: NSMenuItem?
     private var statusBarItem: NSStatusItem?
@@ -150,7 +150,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         wakeRecoveryTask?.cancel()
         WindowUtil.saveWindowOrderFromCache()
         URLCache.shared.removeAllCachedResponses()
-        customDockController?.tearDown()
+        customDockManager?.tearDown()
         if !isRestarting {
             SystemDockHider.restore()
         }
@@ -178,12 +178,12 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         }
         DockerDoorLog.write("Eigenes Dock: \(Defaults[.customDockEnabled] ? "an" : "aus")")
         if Defaults[.customDockEnabled] {
-            if customDockController == nil {
-                customDockController = CustomDockController()
+            if customDockManager == nil {
+                customDockManager = CustomDockManager()
             }
         } else {
-            customDockController?.tearDown()
-            customDockController = nil
+            customDockManager?.tearDown()
+            customDockManager = nil
         }
         SystemDockHider.sync()
         customDockMenuItem?.state = Defaults[.customDockEnabled] ? .on : .off

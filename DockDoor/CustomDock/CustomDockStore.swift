@@ -9,6 +9,7 @@ enum DockTileKind: Equatable {
     case trash
     case group
     case widget
+    case control
 }
 
 struct DockTile: Identifiable, Equatable {
@@ -29,10 +30,16 @@ struct DockTile: Identifiable, Equatable {
 
     var isGroup: Bool { kind == .group }
     var isWidgetStack: Bool { kind == .widget && widgets.count > 1 }
-    var widthFactor: CGFloat { kind == .widget ? (widgets.map(\.widthFactor).max() ?? 1) : 1 }
+    var widthFactor: CGFloat {
+        switch kind {
+        case .widget: widgets.map(\.widthFactor).max() ?? 1
+        case .control: 0.62
+        default: 1
+        }
+    }
     var isFinder: Bool { bundleIdentifier == CustomDockStore.finderBundleID }
     /// Tiles the user can drag to a new place.
-    var isMovable: Bool { kind != .trash && !isFinder }
+    var isMovable: Bool { kind != .trash && kind != .control && !isFinder }
 }
 
 final class CustomDockStore: ObservableObject {
@@ -52,11 +59,43 @@ final class CustomDockStore: ObservableObject {
 
     var allTiles: [DockTile] { appTiles + otherTiles }
 
-    init() {
+    /// Profile whose content this dock shows. nil = the active profile (live settings).
+    var profileID: String? {
+        didSet { if profileID != oldValue { rebuild() } }
+    }
+
+    static let controlTileID = "control"
+
+    private var usesLiveItems: Bool {
+        guard let profileID, !profileID.isEmpty else { return true }
+        return profileID == Defaults[.customDockActiveProfile]
+            || !Defaults[.customDockProfiles].contains { $0.id == profileID }
+    }
+
+    /// The pinned items this dock edits: the live list or the bound profile's list.
+    private var storedItems: [PinnedDockItem] {
+        get {
+            if usesLiveItems { return Defaults[.customDockPinnedItems] }
+            return Defaults[.customDockProfiles].first { $0.id == profileID }?.pinnedItems ?? []
+        }
+        set {
+            if usesLiveItems {
+                Defaults[.customDockPinnedItems] = newValue
+            } else if let profileID {
+                ProfileManager.update(profileID) { $0.pinnedItems = newValue }
+            }
+        }
+    }
+
+    init(profileID: String? = nil) {
+        self.profileID = profileID
         importSystemDockIfNeeded()
         runningOrder = NSWorkspace.shared.runningApplications.map(\.processIdentifier)
         observeWorkspace()
-        let keys: [Defaults._AnyKey] = [.customDockPinnedItems, .customDockShowTrash]
+        let keys: [Defaults._AnyKey] = [
+            .customDockPinnedItems, .customDockShowTrash, .customDockProfiles,
+            .customDockActiveProfile, .customDockShowControlTile,
+        ]
         defaultsTask = Task { [weak self] in
             for await _ in Defaults.updates(keys, initial: false) {
                 await MainActor.run { self?.rebuild() }
@@ -209,6 +248,23 @@ final class CustomDockStore: ObservableObject {
             ))
         }
 
+        if Defaults[.customDockShowControlTile] {
+            let boundID = profileID
+            let profile = usesLiveItems ? ProfileManager.active : Defaults[.customDockProfiles].first(where: { $0.id == boundID })
+            apps.insert(DockTile(
+                id: Self.controlTileID,
+                kind: .control,
+                url: nil,
+                bundleIdentifier: profile?.symbol,
+                name: "Profil: \(profile?.name ?? "Standard")",
+                isPinned: false,
+                isRunning: false,
+                isActive: false,
+                isHidden: false,
+                pid: nil
+            ), at: 0)
+        }
+
         let runningIDs = Set(apps.filter(\.isRunning).map(\.id))
         let stillLaunching = launchingIDs.subtracting(runningIDs)
 
@@ -223,7 +279,7 @@ final class CustomDockStore: ObservableObject {
     }
 
     func normalizedPinnedItems() -> [PinnedDockItem] {
-        var items: [PinnedDockItem] = Defaults[.customDockPinnedItems].compactMap { item in
+        var items: [PinnedDockItem] = storedItems.compactMap { item in
             if item.kind == .widget {
                 return item.widgets?.isEmpty == false ? item : nil
             }
@@ -322,7 +378,7 @@ final class CustomDockStore: ObservableObject {
             if let url = tile.url { NSWorkspace.shared.open(url) }
         case .trash:
             NSWorkspace.shared.open(Self.trashURL)
-        case .group, .widget:
+        case .group, .widget, .control:
             break
         }
     }
@@ -383,7 +439,7 @@ final class CustomDockStore: ObservableObject {
 
     func pin(url: URL, bundleIdentifier: String? = nil) {
         let path = url.standardizedFileURL.path
-        var items = Defaults[.customDockPinnedItems]
+        var items = storedItems
         guard !items.contains(where: { $0.path == path }) else { return }
         let kind: PinnedDockItemKind
         if url.pathExtension == "app" {
@@ -395,12 +451,12 @@ final class CustomDockStore: ObservableObject {
         }
         let bid = bundleIdentifier ?? (kind == .app ? Bundle(url: url)?.bundleIdentifier : nil)
         items.append(PinnedDockItem(kind: kind, path: path, bundleIdentifier: bid))
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     func unpin(_ tile: DockTile) {
         guard tile.isPinned, tile.bundleIdentifier != Self.finderBundleID else { return }
-        Defaults[.customDockPinnedItems].removeAll { $0.path == tile.id }
+        storedItems.removeAll { $0.path == tile.id }
     }
 
     // MARK: - Reordering
@@ -425,7 +481,7 @@ final class CustomDockStore: ObservableObject {
         var target = min(max(index, 0), section.count)
         if isAppSection, target == 0, section.first?.bundleIdentifier == Self.finderBundleID { target = 1 }
         section.insert(moving, at: target)
-        Defaults[.customDockPinnedItems] = isAppSection ? section + rest : rest + section
+        storedItems = isAppSection ? section + rest : rest + section
     }
 
     static func isOtherSection(_ kind: PinnedDockItemKind) -> Bool {
@@ -435,7 +491,7 @@ final class CustomDockStore: ObservableObject {
     // MARK: - Widgets
 
     func addWidget(_ kind: DockWidgetKind) {
-        Self.appendWidget(kind)
+        storedItems = storedItems + [.newWidget([kind])]
     }
 
     static func appendWidget(_ kind: DockWidgetKind) {
@@ -450,7 +506,7 @@ final class CustomDockStore: ObservableObject {
         var widgets = items[index].widgets ?? []
         if !widgets.contains(kind) { widgets.append(kind) }
         items[index].widgets = widgets
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     /// Puts the widgets of `tile` into the stack `targetID` (a single widget becomes a stack).
@@ -463,7 +519,7 @@ final class CustomDockStore: ObservableObject {
         }
         items[index].widgets = widgets
         items.removeAll { $0.id == tile.id }
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     /// Takes one widget out of a stack and puts it next to the stack.
@@ -478,7 +534,7 @@ final class CustomDockStore: ObservableObject {
             items[index].widgets = widgets
             items.insert(.newWidget([kind]), at: index + 1)
         }
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     func dissolveWidgetStack(_ stackID: String) {
@@ -487,7 +543,7 @@ final class CustomDockStore: ObservableObject {
         let singles = (items[index].widgets ?? []).map { PinnedDockItem.newWidget([$0]) }
         items.remove(at: index)
         items.insert(contentsOf: singles, at: index)
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     static func widgetIcon(for kind: DockWidgetKind) -> NSImage {
@@ -530,7 +586,7 @@ final class CustomDockStore: ObservableObject {
         items.removeAll { $0.id == tile.id || $0.id == other.id }
         let group = PinnedDockItem.newGroup(name: name, members: [first, second])
         items.insert(group, at: min(position, items.count))
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     func createGroup(with tile: DockTile, name: String = "Gruppe") {
@@ -539,7 +595,7 @@ final class CustomDockStore: ObservableObject {
         let position = items.firstIndex { $0.id == tile.id } ?? items.filter { $0.kind == .app || $0.kind == .group }.count
         items.removeAll { $0.id == tile.id }
         items.insert(PinnedDockItem.newGroup(name: name, members: [first]), at: min(position, items.count))
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     func add(_ tile: DockTile, toGroup groupID: String) {
@@ -550,7 +606,7 @@ final class CustomDockStore: ObservableObject {
         var members = items[index].members ?? []
         if !members.contains(where: { $0.path == newMember.path }) { members.append(newMember) }
         items[index].members = members
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     func add(appURL: URL, toGroup groupID: String) {
@@ -562,7 +618,7 @@ final class CustomDockStore: ObservableObject {
             members.append(PinnedGroupMember(path: path, bundleIdentifier: Bundle(url: appURL)?.bundleIdentifier))
         }
         items[index].members = members
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     /// Removes an app from a group and puts it back into the dock right after the group.
@@ -579,7 +635,7 @@ final class CustomDockStore: ObservableObject {
             items[index].members = members
             items.insert(appItem, at: index + 1)
         }
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     func dissolveGroup(_ groupID: String) {
@@ -589,7 +645,7 @@ final class CustomDockStore: ObservableObject {
             .filter { app in !items.contains { $0.path == app.path } }
         items.remove(at: index)
         items.insert(contentsOf: apps, at: index)
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     func renameGroup(_ groupID: String, to name: String) {
@@ -598,11 +654,11 @@ final class CustomDockStore: ObservableObject {
         var items = normalizedPinnedItems()
         guard let index = items.firstIndex(where: { $0.id == groupID }) else { return }
         items[index].name = trimmed
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     func removeGroup(_ groupID: String) {
-        Defaults[.customDockPinnedItems] = normalizedPinnedItems().filter { $0.id != groupID }
+        storedItems = normalizedPinnedItems().filter { $0.id != groupID }
     }
 
     // MARK: - Stack options
@@ -611,14 +667,14 @@ final class CustomDockStore: ObservableObject {
         var items = normalizedPinnedItems()
         guard let index = items.firstIndex(where: { $0.id == tileID }) else { return }
         items[index].stackMode = mode
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     func setStackSort(_ sort: StackSortOrder?, for tileID: String) {
         var items = normalizedPinnedItems()
         guard let index = items.firstIndex(where: { $0.id == tileID }) else { return }
         items[index].stackSort = sort
-        Defaults[.customDockPinnedItems] = items
+        storedItems = items
     }
 
     static func groupIcon(for icons: [NSImage]) -> NSImage {
