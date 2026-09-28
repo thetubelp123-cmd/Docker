@@ -37,6 +37,7 @@ struct DockTile: Identifiable, Equatable {
         default: 1
         }
     }
+
     var isFinder: Bool { bundleIdentifier == CustomDockStore.finderBundleID }
     /// Tiles the user can drag to a new place.
     var isMovable: Bool { kind != .trash && kind != .control && !isFinder }
