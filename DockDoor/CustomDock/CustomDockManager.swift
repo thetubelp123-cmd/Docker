@@ -136,9 +136,13 @@ final class CustomDockManager {
     private func checkFollow() {
         guard let controller = controllers["follow"] else { return }
         let mouse = NSEvent.mouseLocation
-        guard let screen = NSScreen.screens.first(where: { NSMouseInRect(mouse, $0.frame, false) }),
-              mouse.y <= screen.frame.minY + 2
-        else { return }
+        guard let screen = NSScreen.screens.first(where: { NSMouseInRect(mouse, $0.frame, false) }) else { return }
+        let atEdge: Bool = switch Defaults[.customDockPosition] {
+        case .bottom: mouse.y <= screen.frame.minY + 2
+        case .left: mouse.x <= screen.frame.minX + 2
+        case .right: mouse.x >= screen.frame.maxX - 2
+        }
+        guard atEdge else { return }
         let id = screen.uniqueIdentifier()
         guard id != controller.screenID else { return }
         followScreenID = id

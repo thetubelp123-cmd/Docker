@@ -26,7 +26,7 @@ struct DockWidgetTileView: View {
                 case .weather: WeatherTileContent(unit: unit)
                 case .calendar: CalendarTileContent(unit: unit)
                 case .battery: BatteryTileContent(unit: unit)
-                case .nowPlaying: NowPlayingTileContent(unit: unit)
+                case .nowPlaying: NowPlayingTileContent(unit: unit, compact: size.width < size.height * 1.5)
                 }
             }
             .id(kind)
@@ -326,9 +326,48 @@ struct BatteryRing: View {
 
 private struct NowPlayingTileContent: View {
     let unit: CGFloat
+    var compact = false
     @ObservedObject private var media = MediaRemoteService.shared
 
     var body: some View {
+        if compact {
+            compactBody
+        } else {
+            wideBody
+        }
+    }
+
+    /// Square version for side docks: cover with play state.
+    private var compactBody: some View {
+        ZStack {
+            if let artwork = media.artwork, media.hasActiveMedia {
+                Image(nsImage: artwork)
+                    .resizable()
+                    .aspectRatio(contentMode: .fill)
+            } else {
+                LinearGradient(colors: [Color(red: 0.95, green: 0.25, blue: 0.4), Color(red: 0.55, green: 0.12, blue: 0.45)], startPoint: .topLeading, endPoint: .bottomTrailing)
+                Image(systemName: "music.note")
+                    .font(.system(size: 17 * unit, weight: .semibold))
+                    .foregroundStyle(.white)
+            }
+            if media.hasActiveMedia {
+                VStack {
+                    Spacer()
+                    HStack {
+                        Spacer()
+                        Image(systemName: media.isPlaying ? "pause.fill" : "play.fill")
+                            .font(.system(size: 8 * unit, weight: .bold))
+                            .foregroundStyle(.white)
+                            .padding(3 * unit)
+                            .background(Circle().fill(Color.black.opacity(0.55)))
+                    }
+                }
+                .padding(3 * unit)
+            }
+        }
+    }
+
+    private var wideBody: some View {
         ZStack {
             if let artwork = media.artwork, media.hasActiveMedia {
                 Image(nsImage: artwork)
@@ -411,7 +450,7 @@ final class DockPopoverController: NSObject, NSWindowDelegate {
     private(set) var openKey: String?
     var isOpen: Bool { panel != nil }
 
-    func show(_ content: some View, size: CGSize, key: String, anchor: CGRect, screen: NSScreen, ignoringClicksIn dockWindow: NSWindow?) {
+    func show(_ content: some View, size: CGSize, key: String, anchor: CGRect, screen: NSScreen, edge: CustomDockPosition = .bottom, ignoringClicksIn dockWindow: NSWindow?) {
         close()
         openKey = key
         let panel = StackPanel()
@@ -422,8 +461,19 @@ final class DockPopoverController: NSObject, NSWindowDelegate {
         self.panel = panel
 
         var x = anchor.midX - size.width / 2
+        var y = anchor.maxY + 6
+        switch edge {
+        case .bottom:
+            break
+        case .left:
+            x = anchor.maxX + 6
+            y = anchor.midY - size.height / 2
+        case .right:
+            x = anchor.minX - size.width - 6
+            y = anchor.midY - size.height / 2
+        }
         x = min(max(x, screen.frame.minX + 6), screen.frame.maxX - size.width - 6)
-        let y = min(anchor.maxY + 6, screen.visibleFrame.maxY - size.height)
+        y = min(max(y, screen.visibleFrame.minY + 6), screen.visibleFrame.maxY - size.height)
         panel.setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
 
         panel.alphaValue = 0

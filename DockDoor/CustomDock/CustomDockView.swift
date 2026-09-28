@@ -15,6 +15,7 @@ final class CustomDockUIState: ObservableObject {
     /// Typed text while letter navigation is active; nil = inactive.
     @Published var letterQuery: String?
     @Published var letterSelectionID: String?
+    @Published var edge: CustomDockPosition = .bottom
 }
 
 struct CustomDockView: View {
@@ -54,7 +55,7 @@ struct CustomDockView: View {
             if let frame = ui.layout.frames["separator-0"] {
                 Rectangle()
                     .fill(Color.primary.opacity(0.25))
-                    .frame(width: 1, height: frame.height)
+                    .frame(width: ui.edge.isVertical ? frame.width : 1, height: ui.edge.isVertical ? 1 : frame.height)
                     .position(x: frame.midX, y: frame.midY)
             }
 
@@ -68,10 +69,7 @@ struct CustomDockView: View {
                 let selected = ui.letterSelectionID.flatMap { id in store.allTiles.first { $0.id == id } }
                 let frame = ui.letterSelectionID.flatMap { ui.layout.frames[$0] }
                 LetterQueryLabel(query: query, name: selected?.name)
-                    .position(
-                        x: frame?.midX ?? ui.layout.barRect.midX,
-                        y: max(16, (frame?.minY ?? ui.layout.barRect.minY) - 24)
-                    )
+                    .modifier(BesideTile(edge: ui.edge, frame: frame ?? ui.layout.barRect, gap: 24))
                     .allowsHitTesting(false)
                     .transition(.opacity)
             } else if showAppNames, let hoveredID = ui.hoveredID,
@@ -79,14 +77,17 @@ struct CustomDockView: View {
                       let frame = ui.layout.frames[hoveredID]
             {
                 NameLabel(text: tile.name)
-                    .position(x: frame.midX, y: frame.minY - 22)
+                    .modifier(BesideTile(edge: ui.edge, frame: frame, gap: 22))
                     .allowsHitTesting(false)
                     .transition(.opacity)
                     .id("label-\(hoveredID)")
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
-        .offset(y: ui.isHidden ? metrics.hiddenOffset : 0)
+        .offset(
+            x: ui.isHidden ? (ui.edge == .left ? -metrics.hiddenOffset : ui.edge == .right ? metrics.hiddenOffset : 0) : 0,
+            y: ui.isHidden && ui.edge == .bottom ? metrics.hiddenOffset : 0
+        )
         .opacity(ui.isHidden ? 0 : 1)
         .animation(spring, value: ui.layout)
         .animation(.easeInOut(duration: 0.25), value: ui.isHidden)
@@ -158,6 +159,7 @@ struct CustomDockView: View {
             baseSize: metrics.iconSize,
             indicatorStyle: indicatorStyle,
             indicatorOffset: metrics.paddingBottom / 2 + 2,
+            edge: ui.edge,
             isDropTarget: ui.dropTargetID == tile.id || ui.letterSelectionID == tile.id,
             isLaunching: store.launchingIDs.contains(tile.id)
         )
@@ -248,6 +250,28 @@ private struct LetterQueryLabel: View {
     }
 }
 
+/// Places a label next to a dock tile, on the side facing away from the screen edge.
+private struct BesideTile: ViewModifier {
+    let edge: CustomDockPosition
+    let frame: CGRect
+    let gap: CGFloat
+
+    func body(content: Content) -> some View {
+        switch edge {
+        case .bottom:
+            content.position(x: frame.midX, y: max(16, frame.minY - gap))
+        case .left:
+            content
+                .frame(width: 180, alignment: .leading)
+                .position(x: frame.maxX + 8 + 90, y: frame.midY)
+        case .right:
+            content
+                .frame(width: 180, alignment: .trailing)
+                .position(x: frame.minX - 8 - 90, y: frame.midY)
+        }
+    }
+}
+
 private struct NameLabel: View {
     let text: String
 
@@ -276,6 +300,7 @@ struct DockTileView: View {
     let baseSize: CGFloat
     let indicatorStyle: CustomDockIndicatorStyle
     let indicatorOffset: CGFloat
+    var edge: CustomDockPosition = .bottom
     let isDropTarget: Bool
     let isLaunching: Bool
 
@@ -289,17 +314,31 @@ struct DockTileView: View {
                 .scaleEffect(isDropTarget ? 1.12 : 1)
                 .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isDropTarget)
                 .opacity(tile.isHidden ? 0.55 : 1)
-                .offset(y: bounceOffset(at: context.date))
+                .offset(bounceOffset(at: context.date))
         }
         .background(cardBackground)
-        .overlay(alignment: .bottom) { runningDot }
+        .overlay(alignment: indicatorAlignment) { runningDot }
         .contentShape(Rectangle())
     }
 
-    private func bounceOffset(at date: Date) -> CGFloat {
-        guard isLaunching else { return 0 }
+    /// Launch bounce, always away from the screen edge.
+    private func bounceOffset(at date: Date) -> CGSize {
+        guard isLaunching else { return .zero }
         let t = date.timeIntervalSinceReferenceDate
-        return -abs(sin(t * .pi * 1.6)) * baseSize * 0.3
+        let amount = abs(sin(t * .pi * 1.6)) * baseSize * 0.3
+        return switch edge {
+        case .bottom: CGSize(width: 0, height: -amount)
+        case .left: CGSize(width: amount, height: 0)
+        case .right: CGSize(width: -amount, height: 0)
+        }
+    }
+
+    private var indicatorAlignment: Alignment {
+        switch edge {
+        case .bottom: .bottom
+        case .left: .leading
+        case .right: .trailing
+        }
     }
 
     @ViewBuilder
@@ -317,7 +356,10 @@ struct DockTileView: View {
             Circle()
                 .fill(Color.primary.opacity(0.75))
                 .frame(width: 4, height: 4)
-                .offset(y: indicatorOffset)
+                .offset(
+                    x: edge == .left ? -indicatorOffset : edge == .right ? indicatorOffset : 0,
+                    y: edge == .bottom ? indicatorOffset : 0
+                )
         }
     }
 }

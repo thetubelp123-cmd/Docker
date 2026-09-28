@@ -623,7 +623,9 @@ final class SharedPreviewWindowCoordinator: NSPanel {
 
     private func calculateWindowPositionFromFrame(mouseLocation: CGPoint?, windowSize: CGSize, screen: NSScreen, dockItemFrame: CGRect, dockPositionOverride: DockPosition? = nil) -> CGPoint {
         let screenFrame = screen.frame
-        let dockPosition = dockPositionOverride ?? DockUtils.getDockPosition()
+        // DockerDoor side docks: place previews beside the icon instead of above it.
+        let sidePlacement = dockPositionOverride == .cli ? CustomDockPreviews.cliPlacement : nil
+        let dockPosition = sidePlacement ?? dockPositionOverride ?? DockUtils.getDockPosition()
         let flippedIconRect = dockItemFrame
 
         var xPosition: CGFloat
@@ -675,7 +677,8 @@ final class SharedPreviewWindowCoordinator: NSPanel {
 
         if shouldAnimate {
             // Window is appearing for the first time, apply slide animation
-            let dockPosition = dockPositionOverride ?? DockUtils.getDockPosition()
+            let sidePlacement = dockPositionOverride == .cli ? CustomDockPreviews.cliPlacement : nil
+            let dockPosition = sidePlacement ?? dockPositionOverride ?? DockUtils.getDockPosition()
             let animationOffset: CGFloat = 7.0
             var startFrame = frame
 

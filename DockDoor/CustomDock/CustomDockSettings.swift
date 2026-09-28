@@ -27,6 +27,22 @@ enum CustomDockLayoutMode: String, CaseIterable, Defaults.Serializable {
     }
 }
 
+enum CustomDockPosition: String, CaseIterable, Defaults.Serializable {
+    case bottom
+    case left
+    case right
+
+    var title: String {
+        switch self {
+        case .bottom: "Unten"
+        case .left: "Links"
+        case .right: "Rechts"
+        }
+    }
+
+    var isVertical: Bool { self != .bottom }
+}
+
 enum CustomDockMaterial: String, CaseIterable, Defaults.Serializable {
     case liquidGlass
     case frosted
@@ -221,6 +237,7 @@ extension Defaults.Keys {
     static let customDockMagnification = Key<Bool>("customDockMagnification", default: true)
     static let customDockMagnifiedSize = Key<Double>("customDockMagnifiedSize", default: 88)
     static let customDockLayoutMode = Key<CustomDockLayoutMode>("customDockLayoutMode", default: .floating)
+    static let customDockPosition = Key<CustomDockPosition>("customDockPosition", default: .bottom)
     static let customDockMaterial = Key<CustomDockMaterial>("customDockMaterial", default: CustomDockMaterial.defaultValue)
     static let customDockTintOpacity = Key<Double>("customDockTintOpacity", default: 0.15)
     static let customDockShowBorder = Key<Bool>("customDockShowBorder", default: true)

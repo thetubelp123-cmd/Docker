@@ -11,6 +11,7 @@ struct CustomDockSettingsView: View {
     @Default(.customDockMagnification) private var magnification
     @Default(.customDockMagnifiedSize) private var magnifiedSize
     @Default(.customDockLayoutMode) private var layoutMode
+    @Default(.customDockPosition) private var position
     @Default(.customDockMaterial) private var material
     @Default(.customDockTintOpacity) private var tintOpacity
     @Default(.customDockShowBorder) private var showBorder
@@ -60,6 +61,12 @@ struct CustomDockSettingsView: View {
 
                     SettingsGroup(header: "Größe und Layout") {
                         VStack(alignment: .leading, spacing: 12) {
+                            Picker("Position", selection: $position) {
+                                ForEach(CustomDockPosition.allCases, id: \.self) { item in
+                                    Text(item.title).tag(item)
+                                }
+                            }
+                            .pickerStyle(.segmented)
                             sliderRow("Symbolgröße", value: $iconSize, range: 24 ... 96)
                             Toggle("Vergrößerung beim Überfahren", isOn: $magnification)
                             if magnification {

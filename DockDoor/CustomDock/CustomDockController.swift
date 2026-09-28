@@ -87,6 +87,10 @@ final class CustomDockController {
     private var screenObserver: NSObjectProtocol?
 
     private var metrics = CustomDockController.currentMetrics()
+    private var edge = Defaults[.customDockPosition]
+    /// Layout in "virtual" coordinates: the dock always lies along the bottom edge.
+    /// For side docks it is rotated into place (see toReal).
+    private var layoutV: DockLayoutResult = .empty
     private var mouseX: CGFloat?
     private var isInside = false
     private var isRevealed = true
@@ -114,6 +118,8 @@ final class CustomDockController {
         store = CustomDockStore(profileID: profileID)
         cachedScreen = Self.resolveScreen(screenID)
         ui.metrics = metrics
+        ui.edge = edge
+        CustomDockPreviews.placement = edge
         let hostingView = CustomDockHostingView(rootView: CustomDockView(store: store, ui: ui))
         hostingView.autoresizingMask = [.width, .height]
         hostingView.sizingOptions = []
@@ -170,7 +176,7 @@ final class CustomDockController {
 
         let keys: [Defaults._AnyKey] = [
             .customDockIconSize, .customDockMagnification, .customDockMagnifiedSize,
-            .customDockLayoutMode, .customDockAutoHide, .customDockAppearance,
+            .customDockLayoutMode, .customDockAutoHide, .customDockAppearance, .customDockPosition,
         ]
         defaultsTask = Task { [weak self] in
             for await _ in Defaults.updates(keys, initial: false) {
@@ -250,6 +256,14 @@ final class CustomDockController {
     private func settingsChanged() {
         metrics = Self.currentMetrics()
         ui.metrics = metrics
+        if edge != Defaults[.customDockPosition] {
+            edge = Defaults[.customDockPosition]
+            ui.edge = edge
+            stackController.close()
+            popoverController.close()
+            CustomDockPreviews.hide()
+        }
+        CustomDockPreviews.placement = edge
         applyAppearance()
         if !Defaults[.customDockAutoHide] {
             isRevealed = true
@@ -272,31 +286,47 @@ final class CustomDockController {
             cachedScreen = Self.resolveScreen(screenID)
         }
         guard let screen = dockScreen else { return }
-        let frame = NSRect(
-            x: screen.frame.minX,
-            y: screen.frame.minY,
-            width: screen.frame.width,
-            height: metrics.panelHeight
-        )
+        let depth = panelDepth
+        let sf = screen.frame
+        // Side docks stay below the menu bar.
+        let top = min(sf.maxY, screen.visibleFrame.maxY)
+        let frame: NSRect = switch edge {
+        case .bottom: NSRect(x: sf.minX, y: sf.minY, width: sf.width, height: depth)
+        case .left: NSRect(x: sf.minX, y: sf.minY, width: depth, height: top - sf.minY)
+        case .right: NSRect(x: sf.maxX - depth, y: sf.minY, width: depth, height: top - sf.minY)
+        }
         if panel.frame != frame {
             panel.setFrame(frame, display: true)
         }
         if !panel.isVisible { panel.orderFrontRegardless() }
     }
 
-    private func relayout() {
+    /// Room the panel needs across the dock; side docks also need space for the name labels.
+    private var panelDepth: CGFloat {
+        metrics.panelHeight + (edge.isVertical ? 200 : 0)
+    }
+
+    /// Size of the panel in virtual coordinates (main axis = width).
+    private var virtualSize: CGSize {
         let size = panel.frame.size
+        return edge.isVertical ? CGSize(width: size.height, height: size.width) : size
+    }
+
+    private func relayout() {
+        let size = virtualSize
         guard size.width > 0 else { return }
         var appIDs = store.appTiles.map(\.id)
         var otherIDs = store.otherTiles.map(\.id)
         var magnifyX = mouseX
         var widthFactors: [String: CGFloat] = [:]
         for tile in store.allTiles where tile.widthFactor != 1 {
+            // Side docks keep widgets square; only the slim control tile stays slim.
+            if edge.isVertical, tile.kind == .widget { continue }
             widthFactors[tile.id] = tile.widthFactor
         }
         if let drag, drag.isActive {
             magnifyX = nil
-            widthFactors[Self.gapID] = drag.tile.widthFactor
+            widthFactors[Self.gapID] = edge.isVertical && drag.tile.kind == .widget ? 1 : drag.tile.widthFactor
             appIDs.removeAll { $0 == drag.tile.id }
             otherIDs.removeAll { $0 == drag.tile.id }
             if !drag.isRemoving {
@@ -317,14 +347,61 @@ final class CustomDockController {
             mouseX: magnifyX,
             widthFactors: widthFactors
         )
-        if layout != ui.layout { ui.layout = layout }
+        layoutV = layout
+        let real = toReal(layout)
+        if real != ui.layout { ui.layout = real }
     }
 
     // MARK: - Coordinates
 
+    /// Virtual rect → real view rect (top-left origin).
+    private func toReal(_ rect: CGRect) -> CGRect {
+        let depth = virtualSize.height
+        switch edge {
+        case .bottom: return rect
+        case .right: return CGRect(x: rect.minY, y: rect.minX, width: rect.height, height: rect.width)
+        case .left: return CGRect(x: depth - rect.maxY, y: rect.minX, width: rect.height, height: rect.width)
+        }
+    }
+
+    private func toReal(_ point: CGPoint) -> CGPoint {
+        let depth = virtualSize.height
+        switch edge {
+        case .bottom: return point
+        case .right: return CGPoint(x: point.y, y: point.x)
+        case .left: return CGPoint(x: depth - point.y, y: point.x)
+        }
+    }
+
+    private func toVirtual(_ point: CGPoint) -> CGPoint {
+        let depth = virtualSize.height
+        switch edge {
+        case .bottom: return point
+        case .right: return CGPoint(x: point.y, y: point.x)
+        case .left: return CGPoint(x: point.y, y: depth - point.x)
+        }
+    }
+
+    private func toReal(_ layout: DockLayoutResult) -> DockLayoutResult {
+        guard edge.isVertical else { return layout }
+        var result = DockLayoutResult()
+        result.frames = layout.frames.mapValues { toReal($0) }
+        result.barRect = toReal(layout.barRect)
+        result.baseBarRect = toReal(layout.baseBarRect)
+        return result
+    }
+
+    /// Screen point → virtual point.
     private func viewPoint(fromScreen point: NSPoint) -> CGPoint {
         let frame = panel.frame
-        return CGPoint(x: point.x - frame.minX, y: frame.maxY - point.y)
+        return toVirtual(CGPoint(x: point.x - frame.minX, y: frame.maxY - point.y))
+    }
+
+    /// Virtual point → screen point.
+    private func screenPoint(fromVirtual point: CGPoint) -> NSPoint {
+        let real = toReal(point)
+        let frame = panel.frame
+        return NSPoint(x: frame.minX + real.x, y: frame.maxY - real.y)
     }
 
     private func screenRect(fromView rect: CGRect) -> CGRect {
@@ -347,11 +424,16 @@ final class CustomDockController {
         let mouse = NSEvent.mouseLocation
         let point = viewPoint(fromScreen: mouse)
         let dragging = NSEvent.pressedMouseButtons & 1 == 1
-        let layout = ui.layout
+        let layout = layoutV
 
         // Auto-hide
         if Defaults[.customDockAutoHide] {
-            let atEdge = mouse.y <= screen.frame.minY + 1.5 && mouse.x >= screen.frame.minX && mouse.x <= screen.frame.maxX
+            let sf = screen.frame
+            let atEdge: Bool = switch edge {
+            case .bottom: mouse.y <= sf.minY + 1.5 && mouse.x >= sf.minX && mouse.x <= sf.maxX
+            case .left: mouse.x <= sf.minX + 1.5 && mouse.y >= sf.minY && mouse.y <= sf.maxY
+            case .right: mouse.x >= sf.maxX - 1.5 && mouse.y >= sf.minY && mouse.y <= sf.maxY
+            }
             let overDock = isRevealed && layout.contentRect.insetBy(dx: -4, dy: -8).contains(point)
             let keep = atEdge || overDock || isMenuOpen || CustomDockPreviews.isMouseInPreview || drag != nil || stackController.isOpen || popoverController.isOpen
             if keep { lastKeepVisible = Date() }
@@ -409,7 +491,7 @@ final class CustomDockController {
             relayout()
         }
 
-        let hovered = inside ? ui.layout.tileID(at: point, spacing: metrics.spacing) : nil
+        let hovered = inside ? layoutV.tileID(at: point, spacing: metrics.spacing) : nil
         if !isMenuOpen, hovered != ui.hoveredID {
             ui.hoveredID = hovered
             hoverChanged(to: hovered, screen: screen)
@@ -441,7 +523,7 @@ final class CustomDockController {
         guard let hostingView else { return }
         let local = hostingView.convert(event.locationInWindow, from: nil)
         let point = CGPoint(x: local.x, y: hostingView.isFlipped ? local.y : hostingView.bounds.height - local.y)
-        let tileID = ui.layout.tileID(at: point, spacing: metrics.spacing)
+        let tileID = layoutV.tileID(at: toVirtual(point), spacing: metrics.spacing)
         let tile = tileID.flatMap { id in store.allTiles.first { $0.id == id } }
 
         CustomDockPreviews.hide()
@@ -514,7 +596,11 @@ final class CustomDockController {
             self?.stackController.close()
             self?.store.remove(memberPath: path, fromGroup: tileID)
         }
-        stackController.show(model, anchor: screenRect(fromView: frame), screen: screen, ignoringClicksIn: panel)
+        if edge.isVertical, model.mode == .fan {
+            // The fan only works upwards; side docks show the grid instead.
+            model.mode = .grid
+        }
+        stackController.show(model, anchor: screenRect(fromView: frame), screen: screen, edge: edge, ignoringClicksIn: panel)
     }
 
     // MARK: - Widgets
@@ -556,6 +642,7 @@ final class CustomDockController {
             key: key,
             anchor: screenRect(fromView: frame),
             screen: screen,
+            edge: edge,
             ignoringClicksIn: panel
         )
     }
@@ -601,7 +688,7 @@ final class CustomDockController {
 
     private func handleScroll(_ event: NSEvent) -> Bool {
         let point = viewPoint(fromScreen: NSEvent.mouseLocation)
-        guard let id = ui.layout.tileID(at: point, spacing: metrics.spacing),
+        guard let id = layoutV.tileID(at: point, spacing: metrics.spacing),
               let tile = store.allTiles.first(where: { $0.id == id })
         else { return false }
         if tile.kind == .control {
@@ -662,6 +749,7 @@ final class CustomDockController {
             key: key,
             anchor: screenRect(fromView: frame),
             screen: screen,
+            edge: edge,
             ignoringClicksIn: panel
         )
     }
@@ -744,7 +832,7 @@ final class CustomDockController {
             let base = CustomDockLayoutEngine.layout(
                 appIDs: store.appTiles.map(\.id),
                 otherIDs: store.otherTiles.map(\.id),
-                size: panel.frame.size,
+                size: virtualSize,
                 metrics: metrics,
                 mouseX: nil,
                 widthFactors: Dictionary(uniqueKeysWithValues: store.allTiles.filter { $0.widthFactor != 1 }.map { ($0.id, $0.widthFactor) })
@@ -768,9 +856,9 @@ final class CustomDockController {
             guard let id = ui.letterSelectionID, let tile = tiles.first(where: { $0.id == id }) else { return true }
             finishLetterNavigation(restoreFocus: false)
             handleTap(tile)
-        case 123, 124, 48: // ←, →, Tab
+        case 123, 124, 125, 126, 48: // ←, →, ↓, ↑, Tab
             guard !tiles.isEmpty else { return true }
-            let step = (event.keyCode == 123 || event.modifierFlags.contains(.shift)) ? -1 : 1
+            let step = (event.keyCode == 123 || event.keyCode == 126 || event.modifierFlags.contains(.shift)) ? -1 : 1
             let next = currentIndex.map { ($0 + step + tiles.count) % tiles.count } ?? (step > 0 ? 0 : tiles.count - 1)
             ui.letterQuery = ""
             selectLetterTile(tiles[next].id)
@@ -795,13 +883,13 @@ final class CustomDockController {
 
     private func mouseDown() {
         let point = viewPoint(fromScreen: NSEvent.mouseLocation)
-        guard let id = ui.layout.tileID(at: point, spacing: metrics.spacing),
+        guard let id = layoutV.tileID(at: point, spacing: metrics.spacing),
               let tile = store.allTiles.first(where: { $0.id == id })
         else {
             drag = nil
             return
         }
-        let frame = ui.layout.frames[id] ?? CGRect(origin: point, size: .zero)
+        let frame = layoutV.frames[id] ?? CGRect(origin: point, size: .zero)
         drag = DockDrag(
             tile: tile,
             startPoint: point,
@@ -864,16 +952,16 @@ final class CustomDockController {
 
     private func updateDrag(at point: CGPoint) {
         guard var current = drag, current.isActive else { return }
-        let layout = ui.layout
+        let layout = layoutV
         var needsLayout = false
 
         if let ghost {
             let scale = ghost.size / current.grabbedSize
-            let screenPoint = NSPoint(
-                x: panel.frame.minX + point.x - current.grabOffset.width * scale,
-                y: panel.frame.maxY - (point.y - current.grabOffset.height * scale)
+            let center = CGPoint(
+                x: point.x - current.grabOffset.width * scale,
+                y: point.y - current.grabOffset.height * scale
             )
-            ghost.move(centerAt: screenPoint)
+            ghost.move(centerAt: screenPoint(fromVirtual: center))
         }
 
         let removing = current.tile.isPinned && point.y < layout.barRect.minY - max(44, metrics.iconSize)

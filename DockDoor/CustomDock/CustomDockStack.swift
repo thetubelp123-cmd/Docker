@@ -180,7 +180,10 @@ final class StackPanelController: NSObject, NSWindowDelegate {
     var panelFrame: CGRect? { panel?.frame }
 
     /// - Parameter anchor: the dock icon in screen coordinates.
-    func show(_ model: StackModel, anchor: CGRect, screen: NSScreen, ignoringClicksIn dockWindow: NSWindow?) {
+    private var edge: CustomDockPosition = .bottom
+
+    func show(_ model: StackModel, anchor: CGRect, screen: NSScreen, edge: CustomDockPosition = .bottom, ignoringClicksIn dockWindow: NSWindow?) {
+        self.edge = edge
         close()
         self.model = model
         model.onClose = { [weak self] in self?.close() }
@@ -229,8 +232,19 @@ final class StackPanelController: NSObject, NSWindowDelegate {
             anchor.midX - size.width / 2
         }
         let visible = screen.visibleFrame
+        var y = min(anchor.maxY + 6, visible.maxY - size.height)
+        switch edge {
+        case .bottom:
+            break
+        case .left:
+            x = anchor.maxX + 6
+            y = anchor.midY - size.height / 2
+        case .right:
+            x = anchor.minX - size.width - 6
+            y = anchor.midY - size.height / 2
+        }
         x = min(max(x, screen.frame.minX + 6), screen.frame.maxX - size.width - 6)
-        let y = min(anchor.maxY + 6, visible.maxY - size.height)
+        y = min(max(y, visible.minY + 6), visible.maxY - size.height)
         panel.setFrame(NSRect(x: x, y: y, width: size.width, height: size.height), display: true)
     }
 

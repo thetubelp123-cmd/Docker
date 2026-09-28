@@ -4,6 +4,17 @@ import Defaults
 /// Connects the DockerDoor dock to DockDoor's window preview panel.
 enum CustomDockPreviews {
     private static var refreshToken = UUID()
+    /// Which side of the icon previews open on (DockDoor treats .cli as "above").
+    static var placement: CustomDockPosition = .bottom
+
+    /// DockDoor position used for placing the preview next to a DockerDoor icon.
+    static var cliPlacement: DockPosition? {
+        switch placement {
+        case .bottom: nil
+        case .left: .left
+        case .right: .right
+        }
+    }
 
     static var coordinator: SharedPreviewWindowCoordinator? {
         SharedPreviewWindowCoordinator.activeInstance
@@ -58,7 +69,11 @@ enum CustomDockPreviews {
         // The preview sits right above the icon. DockDoor adds its "buffer from dock"
         // on top of the anchor, so the anchor is stretched to cancel that out.
         let lift = max(0, -Defaults[.bufferFromDock]) + 6
-        let anchorFrame = CGRect(x: anchor.minX, y: anchor.minY, width: anchor.width, height: anchor.height + lift)
+        let anchorFrame: CGRect = switch placement {
+        case .bottom: CGRect(x: anchor.minX, y: anchor.minY, width: anchor.width, height: anchor.height + lift)
+        case .left: CGRect(x: anchor.minX, y: anchor.minY, width: anchor.width + lift, height: anchor.height)
+        case .right: CGRect(x: anchor.minX - lift, y: anchor.minY, width: anchor.width + lift, height: anchor.height)
+        }
 
         let token = UUID()
         refreshToken = token
