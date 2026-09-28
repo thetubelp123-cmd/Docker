@@ -24,7 +24,9 @@ final class CustomDockPanel: NSPanel {
         animationBehavior = .none
     }
 
-    override var canBecomeKey: Bool { false }
+    /// Only true while letter navigation needs keyboard input.
+    var allowsKey = false
+    override var canBecomeKey: Bool { allowsKey }
     override var canBecomeMain: Bool { false }
 }
 
@@ -34,6 +36,11 @@ final class CustomDockHostingView<Content: View>: NSHostingView<Content> {
     var onMouseDragged: (() -> Void)?
     var onMouseUp: (() -> Void)?
     var onScroll: ((NSEvent) -> Bool)?
+    var onKeyDown: ((NSEvent) -> Bool)?
+
+    override func keyDown(with event: NSEvent) {
+        if onKeyDown?(event) != true { super.keyDown(with: event) }
+    }
 
     override func scrollWheel(with event: NSEvent) {
         if onScroll?(event) != true { super.scrollWheel(with: event) }
@@ -95,6 +102,10 @@ final class CustomDockController {
     private var volumeClearWork: DispatchWorkItem?
     private var drag: DockDrag?
     private var buttonReleasedAt: Date?
+    private(set) var isLetterMode = false
+    private var letterPreviousApp: NSRunningApplication?
+    private var letterClickMonitor: Any?
+    private var letterResignObserver: NSObjectProtocol?
     private var ghost: DockDragGhost?
     static let gapID = "drag-gap"
 
@@ -111,6 +122,7 @@ final class CustomDockController {
         hostingView.onMouseDragged = { [weak self] in self?.mouseDragged() }
         hostingView.onMouseUp = { [weak self] in self?.mouseUp() }
         hostingView.onScroll = { [weak self] event in self?.handleScroll(event) ?? false }
+        hostingView.onKeyDown = { [weak self] event in self?.handleLetterKey(event) ?? false }
         self.hostingView = hostingView
         panel.contentView = hostingView
         panel.ignoresMouseEvents = true
@@ -183,6 +195,7 @@ final class CustomDockController {
         CustomDockPreviews.hide()
         stackController.close()
         popoverController.close()
+        finishLetterNavigation(restoreFocus: false)
         rotateTimer?.invalidate()
         rotateTimer = nil
         rotationTask?.cancel()
@@ -323,6 +336,14 @@ final class CustomDockController {
 
     private func tick() {
         guard let screen = dockScreen else { return }
+        if isLetterMode {
+            lastKeepVisible = Date()
+            if !isRevealed {
+                isRevealed = true
+                ui.isHidden = false
+            }
+            return
+        }
         let mouse = NSEvent.mouseLocation
         let point = viewPoint(fromScreen: mouse)
         let dragging = NSEvent.pressedMouseButtons & 1 == 1
@@ -658,6 +679,115 @@ final class CustomDockController {
             lastPageFlip = Date()
         }
         if event.phase == .ended || event.phase == .cancelled { scrollAccumulator = 0 }
+        return true
+    }
+
+    // MARK: - Letter navigation
+
+    /// Tiles letter navigation can jump to, in dock order.
+    private var navigableTiles: [DockTile] {
+        store.allTiles.filter { $0.kind != .control }
+    }
+
+    func toggleLetterNavigation() {
+        if isLetterMode {
+            finishLetterNavigation(restoreFocus: true)
+            return
+        }
+        isLetterMode = true
+        letterPreviousApp = NSWorkspace.shared.frontmostApplication
+        stackController.close()
+        popoverController.close()
+        CustomDockPreviews.hide()
+        ui.hoveredID = nil
+        ui.letterQuery = ""
+        ui.letterSelectionID = nil
+        isRevealed = true
+        ui.isHidden = false
+        panel.allowsKey = true
+        panel.makeKeyAndOrderFront(nil)
+        letterClickMonitor = NSEvent.addGlobalMonitorForEvents(matching: [.leftMouseDown, .rightMouseDown]) { [weak self] _ in
+            self?.finishLetterNavigation(restoreFocus: false)
+        }
+        letterResignObserver = NotificationCenter.default.addObserver(
+            forName: NSWindow.didResignKeyNotification, object: panel, queue: .main
+        ) { [weak self] _ in
+            self?.finishLetterNavigation(restoreFocus: false)
+        }
+        mouseX = nil
+        relayout()
+        DockerDoorLog.write("Buchstaben-Navigation gestartet")
+    }
+
+    func finishLetterNavigation(restoreFocus: Bool) {
+        guard isLetterMode else { return }
+        isLetterMode = false
+        if let letterClickMonitor { NSEvent.removeMonitor(letterClickMonitor) }
+        letterClickMonitor = nil
+        if let letterResignObserver { NotificationCenter.default.removeObserver(letterResignObserver) }
+        letterResignObserver = nil
+        ui.letterQuery = nil
+        ui.letterSelectionID = nil
+        panel.allowsKey = false
+        if panel.isKeyWindow { panel.resignKey() }
+        if restoreFocus { letterPreviousApp?.activate() }
+        letterPreviousApp = nil
+        lastKeepVisible = Date()
+        mouseX = nil
+        relayout()
+    }
+
+    private func selectLetterTile(_ id: String?) {
+        ui.letterSelectionID = id
+        // Magnify the chosen tile as if the pointer rested on it.
+        if let id {
+            let base = CustomDockLayoutEngine.layout(
+                appIDs: store.appTiles.map(\.id),
+                otherIDs: store.otherTiles.map(\.id),
+                size: panel.frame.size,
+                metrics: metrics,
+                mouseX: nil,
+                widthFactors: Dictionary(uniqueKeysWithValues: store.allTiles.filter { $0.widthFactor != 1 }.map { ($0.id, $0.widthFactor) })
+            )
+            mouseX = base.frames[id]?.midX
+        } else {
+            mouseX = nil
+        }
+        relayout()
+    }
+
+    private func handleLetterKey(_ event: NSEvent) -> Bool {
+        guard isLetterMode else { return false }
+        let tiles = navigableTiles
+        let currentIndex = ui.letterSelectionID.flatMap { id in tiles.firstIndex { $0.id == id } }
+
+        switch Int(event.keyCode) {
+        case 53: // Esc
+            finishLetterNavigation(restoreFocus: true)
+        case 36, 76: // Return, Enter
+            guard let id = ui.letterSelectionID, let tile = tiles.first(where: { $0.id == id }) else { return true }
+            finishLetterNavigation(restoreFocus: false)
+            handleTap(tile)
+        case 123, 124, 48: // ←, →, Tab
+            guard !tiles.isEmpty else { return true }
+            let step = (event.keyCode == 123 || event.modifierFlags.contains(.shift)) ? -1 : 1
+            let next = currentIndex.map { ($0 + step + tiles.count) % tiles.count } ?? (step > 0 ? 0 : tiles.count - 1)
+            ui.letterQuery = ""
+            selectLetterTile(tiles[next].id)
+        case 51: // Backspace
+            var query = ui.letterQuery ?? ""
+            if !query.isEmpty { query.removeLast() }
+            ui.letterQuery = query
+            selectLetterTile(query.isEmpty ? ui.letterSelectionID : LetterSearch.match(query, in: tiles)?.id)
+        default:
+            guard !event.modifierFlags.contains(.command),
+                  let characters = event.characters, !characters.isEmpty,
+                  characters.unicodeScalars.allSatisfy({ !CharacterSet.controlCharacters.contains($0) })
+            else { return true }
+            let query = (ui.letterQuery ?? "") + characters
+            ui.letterQuery = query
+            selectLetterTile(LetterSearch.match(query, in: tiles)?.id)
+        }
         return true
     }
 

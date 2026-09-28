@@ -7,6 +7,9 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		BF3FDB9E28FE4895A732CA99 /* CustomDockBackup.swift in Sources */ = {isa = PBXBuildFile; fileRef = 165CE83D1749430495B37AC2 /* CustomDockBackup.swift */; };
+		D993A204941D478D80F970B2 /* CustomDockLetterNavigation.swift in Sources */ = {isa = PBXBuildFile; fileRef = EEC8C29B08FD4DFD8A964744 /* CustomDockLetterNavigation.swift */; };
+		3148874CB3D34C4CBE19AB41 /* CustomDockBadges.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2A7709689B984D3D98698AAC /* CustomDockBadges.swift */; };
 		FA203B2EFC714F56A6CB5872 /* CustomDockProfilesSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = C5AFFA7769C145A09CF4D3B1 /* CustomDockProfilesSettings.swift */; };
 		6B8C0A3BAE8B4BC78D8423AA /* CustomDockControlCenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 74F44AFF172D4C4CAF7F8128 /* CustomDockControlCenter.swift */; };
 		2819E2A9541C4E8CB14CC6A9 /* CustomDockManager.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6A4B04340D124DF1ADB56EF5 /* CustomDockManager.swift */; };
@@ -259,6 +262,9 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		165CE83D1749430495B37AC2 /* CustomDockBackup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockBackup.swift; sourceTree = "<group>"; };
+		EEC8C29B08FD4DFD8A964744 /* CustomDockLetterNavigation.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockLetterNavigation.swift; sourceTree = "<group>"; };
+		2A7709689B984D3D98698AAC /* CustomDockBadges.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockBadges.swift; sourceTree = "<group>"; };
 		C5AFFA7769C145A09CF4D3B1 /* CustomDockProfilesSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockProfilesSettings.swift; sourceTree = "<group>"; };
 		74F44AFF172D4C4CAF7F8128 /* CustomDockControlCenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockControlCenter.swift; sourceTree = "<group>"; };
 		6A4B04340D124DF1ADB56EF5 /* CustomDockManager.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockManager.swift; sourceTree = "<group>"; };
@@ -510,6 +516,9 @@
 		F9EFDF417AD24010B39AD8D1 /* CustomDock */ = {
 			isa = PBXGroup;
 			children = (
+				165CE83D1749430495B37AC2 /* CustomDockBackup.swift */,
+				EEC8C29B08FD4DFD8A964744 /* CustomDockLetterNavigation.swift */,
+				2A7709689B984D3D98698AAC /* CustomDockBadges.swift */,
 				C5AFFA7769C145A09CF4D3B1 /* CustomDockProfilesSettings.swift */,
 				74F44AFF172D4C4CAF7F8128 /* CustomDockControlCenter.swift */,
 				6A4B04340D124DF1ADB56EF5 /* CustomDockManager.swift */,
@@ -1186,6 +1195,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				BF3FDB9E28FE4895A732CA99 /* CustomDockBackup.swift in Sources */,
+				D993A204941D478D80F970B2 /* CustomDockLetterNavigation.swift in Sources */,
+				3148874CB3D34C4CBE19AB41 /* CustomDockBadges.swift in Sources */,
 				FA203B2EFC714F56A6CB5872 /* CustomDockProfilesSettings.swift in Sources */,
 				6B8C0A3BAE8B4BC78D8423AA /* CustomDockControlCenter.swift in Sources */,
 				2819E2A9541C4E8CB14CC6A9 /* CustomDockManager.swift in Sources */,

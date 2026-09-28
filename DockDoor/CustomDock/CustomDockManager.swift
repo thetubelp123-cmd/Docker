@@ -10,10 +10,20 @@ final class CustomDockManager {
     private var followTimer: Timer?
     private let appSense = AppSenseMonitor()
     private var followScreenID: String?
+    private var hotKey: GlobalHotKey?
+    private var hotKeyTask: Task<Void, Never>?
 
     init() {
         ProfileManager.ensureDefaultProfile()
         rebuild()
+        DockBadgeMonitor.shared.start()
+        DockerDoorBackup.runAutomaticBackupIfDue()
+
+        hotKeyTask = Task { [weak self] in
+            for await shortcut in Defaults.updates(.customDockLetterShortcut) {
+                await MainActor.run { self?.registerHotKey(shortcut) }
+            }
+        }
 
         screenObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification, object: nil, queue: .main
@@ -33,6 +43,9 @@ final class CustomDockManager {
     func tearDown() {
         ProfileManager.saveCurrent()
         appSense.stop()
+        hotKeyTask?.cancel()
+        hotKey = nil
+        DockBadgeMonitor.shared.stop()
         followTimer?.invalidate()
         followTimer = nil
         defaultsTask?.cancel()
@@ -94,6 +107,22 @@ final class CustomDockManager {
             appSense.stop()
         }
         DockerDoorLog.write("Docks: \(mode.title), \(controllers.count) Dock(s)")
+    }
+
+    private func registerHotKey(_ shortcut: DockLetterShortcut) {
+        hotKey = nil
+        guard let keyCode = shortcut.keyCode else { return }
+        hotKey = GlobalHotKey(keyCode: keyCode, modifiers: shortcut.carbonModifiers) { [weak self] in
+            self?.startLetterNavigation()
+        }
+    }
+
+    /// Opens letter navigation on the dock of the screen with the pointer.
+    private func startLetterNavigation() {
+        let mouse = NSEvent.mouseLocation
+        let screenID = NSScreen.screens.first { NSMouseInRect(mouse, $0.frame, false) }?.uniqueIdentifier()
+        let target = controllers.values.first { $0.screenID == screenID && screenID != nil } ?? controllers.values.first
+        target?.toggleLetterNavigation()
     }
 
     /// "Folgt dem Zeiger": the dock moves to the screen whose bottom edge the pointer touches.

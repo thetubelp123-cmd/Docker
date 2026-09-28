@@ -12,6 +12,9 @@ final class CustomDockUIState: ObservableObject {
     @Published var isInteracting = false
     @Published var widgetPages: [String: Int] = [:]
     @Published var volumeOverlay: (id: String, value: Float)?
+    /// Typed text while letter navigation is active; nil = inactive.
+    @Published var letterQuery: String?
+    @Published var letterSelectionID: String?
 }
 
 struct CustomDockView: View {
@@ -22,6 +25,8 @@ struct CustomDockView: View {
     @Default(.customDockMaterial) private var material
     @Default(.customDockTintOpacity) private var tintOpacity
     @Default(.customDockShowBorder) private var showBorder
+    @Default(.customDockShowBadges) private var showBadges
+    @ObservedObject private var badgeMonitor = DockBadgeMonitor.shared
     @State private var barIsDropTarget = false
 
     private var metrics: CustomDockMetrics { ui.metrics }
@@ -59,9 +64,19 @@ struct CustomDockView: View {
                 }
             }
 
-            if showAppNames, let hoveredID = ui.hoveredID,
-               let tile = store.allTiles.first(where: { $0.id == hoveredID }), tile.kind != .widget,
-               let frame = ui.layout.frames[hoveredID]
+            if let query = ui.letterQuery {
+                let selected = ui.letterSelectionID.flatMap { id in store.allTiles.first { $0.id == id } }
+                let frame = ui.letterSelectionID.flatMap { ui.layout.frames[$0] }
+                LetterQueryLabel(query: query, name: selected?.name)
+                    .position(
+                        x: frame?.midX ?? ui.layout.barRect.midX,
+                        y: max(16, (frame?.minY ?? ui.layout.barRect.minY) - 24)
+                    )
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+            } else if showAppNames, let hoveredID = ui.hoveredID,
+                      let tile = store.allTiles.first(where: { $0.id == hoveredID }), tile.kind != .widget,
+                      let frame = ui.layout.frames[hoveredID]
             {
                 NameLabel(text: tile.name)
                     .position(x: frame.midX, y: frame.minY - 22)
@@ -121,8 +136,8 @@ struct CustomDockView: View {
                 size: frame.size,
                 volume: ui.volumeOverlay?.id == tile.id ? ui.volumeOverlay?.value : nil
             )
-            .scaleEffect(ui.dropTargetID == tile.id ? 1.1 : 1)
-            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: ui.dropTargetID == tile.id)
+            .scaleEffect(ui.dropTargetID == tile.id || ui.letterSelectionID == tile.id ? 1.1 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: ui.dropTargetID == tile.id || ui.letterSelectionID == tile.id)
             .position(x: frame.midX, y: frame.midY)
             .transition(.scale(scale: 0.3).combined(with: .opacity))
         } else if tile.kind == .control {
@@ -143,10 +158,18 @@ struct CustomDockView: View {
             baseSize: metrics.iconSize,
             indicatorStyle: indicatorStyle,
             indicatorOffset: metrics.paddingBottom / 2 + 2,
-            isDropTarget: ui.dropTargetID == tile.id,
+            isDropTarget: ui.dropTargetID == tile.id || ui.letterSelectionID == tile.id,
             isLaunching: store.launchingIDs.contains(tile.id)
         )
         .frame(width: frame.width, height: frame.height)
+        .overlay(alignment: .topTrailing) {
+            if showBadges, let badge = badgeMonitor.badge(for: tile) {
+                DockBadgeView(text: badge, size: frame.width)
+                    .offset(x: frame.width * 0.1, y: -frame.width * 0.06)
+                    .allowsHitTesting(false)
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
         .onDrop(of: [UTType.fileURL], isTargeted: Binding(
             get: { ui.dropTargetID == tile.id },
             set: { targeted in
@@ -191,6 +214,37 @@ struct CustomDockView: View {
         case .file, .widget, .control:
             return false
         }
+    }
+}
+
+private struct LetterQueryLabel: View {
+    let query: String
+    let name: String?
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Image(systemName: "keyboard")
+                .foregroundStyle(.secondary)
+            if query.isEmpty {
+                Text(name ?? "Buchstaben tippen …")
+                    .font(.system(size: 13, weight: .medium))
+            } else {
+                Text(query)
+                    .font(.system(size: 13, weight: .bold, design: .rounded))
+                    .foregroundStyle(name == nil ? Color.red : Color.accentColor)
+                if let name {
+                    Text(name).font(.system(size: 13, weight: .medium))
+                }
+            }
+            Text("←→ · ↩ · ⎋")
+                .font(.system(size: 11))
+                .foregroundStyle(.secondary)
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 7)
+        .background(RoundedRectangle(cornerRadius: 10, style: .continuous).fill(.regularMaterial))
+        .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5))
+        .fixedSize()
     }
 }
 

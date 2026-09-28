@@ -200,6 +200,8 @@ struct CustomDockSettingsView: View {
                         }
                     }
 
+                    CustomDockExtrasSettings()
+
                     SettingsGroup(header: "Inhalt") {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Symbole ordnest du per Ziehen neu. Nach oben aus dem Dock ziehen und loslassen entfernt sie. Laufende Apps werden angeheftet, wenn du sie zu den angehefteten ziehst.")

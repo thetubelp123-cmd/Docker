@@ -215,3 +215,135 @@ private struct ProfileRow: View {
         }
     }
 }
+
+/// Settings groups for letter navigation, badges and backups.
+struct CustomDockExtrasSettings: View {
+    @Default(.customDockLetterShortcut) private var shortcut
+    @Default(.customDockShowBadges) private var showBadges
+    @Default(.customDockAutoBackup) private var autoBackup
+    @Default(.customDockLastAutoBackup) private var lastAutoBackup
+    @State private var pendingRestore: URL?
+    @State private var pendingInfo: DockerDoorBackup.BackupInfo?
+    @State private var message: String?
+
+    var body: some View {
+        SettingsGroup(header: "Tastatur und Badges") {
+            VStack(alignment: .leading, spacing: 12) {
+                Picker("Buchstaben-Navigation", selection: $shortcut) {
+                    ForEach(DockLetterShortcut.allCases, id: \.self) { item in
+                        Text(item.title).tag(item)
+                    }
+                }
+                Text("Kürzel drücken, dann Anfangsbuchstaben tippen: Das Dock springt zur passenden App. ←/→ oder Tab wechseln, ↩ öffnet, ⎋ bricht ab. Mehrmals denselben Buchstaben tippen blättert durch alle Treffer.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                Toggle("Benachrichtigungs-Badges anzeigen", isOn: $showBadges)
+                Text("Zeigt die roten Zahlen der Apps (z. B. ungelesene Mails) an den Symbolen. Bei Gruppen werden sie zusammengezählt.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+
+        SettingsGroup(header: "Sichern und Wiederherstellen") {
+            VStack(alignment: .leading, spacing: 12) {
+                Text("Eine Sicherung enthält alle Profile, den Dock-Inhalt, Widgets und das Aussehen.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                HStack {
+                    Button {
+                        exportBackup()
+                    } label: {
+                        Label("Sichern …", systemImage: "square.and.arrow.up")
+                    }
+                    Button {
+                        chooseRestore()
+                    } label: {
+                        Label("Wiederherstellen …", systemImage: "square.and.arrow.down")
+                    }
+                }
+                Toggle("Täglich automatisch sichern (die letzten 10 bleiben erhalten)", isOn: $autoBackup)
+                HStack {
+                    Text(lastAutoBackup > 0
+                        ? "Letzte automatische Sicherung: \(Date(timeIntervalSince1970: lastAutoBackup).formatted(date: .abbreviated, time: .shortened))"
+                        : "Noch keine automatische Sicherung.")
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                    Spacer()
+                    Button("Sicherungsordner öffnen") {
+                        try? FileManager.default.createDirectory(at: DockerDoorBackup.backupsFolder, withIntermediateDirectories: true)
+                        NSWorkspace.shared.open(DockerDoorBackup.backupsFolder)
+                    }
+                    .controlSize(.small)
+                }
+                if let message {
+                    Text(message)
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                }
+            }
+        }
+        .alert("Sicherung wiederherstellen?", isPresented: Binding(
+            get: { pendingRestore != nil },
+            set: { if !$0 { pendingRestore = nil } }
+        )) {
+            Button("Wiederherstellen und neu starten", role: .destructive) { performRestore() }
+            Button("Abbrechen", role: .cancel) { pendingRestore = nil }
+        } message: {
+            Text(restoreDescription)
+        }
+    }
+
+    private var restoreDescription: String {
+        guard let info = pendingInfo else { return "Die aktuellen Dock-Einstellungen werden ersetzt." }
+        var text = "Die aktuellen Dock-Einstellungen werden ersetzt"
+        if let created = info.created {
+            text += " durch den Stand vom \(created.formatted(date: .long, time: .shortened))"
+        }
+        text += " (DockerDoor \(info.appVersion))."
+        if !info.profileNames.isEmpty {
+            text += " Profile: \(info.profileNames.joined(separator: ", "))."
+        }
+        return text + " Vorher wird automatisch eine Sicherung des jetzigen Stands angelegt. DockerDoor startet danach neu."
+    }
+
+    private func exportBackup() {
+        let panel = NSSavePanel()
+        panel.title = "DockerDoor sichern"
+        panel.nameFieldStringValue = DockerDoorBackup.suggestedFileName()
+        panel.allowedContentTypes = [DockerDoorBackup.contentType]
+        panel.canCreateDirectories = true
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            try DockerDoorBackup.export(to: url)
+            message = "Gesichert: \(url.lastPathComponent)"
+        } catch {
+            message = "Sichern fehlgeschlagen: \(error.localizedDescription)"
+        }
+    }
+
+    private func chooseRestore() {
+        let panel = NSOpenPanel()
+        panel.title = "DockerDoor-Sicherung wählen"
+        panel.allowedContentTypes = [DockerDoorBackup.contentType, .propertyList]
+        panel.allowsMultipleSelection = false
+        panel.directoryURL = DockerDoorBackup.backupsFolder
+        guard panel.runModal() == .OK, let url = panel.url else { return }
+        do {
+            pendingInfo = try DockerDoorBackup.inspect(url)
+            pendingRestore = url
+        } catch {
+            message = error.localizedDescription
+        }
+    }
+
+    private func performRestore() {
+        guard let url = pendingRestore else { return }
+        pendingRestore = nil
+        do {
+            try DockerDoorBackup.restore(from: url)
+            (NSApp.delegate as? AppDelegate)?.restartApp()
+        } catch {
+            message = "Wiederherstellen fehlgeschlagen: \(error.localizedDescription)"
+        }
+    }
+}
