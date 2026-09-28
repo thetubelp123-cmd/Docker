@@ -130,7 +130,7 @@ mkdir -p "$STAGE"
 ditto "$DEST/$APP_NAME.app" "$STAGE/$APP_NAME.app"
 ln -s /Applications "$STAGE/Programme"
 rm -f "$DMG"
-if hdiutil create -volname "$APP_NAME $VERSION" -srcfolder "$STAGE" -ov -format UDZO "$DMG" >/dev/null; then
+if hdiutil create -volname "$APP_NAME $VERSION" -srcfolder "$STAGE" -ov -format UDZO "$DMG" >/dev/null 2>&1; then
     echo "  DMG: Versionen/$(basename "$DMG")"
 else
     echo "  Hinweis: DMG konnte nicht erstellt werden."
