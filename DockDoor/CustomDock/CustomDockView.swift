@@ -123,10 +123,6 @@ struct CustomDockView: View {
             isLaunching: store.launchingIDs.contains(tile.id)
         )
         .frame(width: frame.width, height: frame.height)
-        .onTapGesture {
-            CustomDockPreviews.hide()
-            store.open(tile)
-        }
         .onDrop(of: [UTType.fileURL], isTargeted: Binding(
             get: { ui.dropTargetID == tile.id },
             set: { targeted in
@@ -158,6 +154,13 @@ struct CustomDockView: View {
                     let destination = folder.appendingPathComponent(url.lastPathComponent)
                     guard !FileManager.default.fileExists(atPath: destination.path) else { continue }
                     try? FileManager.default.copyItem(at: url, to: destination)
+                }
+            }
+            return true
+        case .group:
+            DockDropLoader.loadURLs(from: providers) { urls in
+                for url in urls where url.pathExtension == "app" {
+                    store.add(appURL: url, toGroup: tile.id)
                 }
             }
             return true
@@ -205,6 +208,8 @@ struct DockTileView: View {
                 .interpolation(.high)
                 .aspectRatio(contentMode: .fit)
                 .brightness(isDropTarget ? 0.12 : 0)
+                .scaleEffect(isDropTarget ? 1.12 : 1)
+                .animation(.spring(response: 0.25, dampingFraction: 0.7), value: isDropTarget)
                 .opacity(tile.isHidden ? 0.55 : 1)
                 .offset(y: bounceOffset(at: context.date))
         }

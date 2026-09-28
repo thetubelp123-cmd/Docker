@@ -7,6 +7,7 @@ enum DockTileKind: Equatable {
     case folder
     case file
     case trash
+    case group
 }
 
 struct DockTile: Identifiable, Equatable {
@@ -20,6 +21,14 @@ struct DockTile: Identifiable, Equatable {
     let isActive: Bool
     let isHidden: Bool
     let pid: pid_t?
+    var members: [PinnedGroupMember] = []
+    var stackMode: StackDisplayMode?
+    var stackSort: StackSortOrder?
+
+    var isGroup: Bool { kind == .group }
+    var isFinder: Bool { bundleIdentifier == CustomDockStore.finderBundleID }
+    /// Tiles the user can drag to a new place.
+    var isMovable: Bool { kind != .trash && !isFinder }
 }
 
 final class CustomDockStore: ObservableObject {
@@ -78,7 +87,37 @@ final class CustomDockStore: ObservableObject {
         var usedPIDs = Set<pid_t>()
         var apps: [DockTile] = []
 
-        for item in pinned where item.kind == .app {
+        for item in pinned where item.kind == .app || item.kind == .group {
+            if item.kind == .group {
+                let members = item.members ?? []
+                var anyRunning = false
+                var anyActive = false
+                for member in members {
+                    if let app = orderedRunning.first(where: { app in
+                        !usedPIDs.contains(app.processIdentifier) && matches(app, path: member.path, bundleIdentifier: member.bundleIdentifier)
+                    }) {
+                        usedPIDs.insert(app.processIdentifier)
+                        anyRunning = true
+                        if app.processIdentifier == frontmostPID { anyActive = true }
+                    }
+                }
+                apps.append(DockTile(
+                    id: item.id,
+                    kind: .group,
+                    url: nil,
+                    bundleIdentifier: nil,
+                    name: item.name ?? "Gruppe",
+                    isPinned: true,
+                    isRunning: anyRunning,
+                    isActive: anyActive,
+                    isHidden: false,
+                    pid: nil,
+                    members: members,
+                    stackMode: item.stackMode,
+                    stackSort: item.stackSort
+                ))
+                continue
+            }
             let match = orderedRunning.first { app in
                 guard !usedPIDs.contains(app.processIdentifier) else { return false }
                 if let bid = item.bundleIdentifier, let appBID = app.bundleIdentifier { return bid == appBID }
@@ -119,7 +158,7 @@ final class CustomDockStore: ObservableObject {
             ))
         }
 
-        var others: [DockTile] = pinned.filter { $0.kind != .app }.map { item in
+        var others: [DockTile] = pinned.filter { $0.kind == .folder || $0.kind == .file }.map { item in
             DockTile(
                 id: item.id,
                 kind: item.kind == .folder ? .folder : .file,
@@ -130,7 +169,9 @@ final class CustomDockStore: ObservableObject {
                 isRunning: false,
                 isActive: false,
                 isHidden: false,
-                pid: nil
+                pid: nil,
+                stackMode: item.stackMode,
+                stackSort: item.stackSort
             )
         }
         if Defaults[.customDockShowTrash] {
@@ -156,8 +197,20 @@ final class CustomDockStore: ObservableObject {
         if stillLaunching != launchingIDs { launchingIDs = stillLaunching }
     }
 
-    private func normalizedPinnedItems() -> [PinnedDockItem] {
-        var items = Defaults[.customDockPinnedItems].filter { FileManager.default.fileExists(atPath: $0.path) }
+    private func matches(_ app: NSRunningApplication, path: String, bundleIdentifier: String?) -> Bool {
+        if let bundleIdentifier, let appBID = app.bundleIdentifier { return bundleIdentifier == appBID }
+        return app.bundleURL?.standardizedFileURL.path == URL(fileURLWithPath: path).standardizedFileURL.path
+    }
+
+    func normalizedPinnedItems() -> [PinnedDockItem] {
+        var items: [PinnedDockItem] = Defaults[.customDockPinnedItems].compactMap { item in
+            guard item.kind == .group else {
+                return FileManager.default.fileExists(atPath: item.path) ? item : nil
+            }
+            var group = item
+            group.members = (item.members ?? []).filter { FileManager.default.fileExists(atPath: $0.path) }
+            return group.members?.isEmpty == false ? group : nil
+        }
         if !items.contains(where: { $0.bundleIdentifier == Self.finderBundleID || $0.path == Self.finderPath }) {
             items.insert(PinnedDockItem(kind: .app, path: Self.finderPath, bundleIdentifier: Self.finderBundleID), at: 0)
         }
@@ -175,6 +228,13 @@ final class CustomDockStore: ObservableObject {
         if tile.kind == .trash {
             let name = trashIsFull ? "NSTrashFull" : "NSTrashEmpty"
             return NSImage(named: NSImage.Name(name)) ?? NSWorkspace.shared.icon(for: .folder)
+        }
+        if tile.kind == .group {
+            let key = "group|" + tile.members.prefix(4).map(\.path).joined(separator: "|")
+            if let cached = iconCache[key] { return cached }
+            let image = Self.groupIcon(for: tile.members.prefix(4).map { NSWorkspace.shared.icon(forFile: $0.path) })
+            iconCache[key] = image
+            return image
         }
         let key = tile.url?.path ?? tile.id
         if let cached = iconCache[key] { return cached }
@@ -231,7 +291,15 @@ final class CustomDockStore: ObservableObject {
             if let url = tile.url { NSWorkspace.shared.open(url) }
         case .trash:
             NSWorkspace.shared.open(Self.trashURL)
+        case .group:
+            break
         }
+    }
+
+    func openApp(at url: URL) {
+        let configuration = NSWorkspace.OpenConfiguration()
+        configuration.activates = true
+        NSWorkspace.shared.openApplication(at: url, configuration: configuration, completionHandler: nil)
     }
 
     private func openApp(_ tile: DockTile) {
@@ -302,6 +370,163 @@ final class CustomDockStore: ObservableObject {
     func unpin(_ tile: DockTile) {
         guard tile.isPinned, tile.bundleIdentifier != Self.finderBundleID else { return }
         Defaults[.customDockPinnedItems].removeAll { $0.path == tile.id }
+    }
+
+    // MARK: - Reordering
+
+    /// Moves a tile inside its section. `index` counts pinned items of that section
+    /// (apps and groups, or folders and files). Unpinned running apps become pinned.
+    func move(_ tile: DockTile, toIndex index: Int) {
+        guard tile.isMovable else { return }
+        let items = normalizedPinnedItems()
+        let isAppSection = tile.kind == .app || tile.kind == .group
+        var section = items.filter { isAppSection ? ($0.kind == .app || $0.kind == .group) : ($0.kind == .folder || $0.kind == .file) }
+        let rest = items.filter { isAppSection ? !($0.kind == .app || $0.kind == .group) : ($0.kind == .app || $0.kind == .group) }
+
+        var moving: PinnedDockItem
+        if let existing = section.firstIndex(where: { $0.id == tile.id }) {
+            moving = section.remove(at: existing)
+        } else if tile.kind == .app, let url = tile.url {
+            moving = PinnedDockItem(kind: .app, path: url.standardizedFileURL.path, bundleIdentifier: tile.bundleIdentifier)
+        } else {
+            return
+        }
+        var target = min(max(index, 0), section.count)
+        if isAppSection, target == 0, section.first?.bundleIdentifier == Self.finderBundleID { target = 1 }
+        section.insert(moving, at: target)
+        Defaults[.customDockPinnedItems] = isAppSection ? section + rest : rest + section
+    }
+
+    // MARK: - App groups
+
+    var groups: [PinnedDockItem] {
+        normalizedPinnedItems().filter(\.isGroup)
+    }
+
+    private func member(for tile: DockTile) -> PinnedGroupMember? {
+        guard tile.kind == .app, let url = tile.url else { return nil }
+        return PinnedGroupMember(path: url.standardizedFileURL.path, bundleIdentifier: tile.bundleIdentifier)
+    }
+
+    /// Creates a group from `tile` and `other` at the position of `other`.
+    func createGroup(from tile: DockTile, with other: DockTile, name: String = "Gruppe") {
+        guard let first = member(for: other), let second = member(for: tile), !tile.isFinder, !other.isFinder else { return }
+        var items = normalizedPinnedItems()
+        let position = items.firstIndex { $0.id == other.id } ?? items.filter { $0.kind == .app || $0.kind == .group }.count
+        items.removeAll { $0.id == tile.id || $0.id == other.id }
+        let group = PinnedDockItem.newGroup(name: name, members: [first, second])
+        items.insert(group, at: min(position, items.count))
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    func createGroup(with tile: DockTile, name: String = "Gruppe") {
+        guard let first = member(for: tile), !tile.isFinder else { return }
+        var items = normalizedPinnedItems()
+        let position = items.firstIndex { $0.id == tile.id } ?? items.filter { $0.kind == .app || $0.kind == .group }.count
+        items.removeAll { $0.id == tile.id }
+        items.insert(PinnedDockItem.newGroup(name: name, members: [first]), at: min(position, items.count))
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    func add(_ tile: DockTile, toGroup groupID: String) {
+        guard let newMember = member(for: tile), !tile.isFinder else { return }
+        var items = normalizedPinnedItems()
+        items.removeAll { $0.id == tile.id }
+        guard let index = items.firstIndex(where: { $0.id == groupID }) else { return }
+        var members = items[index].members ?? []
+        if !members.contains(where: { $0.path == newMember.path }) { members.append(newMember) }
+        items[index].members = members
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    func add(appURL: URL, toGroup groupID: String) {
+        var items = normalizedPinnedItems()
+        guard let index = items.firstIndex(where: { $0.id == groupID }) else { return }
+        let path = appURL.standardizedFileURL.path
+        var members = items[index].members ?? []
+        if !members.contains(where: { $0.path == path }) {
+            members.append(PinnedGroupMember(path: path, bundleIdentifier: Bundle(url: appURL)?.bundleIdentifier))
+        }
+        items[index].members = members
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    /// Removes an app from a group and puts it back into the dock right after the group.
+    func remove(memberPath: String, fromGroup groupID: String) {
+        var items = normalizedPinnedItems()
+        guard let index = items.firstIndex(where: { $0.id == groupID }) else { return }
+        var members = items[index].members ?? []
+        guard let memberIndex = members.firstIndex(where: { $0.path == memberPath }) else { return }
+        let removed = members.remove(at: memberIndex)
+        let appItem = PinnedDockItem(kind: .app, path: removed.path, bundleIdentifier: removed.bundleIdentifier)
+        if members.isEmpty {
+            items[index] = appItem
+        } else {
+            items[index].members = members
+            items.insert(appItem, at: index + 1)
+        }
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    func dissolveGroup(_ groupID: String) {
+        var items = normalizedPinnedItems()
+        guard let index = items.firstIndex(where: { $0.id == groupID }) else { return }
+        let apps = (items[index].members ?? []).map { PinnedDockItem(kind: .app, path: $0.path, bundleIdentifier: $0.bundleIdentifier) }
+            .filter { app in !items.contains { $0.path == app.path } }
+        items.remove(at: index)
+        items.insert(contentsOf: apps, at: index)
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    func renameGroup(_ groupID: String, to name: String) {
+        let trimmed = name.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty else { return }
+        var items = normalizedPinnedItems()
+        guard let index = items.firstIndex(where: { $0.id == groupID }) else { return }
+        items[index].name = trimmed
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    func removeGroup(_ groupID: String) {
+        Defaults[.customDockPinnedItems] = normalizedPinnedItems().filter { $0.id != groupID }
+    }
+
+    // MARK: - Stack options
+
+    func setStackMode(_ mode: StackDisplayMode?, for tileID: String) {
+        var items = normalizedPinnedItems()
+        guard let index = items.firstIndex(where: { $0.id == tileID }) else { return }
+        items[index].stackMode = mode
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    func setStackSort(_ sort: StackSortOrder?, for tileID: String) {
+        var items = normalizedPinnedItems()
+        guard let index = items.firstIndex(where: { $0.id == tileID }) else { return }
+        items[index].stackSort = sort
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    static func groupIcon(for icons: [NSImage]) -> NSImage {
+        let size = NSSize(width: 256, height: 256)
+        return NSImage(size: size, flipped: true) { rect in
+            let background = NSBezierPath(roundedRect: rect.insetBy(dx: 14, dy: 14), xRadius: 56, yRadius: 56)
+            NSColor(white: 0.55, alpha: 0.38).setFill()
+            background.fill()
+            NSColor(white: 1, alpha: 0.25).setStroke()
+            background.lineWidth = 3
+            background.stroke()
+            let inset: CGFloat = 38
+            let gap: CGFloat = 12
+            let cell = (rect.width - inset * 2 - gap) / 2
+            for (index, icon) in icons.prefix(4).enumerated() {
+                let column = CGFloat(index % 2)
+                let row = CGFloat(index / 2)
+                let frame = NSRect(x: inset + column * (cell + gap), y: inset + row * (cell + gap), width: cell, height: cell)
+                icon.draw(in: frame, from: .zero, operation: .sourceOver, fraction: 1, respectFlipped: true, hints: nil)
+            }
+            return true
+        }
     }
 
     func revealInFinder(_ tile: DockTile) {

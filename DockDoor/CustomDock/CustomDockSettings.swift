@@ -62,19 +62,88 @@ enum CustomDockAppearance: String, CaseIterable, Defaults.Serializable {
     }
 }
 
+enum StackDisplayMode: String, Codable, CaseIterable, Defaults.Serializable {
+    case fan
+    case grid
+    case list
+
+    var title: String {
+        switch self {
+        case .fan: "Fächer"
+        case .grid: "Raster"
+        case .list: "Liste"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .fan: "rectangle.stack"
+        case .grid: "square.grid.3x3"
+        case .list: "list.bullet"
+        }
+    }
+}
+
+enum StackSortOrder: String, Codable, CaseIterable, Defaults.Serializable {
+    case name
+    case dateAdded
+    case dateModified
+    case dateCreated
+    case kind
+
+    var title: String {
+        switch self {
+        case .name: "Name"
+        case .dateAdded: "Hinzugefügt am"
+        case .dateModified: "Geändert am"
+        case .dateCreated: "Erstellt am"
+        case .kind: "Art"
+        }
+    }
+}
+
 enum PinnedDockItemKind: String, Codable {
     case app
     case folder
     case file
+    case group
+}
+
+struct PinnedGroupMember: Codable, Hashable {
+    var path: String
+    var bundleIdentifier: String?
+
+    var url: URL { URL(fileURLWithPath: path) }
 }
 
 struct PinnedDockItem: Codable, Hashable, Identifiable, Defaults.Serializable {
     var kind: PinnedDockItemKind
     var path: String
     var bundleIdentifier: String?
+    var name: String?
+    var members: [PinnedGroupMember]?
+    var stackMode: StackDisplayMode?
+    var stackSort: StackSortOrder?
+
+    init(kind: PinnedDockItemKind, path: String, bundleIdentifier: String? = nil, name: String? = nil,
+         members: [PinnedGroupMember]? = nil, stackMode: StackDisplayMode? = nil, stackSort: StackSortOrder? = nil)
+    {
+        self.kind = kind
+        self.path = path
+        self.bundleIdentifier = bundleIdentifier
+        self.name = name
+        self.members = members
+        self.stackMode = stackMode
+        self.stackSort = stackSort
+    }
 
     var id: String { path }
     var url: URL { URL(fileURLWithPath: path) }
+    var isGroup: Bool { kind == .group }
+
+    static func newGroup(name: String, members: [PinnedGroupMember]) -> PinnedDockItem {
+        PinnedDockItem(kind: .group, path: "group:\(UUID().uuidString)", name: name, members: members)
+    }
 }
 
 extension Defaults.Keys {
@@ -93,6 +162,8 @@ extension Defaults.Keys {
     static let customDockAppearance = Key<CustomDockAppearance>("customDockAppearance", default: .system)
     static let customDockAutoHide = Key<Bool>("customDockAutoHide", default: false)
     static let customDockShowPreviews = Key<Bool>("customDockShowPreviews", default: true)
+    static let customDockStackMode = Key<StackDisplayMode>("customDockStackMode", default: .fan)
+    static let customDockStackSort = Key<StackSortOrder>("customDockStackSort", default: .dateAdded)
     static let customDockPinnedItems = Key<[PinnedDockItem]>("customDockPinnedItems", default: [])
     static let customDockDidImportSystemDock = Key<Bool>("customDockDidImportSystemDock", default: false)
 

@@ -17,6 +17,8 @@ struct CustomDockSettingsView: View {
     @Default(.customDockAppearance) private var appearance
     @Default(.customDockAutoHide) private var autoHide
     @Default(.customDockShowPreviews) private var showPreviews
+    @Default(.customDockStackMode) private var stackMode
+    @Default(.customDockStackSort) private var stackSort
     @State private var showReimportConfirmation = false
 
     var body: some View {
@@ -113,8 +115,33 @@ struct CustomDockSettingsView: View {
                         }
                     }
 
+                    SettingsGroup(header: "Ordner und Gruppen") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Picker("Ordner anzeigen als", selection: $stackMode) {
+                                ForEach(StackDisplayMode.allCases, id: \.self) { mode in
+                                    Text(mode.title).tag(mode)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            Picker("Sortieren nach", selection: $stackSort) {
+                                ForEach(StackSortOrder.allCases, id: \.self) { sort in
+                                    Text(sort.title).tag(sort)
+                                }
+                            }
+                            Text("Gilt für alle Ordner ohne eigene Einstellung. Pro Ordner änderst du das per Rechtsklick › „Anzeigen als“ bzw. „Sortieren nach“.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("App-Gruppe erstellen: eine App auf eine andere ziehen und kurz halten, bis sie größer wird – oder Rechtsklick › „Zu Gruppe hinzufügen“.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
                     SettingsGroup(header: "Inhalt") {
                         VStack(alignment: .leading, spacing: 8) {
+                            Text("Symbole ordnest du per Ziehen neu. Nach oben aus dem Dock ziehen und loslassen entfernt sie. Laufende Apps werden angeheftet, wenn du sie zu den angehefteten ziehst.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                             Text("Apps behältst du per Rechtsklick › „Im Dock behalten“. Apps, Ordner und Dateien lassen sich auch aus dem Finder aufs Dock ziehen.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)

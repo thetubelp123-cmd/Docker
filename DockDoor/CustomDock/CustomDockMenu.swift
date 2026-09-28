@@ -9,6 +9,7 @@ final class CustomDockMenuBuilder: NSObject {
     private let store: CustomDockStore
     private var tile: DockTile?
     private var windows: [WindowInfo] = []
+    var onOpenStack: ((DockTile) -> Void)?
 
     init(store: CustomDockStore) {
         self.store = store
@@ -27,10 +28,28 @@ final class CustomDockMenuBuilder: NSObject {
         switch tile.kind {
         case .app:
             buildAppMenu(menu, tile: tile)
-        case .folder, .file:
+        case .folder:
+            add(menu, "Als Stapel öffnen", "rectangle.stack", #selector(openStack))
+            add(menu, "Im Finder öffnen", "arrow.up.forward.app", #selector(openTile))
+            add(menu, "Im Finder zeigen", "folder", #selector(revealTile))
+            menu.addItem(.separator())
+            addStackModeMenu(to: menu, tile: tile)
+            addStackSortMenu(to: menu, tile: tile)
+            menu.addItem(.separator())
+            add(menu, "Aus dem Dock entfernen", "minus.circle", #selector(unpinTile))
+        case .file:
             add(menu, "Öffnen", "arrow.up.forward.app", #selector(openTile))
             add(menu, "Im Finder zeigen", "folder", #selector(revealTile))
             menu.addItem(.separator())
+            add(menu, "Aus dem Dock entfernen", "minus.circle", #selector(unpinTile))
+        case .group:
+            add(menu, "Öffnen", "square.grid.2x2", #selector(openStack))
+            add(menu, "Alle Apps starten", "play", #selector(launchAllMembers))
+            add(menu, "Umbenennen …", "pencil", #selector(renameGroup))
+            menu.addItem(.separator())
+            addStackModeMenu(to: menu, tile: tile)
+            menu.addItem(.separator())
+            add(menu, "Gruppe auflösen", "square.split.2x2", #selector(dissolveGroup))
             add(menu, "Aus dem Dock entfernen", "minus.circle", #selector(unpinTile))
         case .trash:
             add(menu, "Öffnen", "trash", #selector(openTile))
@@ -52,6 +71,9 @@ final class CustomDockMenuBuilder: NSObject {
         }
         if tile.url != nil {
             add(menu, "Im Finder zeigen", "folder", #selector(revealTile))
+        }
+        if tile.url != nil, !isFinder {
+            addGroupMenu(to: menu)
         }
 
         guard let app, tile.isRunning else {
@@ -107,6 +129,60 @@ final class CustomDockMenuBuilder: NSObject {
         }
     }
 
+    private func addGroupMenu(to menu: NSMenu) {
+        let item = NSMenuItem(title: "Zu Gruppe hinzufügen", action: nil, keyEquivalent: "")
+        item.image = NSImage(systemSymbolName: "square.grid.2x2", accessibilityDescription: nil)
+        let submenu = NSMenu()
+        submenu.autoenablesItems = false
+        for group in store.groups {
+            let entry = NSMenuItem(title: group.name ?? "Gruppe", action: #selector(addToGroup(_:)), keyEquivalent: "")
+            entry.target = self
+            entry.representedObject = group.id
+            submenu.addItem(entry)
+        }
+        if !submenu.items.isEmpty { submenu.addItem(.separator()) }
+        let newGroup = NSMenuItem(title: "Neue Gruppe …", action: #selector(addToNewGroup), keyEquivalent: "")
+        newGroup.target = self
+        submenu.addItem(newGroup)
+        item.submenu = submenu
+        menu.addItem(item)
+    }
+
+    private func addStackModeMenu(to menu: NSMenu, tile: DockTile) {
+        let current = tile.stackMode ?? (tile.kind == .group ? .grid : Defaults[.customDockStackMode])
+        let item = NSMenuItem(title: "Anzeigen als", action: nil, keyEquivalent: "")
+        item.image = NSImage(systemSymbolName: "eye", accessibilityDescription: nil)
+        let submenu = NSMenu()
+        submenu.autoenablesItems = false
+        for mode in StackDisplayMode.allCases {
+            let entry = NSMenuItem(title: mode.title, action: #selector(setStackMode(_:)), keyEquivalent: "")
+            entry.target = self
+            entry.representedObject = mode.rawValue
+            entry.image = NSImage(systemSymbolName: mode.symbol, accessibilityDescription: nil)
+            entry.state = mode == current ? .on : .off
+            submenu.addItem(entry)
+        }
+        item.submenu = submenu
+        menu.addItem(item)
+    }
+
+    private func addStackSortMenu(to menu: NSMenu, tile: DockTile) {
+        let current = tile.stackSort ?? Defaults[.customDockStackSort]
+        let item = NSMenuItem(title: "Sortieren nach", action: nil, keyEquivalent: "")
+        item.image = NSImage(systemSymbolName: "arrow.up.arrow.down", accessibilityDescription: nil)
+        let submenu = NSMenu()
+        submenu.autoenablesItems = false
+        for sort in StackSortOrder.allCases {
+            let entry = NSMenuItem(title: sort.title, action: #selector(setStackSort(_:)), keyEquivalent: "")
+            entry.target = self
+            entry.representedObject = sort.rawValue
+            entry.state = sort == current ? .on : .off
+            submenu.addItem(entry)
+        }
+        item.submenu = submenu
+        menu.addItem(item)
+    }
+
     private func addDockOptions(to menu: NSMenu) {
         let magnification = add(menu, "Vergrößerung", nil, #selector(toggleMagnification))
         magnification.state = Defaults[.customDockMagnification] ? .on : .off
@@ -139,6 +215,62 @@ final class CustomDockMenuBuilder: NSObject {
     @objc private func unhideApp() { runningApp?.unhide() }
     @objc private func quitApp() { runningApp?.terminate() }
     @objc private func forceQuitApp() { runningApp?.forceTerminate() }
+
+    @objc private func openStack() {
+        guard let tile else { return }
+        let open = onOpenStack
+        DispatchQueue.main.async { open?(tile) }
+    }
+
+    @objc private func launchAllMembers() {
+        tile?.members.forEach { store.openApp(at: $0.url) }
+    }
+
+    @objc private func renameGroup() {
+        guard let tile, let name = askForGroupName(title: "Gruppe umbenennen", current: tile.name) else { return }
+        store.renameGroup(tile.id, to: name)
+    }
+
+    @objc private func dissolveGroup() {
+        guard let tile else { return }
+        store.dissolveGroup(tile.id)
+    }
+
+    @objc private func addToGroup(_ sender: NSMenuItem) {
+        guard let tile, let groupID = sender.representedObject as? String else { return }
+        store.add(tile, toGroup: groupID)
+    }
+
+    @objc private func addToNewGroup() {
+        guard let tile, let name = askForGroupName(title: "Neue Gruppe", current: "Gruppe") else { return }
+        store.createGroup(with: tile, name: name)
+    }
+
+    @objc private func setStackMode(_ sender: NSMenuItem) {
+        guard let tile, let raw = sender.representedObject as? String, let mode = StackDisplayMode(rawValue: raw) else { return }
+        store.setStackMode(mode, for: tile.id)
+    }
+
+    @objc private func setStackSort(_ sender: NSMenuItem) {
+        guard let tile, let raw = sender.representedObject as? String, let sort = StackSortOrder(rawValue: raw) else { return }
+        store.setStackSort(sort, for: tile.id)
+    }
+
+    private func askForGroupName(title: String, current: String) -> String? {
+        let alert = NSAlert()
+        alert.messageText = title
+        alert.informativeText = "Name der Gruppe:"
+        alert.addButton(withTitle: "OK")
+        alert.addButton(withTitle: "Abbrechen")
+        let field = NSTextField(frame: NSRect(x: 0, y: 0, width: 240, height: 24))
+        field.stringValue = current
+        alert.accessoryView = field
+        alert.window.initialFirstResponder = field
+        NSApp.activate(ignoringOtherApps: true)
+        guard alert.runModal() == .alertFirstButtonReturn else { return nil }
+        let name = field.stringValue.trimmingCharacters(in: .whitespacesAndNewlines)
+        return name.isEmpty ? nil : name
+    }
 
     @objc private func emptyTrash() {
         let alert = NSAlert()

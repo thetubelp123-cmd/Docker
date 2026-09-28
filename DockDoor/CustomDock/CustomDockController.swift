@@ -30,8 +30,23 @@ final class CustomDockPanel: NSPanel {
 
 final class CustomDockHostingView<Content: View>: NSHostingView<Content> {
     var onRightMouseDown: ((NSEvent) -> Void)?
+    var onMouseDown: (() -> Void)?
+    var onMouseDragged: (() -> Void)?
+    var onMouseUp: (() -> Void)?
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+
+    override func mouseDown(with event: NSEvent) {
+        if let onMouseDown { onMouseDown() } else { super.mouseDown(with: event) }
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        if let onMouseDragged { onMouseDragged() } else { super.mouseDragged(with: event) }
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        if let onMouseUp { onMouseUp() } else { super.mouseUp(with: event) }
+    }
 
     override func rightMouseDown(with event: NSEvent) {
         if let onRightMouseDown {
@@ -63,12 +78,20 @@ final class CustomDockController {
     private var lastKeepVisible = Date()
     private var isMenuOpen = false
 
+    let stackController = StackPanelController()
+    private var drag: DockDrag?
+    private var ghost: DockDragGhost?
+    static let gapID = "drag-gap"
+
     init() {
         ui.metrics = metrics
         let hostingView = CustomDockHostingView(rootView: CustomDockView(store: store, ui: ui))
         hostingView.autoresizingMask = [.width, .height]
         hostingView.sizingOptions = []
         hostingView.onRightMouseDown = { [weak self] event in self?.showMenu(for: event) }
+        hostingView.onMouseDown = { [weak self] in self?.mouseDown() }
+        hostingView.onMouseDragged = { [weak self] in self?.mouseDragged() }
+        hostingView.onMouseUp = { [weak self] in self?.mouseUp() }
         self.hostingView = hostingView
         panel.contentView = hostingView
         panel.ignoresMouseEvents = true
@@ -120,6 +143,10 @@ final class CustomDockController {
         if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
         screenObserver = nil
         CustomDockPreviews.hide()
+        stackController.close()
+        ghost?.close()
+        ghost = nil
+        drag = nil
         panel.orderOut(nil)
         panel.contentView = nil
         hostingView = nil
@@ -180,12 +207,28 @@ final class CustomDockController {
     private func relayout() {
         let size = panel.frame.size
         guard size.width > 0 else { return }
+        var appIDs = store.appTiles.map(\.id)
+        var otherIDs = store.otherTiles.map(\.id)
+        var magnifyX = mouseX
+        if let drag, drag.isActive {
+            magnifyX = nil
+            appIDs.removeAll { $0 == drag.tile.id }
+            otherIDs.removeAll { $0 == drag.tile.id }
+            if !drag.isRemoving {
+                if drag.isAppSection {
+                    appIDs.insert(Self.gapID, at: min(drag.insertionIndex, appIDs.count))
+                } else {
+                    let movable = store.otherTiles.filter { $0.kind != .trash && $0.id != drag.tile.id }.count
+                    otherIDs.insert(Self.gapID, at: min(drag.insertionIndex, movable))
+                }
+            }
+        }
         let layout = CustomDockLayoutEngine.layout(
-            appIDs: store.appTiles.map(\.id),
-            otherIDs: store.otherTiles.map(\.id),
+            appIDs: appIDs,
+            otherIDs: otherIDs,
             size: size,
             metrics: metrics,
-            mouseX: mouseX
+            mouseX: magnifyX
         )
         if layout != ui.layout { ui.layout = layout }
     }
@@ -215,7 +258,7 @@ final class CustomDockController {
         if Defaults[.customDockAutoHide] {
             let atEdge = mouse.y <= screen.frame.minY + 1.5 && mouse.x >= screen.frame.minX && mouse.x <= screen.frame.maxX
             let overDock = isRevealed && layout.contentRect.insetBy(dx: -4, dy: -8).contains(point)
-            let keep = atEdge || overDock || isMenuOpen || CustomDockPreviews.isMouseInPreview
+            let keep = atEdge || overDock || isMenuOpen || CustomDockPreviews.isMouseInPreview || drag != nil || stackController.isOpen
             if keep { lastKeepVisible = Date() }
             if !isRevealed, atEdge {
                 isRevealed = true
@@ -235,12 +278,18 @@ final class CustomDockController {
             }
         }
         if isMenuOpen { inside = isInside }
+        if drag != nil { inside = true }
 
         if panel.ignoresMouseEvents == inside {
             panel.ignoresMouseEvents = !inside
         }
         if ui.isInteracting != inside { ui.isInteracting = inside }
         isInside = inside
+
+        if drag?.isActive == true {
+            updateDrag(at: point)
+            return
+        }
 
         let newMouseX: CGFloat? = inside && !isMenuOpen ? point.x : (isMenuOpen ? mouseX : nil)
         if newMouseX != mouseX {
@@ -259,7 +308,7 @@ final class CustomDockController {
     }
 
     private func hoverChanged(to id: String?, screen: NSScreen) {
-        guard let id else { return }
+        guard let id, !stackController.isOpen else { return }
         guard let tile = store.allTiles.first(where: { $0.id == id }),
               let frame = ui.layout.frames[id]
         else { return }
@@ -284,10 +333,322 @@ final class CustomDockController {
         let tile = tileID.flatMap { id in store.allTiles.first { $0.id == id } }
 
         CustomDockPreviews.hide()
+        stackController.close()
+        menuBuilder.onOpenStack = { [weak self] tile in self?.toggleStack(for: tile) }
         let menu = menuBuilder.menu(for: tile)
         isMenuOpen = true
         NSMenu.popUpContextMenu(menu, with: event, for: hostingView)
         isMenuOpen = false
         lastKeepVisible = Date()
+    }
+    // MARK: - Clicks
+
+    private func handleTap(_ tile: DockTile) {
+        switch tile.kind {
+        case .folder, .group:
+            toggleStack(for: tile)
+        default:
+            stackController.close()
+            CustomDockPreviews.hide()
+            store.open(tile)
+        }
+    }
+
+    // MARK: - Stacks
+
+    func toggleStack(for tile: DockTile) {
+        if stackController.openTileID == tile.id {
+            stackController.close()
+            return
+        }
+        guard let screen = dockScreen, let frame = ui.layout.frames[tile.id] else { return }
+        let source: StackModel.Source
+        if tile.kind == .group {
+            source = .group(id: tile.id, members: tile.members)
+        } else if let url = tile.url {
+            source = .folder(url)
+        } else {
+            return
+        }
+        CustomDockPreviews.hide()
+        let model = StackModel(
+            tileID: tile.id,
+            source: source,
+            title: tile.name,
+            mode: tile.stackMode ?? (tile.kind == .group ? .grid : Defaults[.customDockStackMode]),
+            sort: tile.stackSort ?? Defaults[.customDockStackSort]
+        )
+        let tileID = tile.id
+        model.onModeChange = { [weak self] mode in
+            self?.store.setStackMode(mode, for: tileID)
+        }
+        model.onRemoveMember = { [weak self] path in
+            self?.stackController.close()
+            self?.store.remove(memberPath: path, fromGroup: tileID)
+        }
+        stackController.show(model, anchor: screenRect(fromView: frame), screen: screen, ignoringClicksIn: panel)
+    }
+
+    // MARK: - Dragging icons
+
+    private func mouseDown() {
+        let point = viewPoint(fromScreen: NSEvent.mouseLocation)
+        guard let id = ui.layout.tileID(at: point, spacing: metrics.spacing),
+              let tile = store.allTiles.first(where: { $0.id == id })
+        else {
+            drag = nil
+            return
+        }
+        let frame = ui.layout.frames[id] ?? CGRect(origin: point, size: .zero)
+        drag = DockDrag(
+            tile: tile,
+            startPoint: point,
+            grabOffset: CGSize(width: point.x - frame.midX, height: point.y - frame.midY),
+            grabbedSize: max(1, frame.width)
+        )
+    }
+
+    private func mouseDragged() {
+        guard var current = drag else { return }
+        let point = viewPoint(fromScreen: NSEvent.mouseLocation)
+        if !current.isActive {
+            guard current.tile.isMovable,
+                  hypot(point.x - current.startPoint.x, point.y - current.startPoint.y) > 5
+            else { return }
+            current.isActive = true
+            let section = sectionTiles(for: current, includingDragged: true)
+            current.insertionIndex = section.firstIndex { $0.id == current.tile.id } ?? section.count
+            drag = current
+            CustomDockPreviews.hide()
+            stackController.close()
+            ui.hoveredID = nil
+            mouseX = nil
+            let ghost = DockDragGhost(icon: store.icon(for: current.tile), size: metrics.iconSize * 1.1)
+            self.ghost = ghost
+            relayout()
+        }
+        updateDrag(at: point)
+    }
+
+    private func mouseUp() {
+        guard let finished = drag else {
+            stackController.close()
+            return
+        }
+        drag = nil
+        guard finished.isActive else {
+            handleTap(finished.tile)
+            return
+        }
+        finishDrag(finished)
+    }
+
+    /// Tiles of the dragged tile's section in dock order (without the trash).
+    private func sectionTiles(for drag: DockDrag, includingDragged: Bool) -> [DockTile] {
+        let tiles = drag.isAppSection ? store.appTiles : store.otherTiles.filter { $0.kind != .trash }
+        return includingDragged ? tiles : tiles.filter { $0.id != drag.tile.id }
+    }
+
+    private func canMerge(_ dragged: DockTile, onto target: DockTile) -> Bool {
+        guard dragged.id != target.id, dragged.kind == .app, dragged.url != nil, !dragged.isFinder else { return false }
+        if target.kind == .group { return true }
+        return target.kind == .app && target.url != nil && !target.isFinder
+    }
+
+    private func updateDrag(at point: CGPoint) {
+        guard var current = drag, current.isActive else { return }
+        let layout = ui.layout
+        var needsLayout = false
+
+        if let ghost {
+            let scale = ghost.size / current.grabbedSize
+            let screenPoint = NSPoint(
+                x: panel.frame.minX + point.x - current.grabOffset.width * scale,
+                y: panel.frame.maxY - (point.y - current.grabOffset.height * scale)
+            )
+            ghost.move(centerAt: screenPoint)
+        }
+
+        let removing = current.tile.isPinned && point.y < layout.barRect.minY - max(44, metrics.iconSize)
+        if removing != current.isRemoving {
+            current.isRemoving = removing
+            ghost?.model.removing = removing
+            needsLayout = true
+        }
+
+        var candidate: String?
+        if !removing {
+            let section = sectionTiles(for: current, includingDragged: false)
+            var index = current.insertionIndex
+            let framed = section.compactMap { tile in layout.frames[tile.id].map { (tile, $0) } }
+            if let first = framed.first, point.x < first.1.minX {
+                index = 0
+            } else if let last = framed.last, point.x >= last.1.maxX {
+                index = framed.count
+            }
+            for (offset, entry) in framed.enumerated() {
+                let (tile, frame) = entry
+                guard point.x >= frame.minX, point.x < frame.maxX else { continue }
+                let relative = (point.x - frame.minX) / max(1, frame.width)
+                let verticallyInside = point.y >= layout.barRect.minY - metrics.iconSize * 0.5
+                if canMerge(current.tile, onto: tile), verticallyInside {
+                    if relative < 0.25 {
+                        index = offset
+                    } else if relative > 0.75 {
+                        index = offset + 1
+                    } else {
+                        candidate = tile.id
+                    }
+                } else {
+                    index = relative < 0.5 ? offset : offset + 1
+                }
+            }
+            if current.isAppSection, section.first?.isFinder == true {
+                index = max(1, index)
+            }
+            if index != current.insertionIndex {
+                current.insertionIndex = index
+                needsLayout = true
+            }
+        }
+
+        if candidate != current.candidateID {
+            current.candidateID = candidate
+            current.candidateSince = Date()
+            current.mergeTargetID = nil
+        } else if candidate != nil, current.mergeTargetID == nil, Date().timeIntervalSince(current.candidateSince) >= 0.55 {
+            current.mergeTargetID = candidate
+        }
+        if ui.dropTargetID != current.mergeTargetID { ui.dropTargetID = current.mergeTargetID }
+
+        drag = current
+        if needsLayout { relayout() }
+    }
+
+    private func finishDrag(_ finished: DockDrag) {
+        ui.dropTargetID = nil
+        let ghost = ghost
+        self.ghost = nil
+
+        if finished.isRemoving {
+            ghost?.vanish()
+            store.unpin(finished.tile)
+        } else if let targetID = finished.mergeTargetID,
+                  let target = store.allTiles.first(where: { $0.id == targetID })
+        {
+            ghost?.close()
+            if target.kind == .group {
+                store.add(finished.tile, toGroup: targetID)
+            } else {
+                store.createGroup(from: finished.tile, with: target)
+            }
+        } else {
+            ghost?.close()
+            let section = sectionTiles(for: finished, includingDragged: false)
+            let pinnedCount = section.filter(\.isPinned).count
+            if finished.tile.isPinned || finished.insertionIndex <= pinnedCount {
+                store.move(finished.tile, toIndex: min(finished.insertionIndex, pinnedCount))
+            }
+        }
+        store.rebuild()
+        relayout()
+    }
+}
+
+private struct DockDrag {
+    let tile: DockTile
+    let startPoint: CGPoint
+    let grabOffset: CGSize
+    let grabbedSize: CGFloat
+    var isActive = false
+    var insertionIndex = 0
+    var isRemoving = false
+    var candidateID: String?
+    var candidateSince = Date()
+    var mergeTargetID: String?
+
+    var isAppSection: Bool { tile.kind == .app || tile.kind == .group }
+}
+
+// MARK: - Drag image
+
+final class DockDragGhostModel: ObservableObject {
+    @Published var removing = false
+}
+
+private struct DockDragGhostView: View {
+    let icon: NSImage
+    let size: CGFloat
+    @ObservedObject var model: DockDragGhostModel
+
+    var body: some View {
+        ZStack(alignment: .topTrailing) {
+            Image(nsImage: icon)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+                .frame(width: size, height: size)
+                .opacity(model.removing ? 0.6 : 1)
+                .shadow(color: .black.opacity(0.25), radius: 6, y: 3)
+            if model.removing {
+                Image(systemName: "minus.circle.fill")
+                    .symbolRenderingMode(.palette)
+                    .foregroundStyle(.white, .red)
+                    .font(.system(size: max(14, size * 0.3), weight: .bold))
+                    .transition(.scale.combined(with: .opacity))
+            }
+        }
+        .frame(width: size + 16, height: size + 16)
+        .animation(.easeOut(duration: 0.15), value: model.removing)
+    }
+}
+
+final class DockDragGhost {
+    let size: CGFloat
+    let model = DockDragGhostModel()
+    private let panel: NSPanel
+
+    init(icon: NSImage, size: CGFloat) {
+        self.size = size
+        panel = NSPanel(
+            contentRect: NSRect(x: 0, y: 0, width: size + 16, height: size + 16),
+            styleMask: [.borderless, .nonactivatingPanel],
+            backing: .buffered,
+            defer: false
+        )
+        panel.level = NSWindow.Level(rawValue: Int(CGWindowLevelForKey(.dockWindow)) + 2)
+        panel.collectionBehavior = [.canJoinAllSpaces, .transient, .ignoresCycle]
+        panel.isOpaque = false
+        panel.backgroundColor = .clear
+        panel.hasShadow = false
+        panel.ignoresMouseEvents = true
+        panel.animationBehavior = .none
+        panel.isReleasedWhenClosed = false
+        let hosting = NSHostingView(rootView: DockDragGhostView(icon: icon, size: size, model: model))
+        hosting.sizingOptions = []
+        panel.contentView = hosting
+    }
+
+    func move(centerAt point: NSPoint) {
+        let frame = panel.frame
+        panel.setFrameOrigin(NSPoint(x: point.x - frame.width / 2, y: point.y - frame.height / 2))
+        if !panel.isVisible { panel.orderFrontRegardless() }
+    }
+
+    func close() {
+        panel.orderOut(nil)
+    }
+
+    /// Small "poof": grows a little and fades out.
+    func vanish() {
+        let panel = panel
+        let frame = panel.frame
+        NSAnimationContext.runAnimationGroup({ context in
+            context.duration = 0.2
+            panel.animator().alphaValue = 0
+            panel.animator().setFrame(frame.insetBy(dx: -frame.width * 0.25, dy: -frame.height * 0.25), display: true)
+        }, completionHandler: {
+            panel.orderOut(nil)
+        })
     }
 }

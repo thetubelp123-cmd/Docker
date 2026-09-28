@@ -7,6 +7,7 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		2CA2C31FB5DF4B00B13D7C2A /* CustomDockStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2EF7850D1E643ACA9411E16 /* CustomDockStack.swift */; };
 		63BF27C1A38748148301CC06 /* CustomDockLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65B5BC9C4F01418A9005C48F /* CustomDockLayout.swift */; };
 		6DB12189CC274E3E8E444817 /* CustomDockPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BA7780B881C4765BD198DC4 /* CustomDockPreviews.swift */; };
 		EB059D8E661741E2988469FC /* CustomDockMenu.swift in Sources */ = {isa = PBXBuildFile; fileRef = FFBE09E2AFF04B5E96235FB9 /* CustomDockMenu.swift */; };
@@ -251,6 +252,7 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		D2EF7850D1E643ACA9411E16 /* CustomDockStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockStack.swift; sourceTree = "<group>"; };
 		65B5BC9C4F01418A9005C48F /* CustomDockLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockLayout.swift; sourceTree = "<group>"; };
 		7BA7780B881C4765BD198DC4 /* CustomDockPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockPreviews.swift; sourceTree = "<group>"; };
 		FFBE09E2AFF04B5E96235FB9 /* CustomDockMenu.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockMenu.swift; sourceTree = "<group>"; };
@@ -494,6 +496,7 @@
 		F9EFDF417AD24010B39AD8D1 /* CustomDock */ = {
 			isa = PBXGroup;
 			children = (
+				D2EF7850D1E643ACA9411E16 /* CustomDockStack.swift */,
 				65B5BC9C4F01418A9005C48F /* CustomDockLayout.swift */,
 				7BA7780B881C4765BD198DC4 /* CustomDockPreviews.swift */,
 				FFBE09E2AFF04B5E96235FB9 /* CustomDockMenu.swift */,
@@ -1162,6 +1165,7 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				2CA2C31FB5DF4B00B13D7C2A /* CustomDockStack.swift in Sources */,
 				63BF27C1A38748148301CC06 /* CustomDockLayout.swift in Sources */,
 				6DB12189CC274E3E8E444817 /* CustomDockPreviews.swift in Sources */,
 				EB059D8E661741E2988469FC /* CustomDockMenu.swift in Sources */,
