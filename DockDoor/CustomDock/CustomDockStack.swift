@@ -221,13 +221,12 @@ final class StackPanelController: NSObject, NSWindowDelegate {
     private func layout(anchor: CGRect, screen: NSScreen) {
         guard let panel, let model else { return }
         let size = StackView.panelSize(for: model)
-        var x: CGFloat
-        switch model.mode {
+        var x: CGFloat = switch model.mode {
         case .fan:
             // The icon column sits at the right edge, names grow to the left.
-            x = anchor.midX - (size.width - StackView.fanColumnInset)
+            anchor.midX - (size.width - StackView.fanColumnInset)
         case .grid, .list:
-            x = anchor.midX - size.width / 2
+            anchor.midX - size.width / 2
         }
         let visible = screen.visibleFrame
         x = min(max(x, screen.frame.minX + 6), screen.frame.maxX - size.width - 6)

@@ -341,6 +341,7 @@ final class CustomDockController {
         isMenuOpen = false
         lastKeepVisible = Date()
     }
+
     // MARK: - Clicks
 
     private func handleTap(_ tile: DockTile) {
