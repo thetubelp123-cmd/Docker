@@ -59,7 +59,7 @@ class SettingsManager: NSObject, ObservableObject {
         let mainMenu = NSMenu()
 
         let appMenu = NSMenu()
-        appMenu.addItem(withTitle: String(localized: "Quit DockDoor"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        appMenu.addItem(withTitle: "DockerDoor beenden", action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
         mainMenu.addItem(NSMenuItem(submenu: appMenu))
 
         let editMenu = NSMenu(title: String(localized: "Edit"))
@@ -202,6 +202,8 @@ struct SettingsView: View {
                             .tag("General")
 
                         Section(String(localized: "Features", comment: "Settings section header")) {
+                            Label("Eigenes Dock", systemImage: "dock.rectangle")
+                                .tag("CustomDock")
                             Label(String(localized: "Dock Previews", comment: "Settings tab title"), systemImage: "dock.rectangle")
                                 .tag("DockPreviews")
                             Label(String(localized: "Window Switcher", comment: "Settings tab title"), systemImage: "uiwindow.split.2x1")
@@ -240,6 +242,8 @@ struct SettingsView: View {
                 switch selectedTab {
                 case "General":
                     MainSettingsView()
+                case "CustomDock":
+                    CustomDockSettingsView()
                 case "DockPreviews":
                     DockPreviewsSettingsView()
                 case "WindowSwitcher":

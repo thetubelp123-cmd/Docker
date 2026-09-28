@@ -7,6 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		8DDC9FA4333F40A296D73491 /* CustomDockSettings.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5EDEDD3EF532422895D3560F /* CustomDockSettings.swift */; };
+		76AACB9A6AF642DBB35FB1AA /* SystemDockHider.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5795CD8B2ADF429CAB4F7212 /* SystemDockHider.swift */; };
+		C1D3E8D0AE984FB7828D9BE3 /* CustomDockStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 864A4299C88640E39E2814B7 /* CustomDockStore.swift */; };
+		5AD70A81B9424C138DA16659 /* CustomDockView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 54BF6E70C0804D78B9FD5609 /* CustomDockView.swift */; };
+		BAD044CD4CFE4514B7320C2A /* CustomDockController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 43D650B96D7D4A6F83BEBBF7 /* CustomDockController.swift */; };
+		5239797FF8A1402D9242ADA7 /* CustomDockSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6CC9EE6E2DA245E6B9BBD552 /* CustomDockSettingsView.swift */; };
 		02D5CE06E29A4A3087322871 /* DockDoorProPromo.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3D6937C6B55416A8668B25B /* DockDoorProPromo.swift */; };
 		DBFD0B5445DD4F01BD0FBBAB /* DockDoorPro.swift in Sources */ = {isa = PBXBuildFile; fileRef = F875D112D98340CFAB1BC620 /* DockDoorPro.swift */; };
 		0531F8D22C3CC04600327808 /* AppearanceSettingsView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0531F8D12C3CC04600327808 /* AppearanceSettingsView.swift */; };
@@ -242,6 +248,12 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		5EDEDD3EF532422895D3560F /* CustomDockSettings.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockSettings.swift; sourceTree = "<group>"; };
+		5795CD8B2ADF429CAB4F7212 /* SystemDockHider.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SystemDockHider.swift; sourceTree = "<group>"; };
+		864A4299C88640E39E2814B7 /* CustomDockStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockStore.swift; sourceTree = "<group>"; };
+		54BF6E70C0804D78B9FD5609 /* CustomDockView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockView.swift; sourceTree = "<group>"; };
+		43D650B96D7D4A6F83BEBBF7 /* CustomDockController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockController.swift; sourceTree = "<group>"; };
+		6CC9EE6E2DA245E6B9BBD552 /* CustomDockSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockSettingsView.swift; sourceTree = "<group>"; };
 		B3D6937C6B55416A8668B25B /* DockDoorProPromo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockDoorProPromo.swift; sourceTree = "<group>"; };
 		F875D112D98340CFAB1BC620 /* DockDoorPro.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockDoorPro.swift; sourceTree = "<group>"; };
 		033B1F63CB464113ADA3868696F486CF /* WindowlessAppPreview.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WindowlessAppPreview.swift; sourceTree = "<group>"; };
@@ -312,7 +324,7 @@
 		BB04405F2C77AD27009F1D33 /* CodableColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableColor.swift; sourceTree = "<group>"; };
 		BB0440612C77AE85009F1D33 /* GradientColorPaletteSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientColorPaletteSettingsView.swift; sourceTree = "<group>"; };
 		BB0CBE392DD8179200D55437 /* MouseEventModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseEventModifier.swift; sourceTree = "<group>"; };
-		BB157B652C0E31CE00997315 /* DockDoor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DockDoor.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB157B652C0E31CE00997315 /* DockDoor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = DockerDoor.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB157B6C2C0E31CF00997315 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BB157B6F2C0E31CF00997315 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		BB157B712C0E31CF00997315 /* DockDoor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DockDoor.entitlements; sourceTree = "<group>"; };
@@ -473,6 +485,19 @@
 /* End PBXFrameworksBuildPhase section */
 
 /* Begin PBXGroup section */
+		F9EFDF417AD24010B39AD8D1 /* CustomDock */ = {
+			isa = PBXGroup;
+			children = (
+				5EDEDD3EF532422895D3560F /* CustomDockSettings.swift */,
+				5795CD8B2ADF429CAB4F7212 /* SystemDockHider.swift */,
+				864A4299C88640E39E2814B7 /* CustomDockStore.swift */,
+				54BF6E70C0804D78B9FD5609 /* CustomDockView.swift */,
+				43D650B96D7D4A6F83BEBBF7 /* CustomDockController.swift */,
+				6CC9EE6E2DA245E6B9BBD552 /* CustomDockSettingsView.swift */,
+			);
+			path = CustomDock;
+			sourceTree = "<group>";
+		};
 		148128F9F9F04C5E988ED084A0C21E7E /* Folder */ = {
 			isa = PBXGroup;
 			children = (
@@ -701,6 +726,7 @@
 				BBA153F92C11FFD500119C02 /* consts.swift */,
 				BBA153FB2C12356100119C02 /* main.swift */,
 				BBA153F52C115DDA00119C02 /* AppDelegate.swift */,
+				F9EFDF417AD24010B39AD8D1 /* CustomDock */,
 				3A105FD42C1BED5B0015EC66 /* Components */,
 				3A105FD72C1BF11D0015EC66 /* Extensions */,
 				BBA153FD2C12358600119C02 /* Views */,
@@ -1127,6 +1153,12 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				8DDC9FA4333F40A296D73491 /* CustomDockSettings.swift in Sources */,
+				76AACB9A6AF642DBB35FB1AA /* SystemDockHider.swift in Sources */,
+				C1D3E8D0AE984FB7828D9BE3 /* CustomDockStore.swift in Sources */,
+				5AD70A81B9424C138DA16659 /* CustomDockView.swift in Sources */,
+				BAD044CD4CFE4514B7320C2A /* CustomDockController.swift in Sources */,
+				5239797FF8A1402D9242ADA7 /* CustomDockSettingsView.swift in Sources */,
 				B3C9F20484F14266B941AFB170B66530 /* MediaRemoteService.swift in Sources */,
 				B376D66B467C4587915220BC80D3B9CB /* ScriptCommands.swift in Sources */,
 				1A04FA16AC74448F83D0F964 /* ActiveAppIndicatorCoordinator.swift in Sources */,
@@ -1338,18 +1370,18 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 25DV56692Y;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.5;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ethanbills.DockDoorTests;
+				PRODUCT_BUNDLE_IDENTIFIER = de.leonardjaeger.DockerDoorTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.10;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DockDoor.app/Contents/MacOS/DockDoor";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DockerDoor.app/Contents/MacOS/DockerDoor";
 			};
 			name = Debug;
 		};
@@ -1357,18 +1389,18 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				BUNDLE_LOADER = "$(TEST_HOST)";
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_TEAM = 25DV56692Y;
+				DEVELOPMENT_TEAM = "";
 				GENERATE_INFOPLIST_FILE = YES;
 				MACOSX_DEPLOYMENT_TARGET = 14.5;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ethanbills.DockDoorTests;
+				PRODUCT_BUNDLE_IDENTIFIER = de.leonardjaeger.DockerDoorTests;
 				PRODUCT_NAME = "$(TARGET_NAME)";
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				SWIFT_EMIT_LOC_STRINGS = NO;
 				SWIFT_VERSION = 5.10;
-				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DockDoor.app/Contents/MacOS/DockDoor";
+				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/DockerDoor.app/Contents/MacOS/DockerDoor";
 			};
 			name = Release;
 		};
@@ -1506,14 +1538,14 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				AUTOMATION_APPLE_EVENTS = YES;
 				CODE_SIGN_ENTITLEMENTS = DockDoor/DockDoorDebug.entitlements;
-				CODE_SIGN_IDENTITY = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.18.3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"DockDoor/Preview Content\"";
-				DEVELOPMENT_TEAM = 2Q775S63Q3;
-				ENABLE_HARDENED_RUNTIME = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
 				ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
@@ -1524,11 +1556,11 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DockDoor/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = DockDoor;
+				INFOPLIST_KEY_CFBundleDisplayName = DockerDoor;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "DockDoor uses AppleEvents to fetch music info from Music and Spotify.";
-				INFOPLIST_KEY_NSCalendarsUsageDescription = "DockDoor uses EventKit to fetch task info from Calendar.";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "DockerDoor nutzt AppleEvents für Musik-Infos und zum Entleeren des Papierkorbs.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "DockerDoor liest Termine aus dem Kalender.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1536,8 +1568,9 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.18.3;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ethanbills.DockDoor.debug;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = de.leonardjaeger.DockerDoor.debug;
+				PRODUCT_NAME = DockerDoor;
+				PRODUCT_MODULE_NAME = DockDoor;
 				PROVISIONING_PROFILE_SPECIFIER = "";
 				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
 				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
@@ -1558,14 +1591,14 @@
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				AUTOMATION_APPLE_EVENTS = YES;
 				CODE_SIGN_ENTITLEMENTS = DockDoor/DockDoor.entitlements;
-				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "Apple Development";
-				CODE_SIGN_STYLE = Automatic;
+				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
+				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.18.3;
 				DEAD_CODE_STRIPPING = YES;
 				DEVELOPMENT_ASSET_PATHS = "\"DockDoor/Preview Content\"";
-				DEVELOPMENT_TEAM = 2Q775S63Q3;
-				ENABLE_HARDENED_RUNTIME = YES;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
 				ENABLE_RESOURCE_ACCESS_AUDIO_INPUT = NO;
 				ENABLE_RESOURCE_ACCESS_CALENDARS = YES;
@@ -1576,11 +1609,11 @@
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = DockDoor/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = DockDoor;
+				INFOPLIST_KEY_CFBundleDisplayName = DockerDoor;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
-				INFOPLIST_KEY_NSAppleEventsUsageDescription = "DockDoor uses AppleEvents to fetch music info from Music and Spotify.";
-				INFOPLIST_KEY_NSCalendarsUsageDescription = "DockDoor uses EventKit to fetch task info from Calendar.";
+				INFOPLIST_KEY_NSAppleEventsUsageDescription = "DockerDoor nutzt AppleEvents für Musik-Infos und zum Entleeren des Papierkorbs.";
+				INFOPLIST_KEY_NSCalendarsUsageDescription = "DockerDoor liest Termine aus dem Kalender.";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -1588,8 +1621,9 @@
 				);
 				MACOSX_DEPLOYMENT_TARGET = 13.0;
 				MARKETING_VERSION = 1.18.3;
-				PRODUCT_BUNDLE_IDENTIFIER = com.ethanbills.DockDoor;
-				PRODUCT_NAME = "$(TARGET_NAME)";
+				PRODUCT_BUNDLE_IDENTIFIER = de.leonardjaeger.DockerDoor;
+				PRODUCT_NAME = DockerDoor;
+				PRODUCT_MODULE_NAME = DockDoor;
 				RUNTIME_EXCEPTION_ALLOW_DYLD_ENVIRONMENT_VARIABLES = NO;
 				RUNTIME_EXCEPTION_ALLOW_JIT = NO;
 				RUNTIME_EXCEPTION_ALLOW_UNSIGNED_EXECUTABLE_MEMORY = NO;

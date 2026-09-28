@@ -12,6 +12,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var keybindHelper: KeybindHelper?
     private var activeAppIndicator: ActiveAppIndicatorCoordinator?
     private var dockLocker: DockLocker?
+    private var customDockController: CustomDockController?
+    private var isRestarting = false
+    private var customDockMenuItem: NSMenuItem?
     private var statusBarItem: NSStatusItem?
     private let windowActionsMenu = WindowActionsMenuController()
     private var updaterController: SPUStandardUpdaterController
@@ -32,7 +35,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let state = UpdaterState()
         updaterState = state
 
-        let anUpdaterController = SPUStandardUpdaterController(startingUpdater: true, updaterDelegate: state, userDriverDelegate: nil)
+        let anUpdaterController = SPUStandardUpdaterController(startingUpdater: false, updaterDelegate: state, userDriverDelegate: nil)
         updaterController = anUpdaterController
 
         state.updater = anUpdaterController.updater
@@ -98,11 +101,9 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 dockLocker = DockLocker()
             }
 
-            if updater.automaticallyChecksForUpdates {
-                print("AppDelegate: Automatic updates enabled, checking in background.")
-                updater.checkForUpdatesInBackground()
-            }
         }
+
+        updateCustomDock()
 
         Task(priority: .high) { [weak self] in
             guard self != nil else { return }
@@ -151,6 +152,28 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         wakeRecoveryTask?.cancel()
         WindowUtil.saveWindowOrderFromCache()
         URLCache.shared.removeAllCachedResponses()
+        customDockController?.tearDown()
+        if !isRestarting {
+            SystemDockHider.restore()
+        }
+    }
+
+    func updateCustomDock() {
+        if Defaults[.customDockEnabled] {
+            if customDockController == nil {
+                customDockController = CustomDockController()
+            }
+        } else {
+            customDockController?.tearDown()
+            customDockController = nil
+        }
+        SystemDockHider.sync()
+        customDockMenuItem?.state = Defaults[.customDockEnabled] ? .on : .off
+    }
+
+    @objc private func toggleCustomDock() {
+        Defaults[.customDockEnabled].toggle()
+        updateCustomDock()
     }
 
     func setupMenuBar() {
@@ -177,17 +200,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let menu = NSMenu()
         menu.addItem(NSMenuItem(title: String(localized: "Open Settings"), action: #selector(openSettingsWindow(_:)), keyEquivalent: ""))
         menu.addItem(NSMenuItem.separator())
+        let dockItem = NSMenuItem(title: "Eigenes Dock", action: #selector(toggleCustomDock), keyEquivalent: "")
+        dockItem.target = self
+        dockItem.state = Defaults[.customDockEnabled] ? .on : .off
+        customDockMenuItem = dockItem
+        menu.addItem(dockItem)
+        menu.addItem(NSMenuItem.separator())
         let actionsItem = NSMenuItem(title: windowActionsMenu.menu.title, action: nil, keyEquivalent: "")
         actionsItem.submenu = windowActionsMenu.menu
         menu.addItem(actionsItem)
         menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: String(localized: "Check for Updates…"), action: #selector(checkForUpdatesWrapper), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: String(localized: "Support DockDoor"), action: #selector(openDonationPage), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: String(localized: "Get DockDoor Pro…"), action: #selector(openProPage), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: String(localized: "Leave a Review"), action: #selector(openReviewPage), keyEquivalent: ""))
-        menu.addItem(NSMenuItem.separator())
-        menu.addItem(NSMenuItem(title: String(localized: "Restart DockDoor"), action: #selector(restartAppWrapper), keyEquivalent: ""))
-        menu.addItem(NSMenuItem(title: String(localized: "Quit DockDoor"), action: #selector(quitAppWrapper), keyEquivalent: "q"))
+        menu.addItem(NSMenuItem(title: "DockerDoor neu starten", action: #selector(restartAppWrapper), keyEquivalent: ""))
+        menu.addItem(NSMenuItem(title: "DockerDoor beenden", action: #selector(quitAppWrapper), keyEquivalent: "q"))
         button.menu = menu
     }
 
@@ -291,6 +315,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     }
 
     func restartApp() {
+        isRestarting = true
         Process.launchedProcess(launchPath: "/usr/bin/open", arguments: ["-n", Bundle.main.bundlePath])
         quitApp()
     }
