@@ -156,6 +156,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if !isRestarting {
             SystemDockHider.restore()
         }
+        DockerDoorLog.write("DockerDoor beendet")
+        DockerDoorLog.flush()
     }
 
     /// Helpers that only make sense for the macOS Dock. They stay off while the own dock is active.

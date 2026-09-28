@@ -38,6 +38,11 @@ enum DockerDoorLog {
             }
         }
     }
+
+    /// Waits until every pending line is on disk (used right before quitting).
+    static func flush() {
+        queue.sync {}
+    }
 }
 
 /// Notices when DockerDoor's main thread stops responding and writes it to the log.

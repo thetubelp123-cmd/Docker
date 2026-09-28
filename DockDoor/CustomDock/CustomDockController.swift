@@ -82,6 +82,12 @@ final class CustomDockController {
     private var hostingView: CustomDockHostingView<CustomDockView>?
     private lazy var menuBuilder = CustomDockMenuBuilder(store: store)
     private var mouseTimer: Timer?
+    /// The pointer is tracked at 60 Hz near the dock and much slower elsewhere (saves CPU/battery).
+    private var isFastTicking = true
+    private var lastMouse = CGPoint(x: -1, y: -1)
+    private var lastActivity = Date()
+    private static let fastInterval: TimeInterval = 1.0 / 60.0
+    private static let slowInterval: TimeInterval = 1.0 / 10.0
     private var cancellables: Set<AnyCancellable> = []
     private var defaultsTask: Task<Void, Never>?
     private var screenObserver: NSObjectProtocol?
@@ -184,11 +190,38 @@ final class CustomDockController {
             }
         }
 
-        let timer = Timer(timeInterval: 1.0 / 60.0, repeats: true) { [weak self] _ in
+        scheduleTick(fast: true)
+    }
+
+    private func scheduleTick(fast: Bool) {
+        mouseTimer?.invalidate()
+        isFastTicking = fast
+        let timer = Timer(timeInterval: fast ? Self.fastInterval : Self.slowInterval, repeats: true) { [weak self] _ in
             self?.tick()
         }
+        timer.tolerance = fast ? 0.002 : 0.03
         RunLoop.main.add(timer, forMode: .common)
         mouseTimer = timer
+    }
+
+    /// Picks the tick rate: fast while the pointer is near the dock or something is going on.
+    private func adaptTickRate() {
+        let mouse = NSEvent.mouseLocation
+        let moved = mouse != lastMouse
+        lastMouse = mouse
+        var busy = drag != nil || isLetterMode || isMenuOpen || buttonReleasedAt != nil
+        if !busy, moved, let screen = dockScreen {
+            let sf = screen.frame
+            let reach = panelDepth + 90
+            busy = switch edge {
+            case .bottom: mouse.y - sf.minY < reach && mouse.x > sf.minX - 1 && mouse.x < sf.maxX + 1
+            case .left: mouse.x - sf.minX < reach && mouse.y > sf.minY - 1 && mouse.y < sf.maxY + 1
+            case .right: sf.maxX - mouse.x < reach && mouse.y > sf.minY - 1 && mouse.y < sf.maxY + 1
+            }
+        }
+        if busy || isInside && moved { lastActivity = Date() }
+        let wantFast = Date().timeIntervalSince(lastActivity) < 0.6
+        if wantFast != isFastTicking { scheduleTick(fast: wantFast) }
     }
 
     func tearDown() {
@@ -412,6 +445,11 @@ final class CustomDockController {
     // MARK: - Pointer tracking
 
     private func tick() {
+        trackPointer()
+        adaptTickRate()
+    }
+
+    private func trackPointer() {
         guard let screen = dockScreen else { return }
         if isLetterMode {
             lastKeepVisible = Date()
