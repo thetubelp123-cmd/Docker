@@ -218,12 +218,12 @@ final class DockWeatherModel: NSObject, ObservableObject, CLLocationManagerDeleg
             let snapshot = data.flatMap { try? JSONDecoder().decode(OpenMeteoResponse.self, from: $0) }.map(Self.makeSnapshot)
             DispatchQueue.main.async {
                 guard let self else { return }
-                isLoading = false
+                self.isLoading = false
                 if let snapshot {
                     self.snapshot = snapshot
-                    errorText = nil
+                    self.errorText = nil
                 } else {
-                    errorText = error == nil ? "Wetterdaten konnten nicht gelesen werden." : "Keine Verbindung zum Wetterdienst."
+                    self.errorText = error == nil ? "Wetterdaten konnten nicht gelesen werden." : "Keine Verbindung zum Wetterdienst."
                 }
             }
         }.resume()
@@ -476,9 +476,9 @@ final class DockCalendarModel: ObservableObject {
         }
         timer = Timer.scheduledTimer(withTimeInterval: 60, repeats: true) { [weak self] _ in
             guard let self else { return }
-            if !Calendar.current.isDate(today, inSameDayAs: Date()) {
-                today = Date()
-                load()
+            if !Calendar.current.isDate(self.today, inSameDayAs: Date()) {
+                self.today = Date()
+                self.load()
             }
         }
     }
