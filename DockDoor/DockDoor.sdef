@@ -3,7 +3,7 @@
 <dictionary title="DockDoor Terminology">
 
     <suite name="Standard Suite" code="????" description="Common commands for all applications.">
-        <command name="quit" code="aaboroot" description="Quit the application.">
+        <command name="quit" code="aevtquit" description="Quit the application.">
             <cocoa class="NSQuitCommand"/>
         </command>
     </suite>

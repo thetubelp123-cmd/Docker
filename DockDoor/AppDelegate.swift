@@ -14,6 +14,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private var dockLocker: DockLocker?
     private var customDockManager: CustomDockManager?
     private var isRestarting = false
+    private var terminationSignalSource: DispatchSourceSignal?
     private var customDockMenuItem: NSMenuItem?
     private var statusBarItem: NSStatusItem?
     private let windowActionsMenu = WindowActionsMenuController()
@@ -49,6 +50,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
         DockerDoorLog.write("DockerDoor \(version) startet")
         MainThreadWatchdog.shared.start()
+        installTerminationSignalHandler()
         applyAppearanceMode(Defaults[.appAppearanceMode])
 
         reconcileImagePreviewWithPermission()
@@ -169,6 +171,18 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if Defaults[.enableDockLocking], dockLocker == nil {
             dockLocker = DockLocker()
         }
+    }
+
+    /// Quit cleanly on SIGTERM (e.g. `pkill DockerDoor`) so the macOS Dock gets restored.
+    private func installTerminationSignalHandler() {
+        signal(SIGTERM, SIG_IGN)
+        let source = DispatchSource.makeSignalSource(signal: SIGTERM, queue: .main)
+        source.setEventHandler {
+            DockerDoorLog.write("SIGTERM empfangen – beende sauber")
+            NSApp.terminate(nil)
+        }
+        source.resume()
+        terminationSignalSource = source
     }
 
     func updateCustomDock() {
