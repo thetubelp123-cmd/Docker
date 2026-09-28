@@ -8,6 +8,8 @@ struct CustomDockSettingsView: View {
     @Default(.customDockIndicatorStyle) private var indicatorStyle
     @Default(.customDockShowTrash) private var showTrash
     @Default(.customDockShowAppNames) private var showAppNames
+    @Default(.customDockShowMinimized) private var showMinimized
+    @Default(.customDockShowRecents) private var showRecents
     @Default(.customDockMagnification) private var magnification
     @Default(.customDockMagnifiedSize) private var magnifiedSize
     @Default(.customDockLayoutMode) private var layoutMode
@@ -41,7 +43,7 @@ struct CustomDockSettingsView: View {
             VStack(alignment: .leading, spacing: 16) {
                 SettingsGroup {
                     SettingsIllustratedToggle(isOn: $enabled, title: "Eigenes Dock verwenden") {
-                        Text("DockerDoor zeigt ein eigenes Dock am unteren Bildschirmrand.")
+                        Text("DockerDoor zeigt ein eigenes Dock am Bildschirmrand – unten, links oder rechts.")
                     }
                     .onChange(of: enabled) { _ in applyChanges() }
                 }
@@ -122,13 +124,18 @@ struct CustomDockSettingsView: View {
                             .pickerStyle(.segmented)
                             Toggle("Namen beim Überfahren anzeigen", isOn: $showAppNames)
                             Toggle("Papierkorb anzeigen", isOn: $showTrash)
+                            Toggle("Minimierte Fenster im Dock zeigen", isOn: $showMinimized)
+                            Toggle("Zuletzt benutzte Apps zeigen", isOn: $showRecents)
+                            Text("Minimierte Fenster erscheinen vor dem Papierkorb, bis zu drei zuletzt beendete Apps hinter den laufenden Apps. Abstände und Trennstriche fügst du per Rechtsklick auf das Dock hinzu.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
 
                     SettingsGroup(header: "Verhalten") {
                         VStack(alignment: .leading, spacing: 12) {
                             Toggle("Automatisch ausblenden", isOn: $autoHide)
-                            Text("Das Dock gleitet nach unten weg und erscheint wieder, sobald der Zeiger den unteren Bildschirmrand berührt.")
+                            Text("Das Dock gleitet an den Rand und erscheint wieder, sobald der Zeiger den Bildschirmrand berührt.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
                             Toggle("Fenstervorschauen beim Überfahren", isOn: $showPreviews)

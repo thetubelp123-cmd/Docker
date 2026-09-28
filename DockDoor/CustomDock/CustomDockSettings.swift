@@ -124,6 +124,29 @@ enum PinnedDockItemKind: String, Codable {
     case file
     case group
     case widget
+    case spacer
+}
+
+enum DockSpacerStyle: String, Codable, CaseIterable {
+    case space
+    case small
+    case line
+
+    var title: String {
+        switch self {
+        case .space: "Abstand"
+        case .small: "Kleiner Abstand"
+        case .line: "Trennstrich"
+        }
+    }
+
+    var widthFactor: CGFloat {
+        switch self {
+        case .space: 1
+        case .small: 0.5
+        case .line: 0.4
+        }
+    }
 }
 
 enum DockWidgetKind: String, Codable, CaseIterable, Defaults.Serializable {
@@ -199,6 +222,7 @@ struct PinnedDockItem: Codable, Hashable, Identifiable, Defaults.Serializable {
     var stackMode: StackDisplayMode?
     var stackSort: StackSortOrder?
     var widgets: [DockWidgetKind]?
+    var spacerStyle: DockSpacerStyle?
 
     init(kind: PinnedDockItemKind, path: String, bundleIdentifier: String? = nil, name: String? = nil,
          members: [PinnedGroupMember]? = nil, stackMode: StackDisplayMode? = nil, stackSort: StackSortOrder? = nil,
@@ -220,6 +244,12 @@ struct PinnedDockItem: Codable, Hashable, Identifiable, Defaults.Serializable {
 
     static func newGroup(name: String, members: [PinnedGroupMember]) -> PinnedDockItem {
         PinnedDockItem(kind: .group, path: "group:\(UUID().uuidString)", name: name, members: members)
+    }
+
+    static func newSpacer(_ style: DockSpacerStyle) -> PinnedDockItem {
+        var item = PinnedDockItem(kind: .spacer, path: "spacer:\(UUID().uuidString)")
+        item.spacerStyle = style
+        return item
     }
 
     static func newWidget(_ widgets: [DockWidgetKind]) -> PinnedDockItem {
@@ -249,6 +279,9 @@ extension Defaults.Keys {
     static let customDockPinnedItems = Key<[PinnedDockItem]>("customDockPinnedItems", default: [])
     static let customDockDidImportSystemDock = Key<Bool>("customDockDidImportSystemDock", default: false)
 
+    static let customDockShowMinimized = Key<Bool>("customDockShowMinimized", default: true)
+    static let customDockShowRecents = Key<Bool>("customDockShowRecents", default: true)
+    static let customDockRecentApps = Key<[String]>("customDockRecentApps", default: [])
     static let customDockClockStyle = Key<DockClockStyle>("customDockClockStyle", default: .digital)
     static let customDockTemperatureUnit = Key<DockTemperatureUnit>("customDockTemperatureUnit", default: .celsius)
     static let customDockWeatherPlace = Key<String>("customDockWeatherPlace", default: "")

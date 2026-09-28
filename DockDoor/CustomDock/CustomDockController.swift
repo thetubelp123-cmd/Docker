@@ -334,7 +334,7 @@ final class CustomDockController {
                     let offset = appIDs.first == CustomDockStore.controlTileID ? 1 : 0
                     appIDs.insert(Self.gapID, at: min(drag.insertionIndex + offset, appIDs.count))
                 } else {
-                    let movable = store.otherTiles.filter { $0.kind != .trash && $0.id != drag.tile.id }.count
+                    let movable = store.otherTiles.filter { $0.kind != .trash && $0.kind != .minimized && $0.id != drag.tile.id }.count
                     otherIDs.insert(Self.gapID, at: min(drag.insertionIndex, movable))
                 }
             }
@@ -555,6 +555,8 @@ final class CustomDockController {
             togglePopover(for: tile)
         case .control:
             toggleControlCenter(for: tile)
+        case .spacer:
+            break
         default:
             stackController.close()
             popoverController.close()
@@ -774,7 +776,7 @@ final class CustomDockController {
 
     /// Tiles letter navigation can jump to, in dock order.
     private var navigableTiles: [DockTile] {
-        store.allTiles.filter { $0.kind != .control }
+        store.allTiles.filter { $0.kind != .control && $0.kind != .spacer }
     }
 
     func toggleLetterNavigation() {
@@ -937,7 +939,9 @@ final class CustomDockController {
 
     /// Tiles of the dragged tile's section in dock order (without the trash).
     private func sectionTiles(for drag: DockDrag, includingDragged: Bool) -> [DockTile] {
-        let tiles = drag.isAppSection ? store.appTiles.filter { $0.kind != .control } : store.otherTiles.filter { $0.kind != .trash }
+        let tiles = drag.isAppSection
+            ? store.appTiles.filter { $0.kind != .control }
+            : store.otherTiles.filter { $0.kind != .trash && $0.kind != .minimized }
         return includingDragged ? tiles : tiles.filter { $0.id != drag.tile.id }
     }
 
@@ -1064,7 +1068,7 @@ private struct DockDrag {
     var candidateSince = Date()
     var mergeTargetID: String?
 
-    var isAppSection: Bool { tile.kind == .app || tile.kind == .group }
+    var isAppSection: Bool { tile.kind == .app || tile.kind == .group || tile.kind == .spacer }
 }
 
 // MARK: - Drag image

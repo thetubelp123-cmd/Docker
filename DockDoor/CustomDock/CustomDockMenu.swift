@@ -48,6 +48,7 @@ final class CustomDockMenuBuilder: NSObject {
             add(menu, "Umbenennen …", "pencil", #selector(renameGroup))
             menu.addItem(.separator())
             addStackModeMenu(to: menu, tile: tile)
+            addSpacerMenu(to: menu, title: "Abstand danach einfügen", after: tile.id)
             menu.addItem(.separator())
             add(menu, "Gruppe auflösen", "square.split.2x2", #selector(dissolveGroup))
             add(menu, "Aus dem Dock entfernen", "minus.circle", #selector(unpinTile))
@@ -64,8 +65,45 @@ final class CustomDockMenuBuilder: NSObject {
             add(menu, "Öffnen", "trash", #selector(openTile))
             let empty = add(menu, "Papierkorb entleeren …", "trash.slash", #selector(emptyTrash))
             empty.isEnabled = store.trashIsFull
+        case .spacer:
+            buildSpacerMenu(menu, tile: tile)
+        case .minimized:
+            add(menu, "Wiederherstellen", "arrow.up.left.and.arrow.down.right", #selector(openTile))
+            add(menu, "Schließen", "xmark.rectangle", #selector(closeMinimized))
+            menu.addItem(.separator())
+            add(menu, "Minimierte Fenster nicht im Dock zeigen", "eye.slash", #selector(hideMinimizedTiles))
         }
         return menu
+    }
+
+    private func buildSpacerMenu(_ menu: NSMenu, tile: DockTile) {
+        guard tile.isPinned else {
+            // The divider in front of recently used apps.
+            add(menu, "Liste leeren", "clock.arrow.circlepath", #selector(clearRecents))
+            add(menu, "„Zuletzt benutzt“ ausblenden", "eye.slash", #selector(hideRecents))
+            return
+        }
+        for style in DockSpacerStyle.allCases {
+            let item = add(menu, style.title, nil, #selector(setSpacerStyle(_:)))
+            item.representedObject = style.rawValue
+            item.state = tile.spacerStyle == style ? .on : .off
+        }
+        menu.addItem(.separator())
+        add(menu, "Aus dem Dock entfernen", "minus.circle", #selector(unpinTile))
+    }
+
+    private func addSpacerMenu(to menu: NSMenu, title: String, after tileID: String?) {
+        let item = NSMenuItem(title: title, action: nil, keyEquivalent: "")
+        item.image = NSImage(systemSymbolName: "arrow.left.and.right", accessibilityDescription: nil)
+        let submenu = NSMenu()
+        for style in DockSpacerStyle.allCases {
+            let entry = NSMenuItem(title: style.title, action: #selector(addSpacer(_:)), keyEquivalent: "")
+            entry.target = self
+            entry.representedObject = [style.rawValue, tileID ?? ""]
+            submenu.addItem(entry)
+        }
+        item.submenu = submenu
+        menu.addItem(item)
     }
 
     private func buildAppMenu(_ menu: NSMenu, tile: DockTile) {
@@ -77,6 +115,12 @@ final class CustomDockMenuBuilder: NSObject {
             if !isFinder { add(menu, "Aus dem Dock entfernen", "minus.circle", #selector(unpinTile)) }
         } else if tile.url != nil {
             add(menu, "Im Dock behalten", "pin", #selector(pinTile))
+        }
+        if tile.isRecent {
+            add(menu, "Aus „Zuletzt benutzt“ entfernen", "clock.badge.xmark", #selector(removeRecent))
+        }
+        if tile.isPinned {
+            addSpacerMenu(to: menu, title: "Abstand danach einfügen", after: tile.id)
         }
         if tile.url != nil {
             add(menu, "Im Finder zeigen", "folder", #selector(revealTile))
@@ -286,6 +330,7 @@ final class CustomDockMenuBuilder: NSObject {
         }
         menu.addItem(.separator())
         addWidgetMenu(to: menu)
+        addSpacerMenu(to: menu, title: "Abstand hinzufügen", after: nil)
         menu.addItem(.separator())
         let magnification = add(menu, "Vergrößerung", nil, #selector(toggleMagnification))
         magnification.state = Defaults[.customDockMagnification] ? .on : .off
@@ -322,6 +367,23 @@ final class CustomDockMenuBuilder: NSObject {
     @objc private func activateProfile(_ sender: NSMenuItem) {
         guard let id = sender.representedObject as? String else { return }
         ProfileManager.activate(id)
+    }
+
+    @objc private func removeRecent() { if let tile { store.removeRecent(tile) } }
+    @objc private func clearRecents() { CustomDockStore.clearRecents() }
+    @objc private func hideRecents() { Defaults[.customDockShowRecents] = false }
+    @objc private func hideMinimizedTiles() { Defaults[.customDockShowMinimized] = false }
+    @objc private func closeMinimized() { if let tile { store.closeMinimized(tile) } }
+
+    @objc private func setSpacerStyle(_ sender: NSMenuItem) {
+        guard let tile, let raw = sender.representedObject as? String, let style = DockSpacerStyle(rawValue: raw) else { return }
+        store.setSpacerStyle(style, for: tile.id)
+    }
+
+    @objc private func addSpacer(_ sender: NSMenuItem) {
+        guard let values = sender.representedObject as? [String], values.count == 2,
+              let style = DockSpacerStyle(rawValue: values[0]) else { return }
+        store.addSpacer(style, after: values[1].isEmpty ? nil : values[1])
     }
 
     @objc private func hideControlTile() {

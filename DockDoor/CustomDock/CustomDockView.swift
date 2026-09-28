@@ -73,7 +73,7 @@ struct CustomDockView: View {
                     .allowsHitTesting(false)
                     .transition(.opacity)
             } else if showAppNames, let hoveredID = ui.hoveredID,
-                      let tile = store.allTiles.first(where: { $0.id == hoveredID }), tile.kind != .widget,
+                      let tile = store.allTiles.first(where: { $0.id == hoveredID }), tile.kind != .widget, tile.kind != .spacer,
                       let frame = ui.layout.frames[hoveredID]
             {
                 NameLabel(text: tile.name)
@@ -145,6 +145,15 @@ struct CustomDockView: View {
             ControlTileView(symbol: tile.bundleIdentifier ?? "slider.horizontal.3", size: frame.size)
                 .position(x: frame.midX, y: frame.midY)
                 .transition(.opacity)
+        } else if tile.kind == .spacer {
+            DockSpacerView(
+                style: tile.spacerStyle ?? .space,
+                vertical: ui.edge.isVertical,
+                highlighted: tile.isPinned && (ui.hoveredID == tile.id || ui.letterSelectionID == tile.id)
+            )
+            .frame(width: frame.width, height: frame.height)
+            .position(x: frame.midX, y: frame.midY)
+            .transition(.opacity)
         } else {
             iconTileView(tile, frame: frame)
         }
@@ -213,8 +222,36 @@ struct CustomDockView: View {
                 }
             }
             return true
-        case .file, .widget, .control:
+        case .file, .widget, .control, .spacer, .minimized:
             return false
+        }
+    }
+}
+
+/// Empty space or a divider line between dock items.
+private struct DockSpacerView: View {
+    let style: DockSpacerStyle
+    let vertical: Bool
+    let highlighted: Bool
+
+    var body: some View {
+        GeometryReader { proxy in
+            let size = proxy.size
+            ZStack {
+                if style == .line {
+                    let length = (vertical ? size.width : size.height) * 0.62
+                    Capsule()
+                        .fill(Color.primary.opacity(0.28))
+                        .frame(width: vertical ? length : 1.2, height: vertical ? 1.2 : length)
+                }
+                if highlighted {
+                    RoundedRectangle(cornerRadius: 8, style: .continuous)
+                        .strokeBorder(Color.primary.opacity(0.35), style: StrokeStyle(lineWidth: 1, dash: [4, 3]))
+                        .padding(3)
+                }
+            }
+            .frame(width: size.width, height: size.height)
+            .contentShape(Rectangle())
         }
     }
 }

@@ -10,6 +10,9 @@ enum DockTileKind: Equatable {
     case group
     case widget
     case control
+    case spacer
+    /// A minimized window, shown before the trash like in the macOS Dock.
+    case minimized
 }
 
 struct DockTile: Identifiable, Equatable {
@@ -27,6 +30,8 @@ struct DockTile: Identifiable, Equatable {
     var stackMode: StackDisplayMode?
     var stackSort: StackSortOrder?
     var widgets: [DockWidgetKind] = []
+    var spacerStyle: DockSpacerStyle?
+    var windowID: CGWindowID?
 
     var isGroup: Bool { kind == .group }
     var isWidgetStack: Bool { kind == .widget && widgets.count > 1 }
@@ -34,13 +39,24 @@ struct DockTile: Identifiable, Equatable {
         switch kind {
         case .widget: widgets.map(\.widthFactor).max() ?? 1
         case .control: 0.62
+        case .spacer: (spacerStyle ?? .space).widthFactor
         default: 1
         }
     }
 
     var isFinder: Bool { bundleIdentifier == CustomDockStore.finderBundleID }
     /// Tiles the user can drag to a new place.
-    var isMovable: Bool { kind != .trash && kind != .control && !isFinder }
+    var isMovable: Bool {
+        switch kind {
+        case .trash, .control, .minimized: false
+        case .spacer: isPinned
+        default: !isFinder
+        }
+    }
+
+    var isSpacer: Bool { kind == .spacer }
+    /// An app that was used recently and is neither pinned nor running.
+    var isRecent: Bool { id.hasPrefix(CustomDockStore.recentPrefix) }
 }
 
 final class CustomDockStore: ObservableObject {
@@ -66,6 +82,14 @@ final class CustomDockStore: ObservableObject {
     }
 
     static let controlTileID = "control"
+    static let recentPrefix = "recent:"
+    static let recentSeparatorID = "recent-separator"
+    static let minimizedPrefix = "min-"
+    static let maxRecentApps = 3
+
+    /// Minimized windows (newest last), refreshed from DockDoor's window cache.
+    private var minimizedWindows: [WindowInfo] = []
+    private var minimizedTimer: Timer?
 
     private var usesLiveItems: Bool {
         guard let profileID, !profileID.isEmpty else { return true }
@@ -96,6 +120,7 @@ final class CustomDockStore: ObservableObject {
         let keys: [Defaults._AnyKey] = [
             .customDockPinnedItems, .customDockShowTrash, .customDockProfiles,
             .customDockActiveProfile, .customDockShowControlTile,
+            .customDockShowRecents, .customDockRecentApps, .customDockShowMinimized,
         ]
         defaultsTask = Task { [weak self] in
             for await _ in Defaults.updates(keys, initial: false) {
@@ -106,6 +131,11 @@ final class CustomDockStore: ObservableObject {
             self?.refreshTrashState()
         }
         refreshTrashState()
+        minimizedTimer = Timer.scheduledTimer(withTimeInterval: 1.5, repeats: true) { [weak self] _ in
+            self?.refreshMinimizedWindows()
+        }
+        minimizedTimer?.tolerance = 0.5
+        refreshMinimizedWindows(rebuildIfChanged: false)
         rebuild()
     }
 
@@ -113,6 +143,7 @@ final class CustomDockStore: ObservableObject {
         let center = NSWorkspace.shared.notificationCenter
         observers.forEach { center.removeObserver($0) }
         trashTimer?.invalidate()
+        minimizedTimer?.invalidate()
         defaultsTask?.cancel()
     }
 
@@ -131,7 +162,24 @@ final class CustomDockStore: ObservableObject {
         var usedPIDs = Set<pid_t>()
         var apps: [DockTile] = []
 
-        for item in pinned where item.kind == .app || item.kind == .group {
+        for item in pinned where !Self.isOtherSection(item.kind) {
+            if item.kind == .spacer {
+                var spacer = DockTile(
+                    id: item.id,
+                    kind: .spacer,
+                    url: nil,
+                    bundleIdentifier: nil,
+                    name: (item.spacerStyle ?? .space).title,
+                    isPinned: true,
+                    isRunning: false,
+                    isActive: false,
+                    isHidden: false,
+                    pid: nil
+                )
+                spacer.spacerStyle = item.spacerStyle ?? .space
+                apps.append(spacer)
+                continue
+            }
             if item.kind == .group {
                 let members = item.members ?? []
                 var anyRunning = false
@@ -202,6 +250,51 @@ final class CustomDockStore: ObservableObject {
             ))
         }
 
+        if Defaults[.customDockShowRecents] {
+            var pinnedPaths = Set<String>()
+            for item in pinned {
+                if item.kind == .app { pinnedPaths.insert(item.url.standardizedFileURL.path) }
+                for member in item.members ?? [] {
+                    pinnedPaths.insert(URL(fileURLWithPath: member.path).standardizedFileURL.path)
+                }
+            }
+            let runningPaths = Set(apps.compactMap { $0.url?.standardizedFileURL.path })
+            let recents = Defaults[.customDockRecentApps]
+                .filter { !pinnedPaths.contains($0) && !runningPaths.contains($0) && FileManager.default.fileExists(atPath: $0) }
+                .prefix(Self.maxRecentApps)
+            if !recents.isEmpty {
+                var separator = DockTile(
+                    id: Self.recentSeparatorID,
+                    kind: .spacer,
+                    url: nil,
+                    bundleIdentifier: nil,
+                    name: "Zuletzt benutzt",
+                    isPinned: false,
+                    isRunning: false,
+                    isActive: false,
+                    isHidden: false,
+                    pid: nil
+                )
+                separator.spacerStyle = .line
+                apps.append(separator)
+                for path in recents {
+                    let url = URL(fileURLWithPath: path)
+                    apps.append(DockTile(
+                        id: Self.recentPrefix + path,
+                        kind: .app,
+                        url: url,
+                        bundleIdentifier: Bundle(url: url)?.bundleIdentifier,
+                        name: displayName(for: url, fallback: nil),
+                        isPinned: false,
+                        isRunning: false,
+                        isActive: false,
+                        isHidden: false,
+                        pid: nil
+                    ))
+                }
+            }
+        }
+
         var others: [DockTile] = pinned.filter { Self.isOtherSection($0.kind) }.map { item in
             if item.kind == .widget {
                 let widgets = item.widgets ?? []
@@ -233,6 +326,24 @@ final class CustomDockStore: ObservableObject {
                 stackMode: item.stackMode,
                 stackSort: item.stackSort
             )
+        }
+        if Defaults[.customDockShowMinimized] {
+            for window in minimizedWindows {
+                var tile = DockTile(
+                    id: Self.minimizedPrefix + String(window.id),
+                    kind: .minimized,
+                    url: nil,
+                    bundleIdentifier: window.app.bundleIdentifier,
+                    name: window.windowName.flatMap { $0.isEmpty ? nil : $0 } ?? window.app.localizedName ?? "Fenster",
+                    isPinned: false,
+                    isRunning: false,
+                    isActive: false,
+                    isHidden: false,
+                    pid: window.app.processIdentifier
+                )
+                tile.windowID = window.id
+                others.append(tile)
+            }
         }
         if Defaults[.customDockShowTrash] {
             others.append(DockTile(
@@ -284,6 +395,7 @@ final class CustomDockStore: ObservableObject {
             if item.kind == .widget {
                 return item.widgets?.isEmpty == false ? item : nil
             }
+            if item.kind == .spacer { return item }
             guard item.kind == .group else {
                 return FileManager.default.fileExists(atPath: item.path) ? item : nil
             }
@@ -315,6 +427,18 @@ final class CustomDockStore: ObservableObject {
             if let cached = iconCache[key] { return cached }
             let image = Self.widgetIcon(for: kind)
             iconCache[key] = image
+            return image
+        }
+        if tile.kind == .spacer {
+            return NSImage(size: NSSize(width: 16, height: 16))
+        }
+        if tile.kind == .minimized {
+            let key = tile.id
+            if let cached = iconCache[key] { return cached }
+            let window = minimizedWindows.first { $0.id == tile.windowID }
+            let appIcon = window?.app.icon ?? NSWorkspace.shared.icon(for: .applicationBundle)
+            let image = Self.minimizedIcon(window: window?.image, appIcon: appIcon)
+            if window?.image != nil { iconCache[key] = image }
             return image
         }
         if tile.kind == .group {
@@ -358,6 +482,8 @@ final class CustomDockStore: ObservableObject {
                         runningOrder.append(app.processIdentifier)
                     } else if name == NSWorkspace.didTerminateApplicationNotification {
                         runningOrder.removeAll { $0 == app.processIdentifier }
+                        rememberRecent(app)
+                        minimizedWindows.removeAll { $0.app.processIdentifier == app.processIdentifier }
                     }
                 }
                 rebuild()
@@ -379,7 +505,9 @@ final class CustomDockStore: ObservableObject {
             if let url = tile.url { NSWorkspace.shared.open(url) }
         case .trash:
             NSWorkspace.shared.open(Self.trashURL)
-        case .group, .widget, .control:
+        case .minimized:
+            restoreMinimized(tile)
+        case .group, .widget, .control, .spacer:
             break
         }
     }
@@ -467,7 +595,7 @@ final class CustomDockStore: ObservableObject {
     func move(_ tile: DockTile, toIndex index: Int) {
         guard tile.isMovable else { return }
         let items = normalizedPinnedItems()
-        let isAppSection = tile.kind == .app || tile.kind == .group
+        let isAppSection = tile.kind == .app || tile.kind == .group || tile.kind == .spacer
         var section = items.filter { isAppSection ? !Self.isOtherSection($0.kind) : Self.isOtherSection($0.kind) }
         let rest = items.filter { isAppSection ? Self.isOtherSection($0.kind) : !Self.isOtherSection($0.kind) }
 
@@ -487,6 +615,130 @@ final class CustomDockStore: ObservableObject {
 
     static func isOtherSection(_ kind: PinnedDockItemKind) -> Bool {
         kind == .folder || kind == .file || kind == .widget
+    }
+
+    // MARK: - Spacers
+
+    /// Adds a spacer at the end of the pinned apps.
+    func addSpacer(_ style: DockSpacerStyle, after tileID: String? = nil) {
+        var items = normalizedPinnedItems()
+        let index: Int = if let tileID, let found = items.firstIndex(where: { $0.id == tileID }) {
+            found + 1
+        } else {
+            (items.lastIndex { !Self.isOtherSection($0.kind) } ?? -1) + 1
+        }
+        items.insert(.newSpacer(style), at: min(index, items.count))
+        storedItems = items
+    }
+
+    func setSpacerStyle(_ style: DockSpacerStyle, for tileID: String) {
+        var items = normalizedPinnedItems()
+        guard let index = items.firstIndex(where: { $0.id == tileID }) else { return }
+        items[index].spacerStyle = style
+        storedItems = items
+    }
+
+    func removeItem(_ tileID: String) {
+        storedItems = normalizedPinnedItems().filter { $0.id != tileID }
+    }
+
+    // MARK: - Recently used apps
+
+    private func rememberRecent(_ app: NSRunningApplication) {
+        guard app.activationPolicy == .regular,
+              app.processIdentifier != ProcessInfo.processInfo.processIdentifier,
+              app.bundleIdentifier != Self.finderBundleID,
+              let url = app.bundleURL
+        else { return }
+        let path = url.standardizedFileURL.path
+        var recents = Defaults[.customDockRecentApps]
+        guard recents.first != path else { return }
+        recents.removeAll { $0 == path }
+        recents.insert(path, at: 0)
+        Defaults[.customDockRecentApps] = Array(recents.prefix(10))
+    }
+
+    func removeRecent(_ tile: DockTile) {
+        guard tile.isRecent else { return }
+        let path = String(tile.id.dropFirst(Self.recentPrefix.count))
+        Defaults[.customDockRecentApps].removeAll { $0 == path }
+    }
+
+    static func clearRecents() {
+        Defaults[.customDockRecentApps] = []
+    }
+
+    // MARK: - Minimized windows
+
+    private func refreshMinimizedWindows(rebuildIfChanged: Bool = true) {
+        guard Defaults[.customDockShowMinimized] else {
+            if !minimizedWindows.isEmpty {
+                minimizedWindows = []
+                if rebuildIfChanged { rebuild() }
+            }
+            return
+        }
+        let ownPID = ProcessInfo.processInfo.processIdentifier
+        var found: [WindowInfo] = []
+        for app in NSWorkspace.shared.runningApplications where app.activationPolicy == .regular && app.processIdentifier != ownPID {
+            found += WindowUtil.readCachedWindows(for: app.processIdentifier).filter { $0.isMinimized && !$0.isWindowlessApp }
+        }
+        // Keep the order in which windows were minimized: known ones first, new ones appended.
+        let foundIDs = Set(found.map(\.id))
+        var ordered = minimizedWindows.filter { foundIDs.contains($0.id) }.compactMap { old in found.first { $0.id == old.id } }
+        let knownIDs = Set(ordered.map(\.id))
+        ordered += found.filter { !knownIDs.contains($0.id) }
+
+        let changed = ordered.map(\.id) != minimizedWindows.map(\.id)
+            || zip(ordered, minimizedWindows).contains { ($0.image != nil) != ($1.image != nil) }
+        minimizedWindows = ordered
+        for key in iconCache.keys where key.hasPrefix(Self.minimizedPrefix) && !foundIDs.contains(CGWindowID(key.dropFirst(Self.minimizedPrefix.count)) ?? 0) {
+            iconCache[key] = nil
+        }
+        if changed, rebuildIfChanged { rebuild() }
+    }
+
+    func minimizedWindow(for tile: DockTile) -> WindowInfo? {
+        minimizedWindows.first { $0.id == tile.windowID }
+    }
+
+    private func restoreMinimized(_ tile: DockTile) {
+        guard var window = minimizedWindow(for: tile) else { return }
+        window.toggleMinimize()
+        minimizedWindows.removeAll { $0.id == window.id }
+        rebuild()
+    }
+
+    func closeMinimized(_ tile: DockTile) {
+        guard let window = minimizedWindow(for: tile) else { return }
+        _ = window.close()
+        minimizedWindows.removeAll { $0.id == window.id }
+        rebuild()
+    }
+
+    static func minimizedIcon(window: CGImage?, appIcon: NSImage) -> NSImage {
+        NSImage(size: NSSize(width: 256, height: 256), flipped: false) { rect in
+            if let window {
+                let imageSize = CGSize(width: window.width, height: window.height)
+                let scale = min((rect.width - 16) / max(1, imageSize.width), (rect.height - 16) / max(1, imageSize.height))
+                let size = CGSize(width: imageSize.width * scale, height: imageSize.height * scale)
+                let frame = NSRect(x: rect.midX - size.width / 2, y: rect.midY - size.height / 2, width: size.width, height: size.height)
+                NSGraphicsContext.saveGraphicsState()
+                let shadow = NSShadow()
+                shadow.shadowBlurRadius = 6
+                shadow.shadowOffset = NSSize(width: 0, height: -2)
+                shadow.shadowColor = NSColor.black.withAlphaComponent(0.35)
+                shadow.set()
+                NSBezierPath(roundedRect: frame, xRadius: 10, yRadius: 10).addClip()
+                NSImage(cgImage: window, size: size).draw(in: frame)
+                NSGraphicsContext.restoreGraphicsState()
+            } else {
+                NSColor(white: 0.5, alpha: 0.35).setFill()
+                NSBezierPath(roundedRect: rect.insetBy(dx: 20, dy: 40), xRadius: 14, yRadius: 14).fill()
+            }
+            appIcon.draw(in: NSRect(x: rect.maxX - 104, y: rect.minY + 4, width: 100, height: 100))
+            return true
+        }
     }
 
     // MARK: - Widgets
