@@ -16,9 +16,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "BB157B642C0E31CE00997315"
-               BuildableName = "DockerDoor.app"
-               BlueprintName = "DockDoor"
-               ReferencedContainer = "container:DockDoor.xcodeproj">
+               BuildableName = "Docker.app"
+               BlueprintName = "Docker"
+               ReferencedContainer = "container:Docker.xcodeproj">
             </BuildableReference>
          </BuildActionEntry>
       </BuildActionEntries>
@@ -35,9 +35,9 @@
             <BuildableReference
                BuildableIdentifier = "primary"
                BlueprintIdentifier = "AA11001122334455AA110088"
-               BuildableName = "DockDoorTests.xctest"
-               BlueprintName = "DockDoorTests"
-               ReferencedContainer = "container:DockDoor.xcodeproj">
+               BuildableName = "DockerTests.xctest"
+               BlueprintName = "DockerTests"
+               ReferencedContainer = "container:Docker.xcodeproj">
             </BuildableReference>
          </TestableReference>
       </Testables>
@@ -57,9 +57,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BB157B642C0E31CE00997315"
-            BuildableName = "DockerDoor.app"
-            BlueprintName = "DockDoor"
-            ReferencedContainer = "container:DockDoor.xcodeproj">
+            BuildableName = "Docker.app"
+            BlueprintName = "Docker"
+            ReferencedContainer = "container:Docker.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </LaunchAction>
@@ -74,9 +74,9 @@
          <BuildableReference
             BuildableIdentifier = "primary"
             BlueprintIdentifier = "BB157B642C0E31CE00997315"
-            BuildableName = "DockerDoor.app"
-            BlueprintName = "DockDoor"
-            ReferencedContainer = "container:DockDoor.xcodeproj">
+            BuildableName = "Docker.app"
+            BlueprintName = "Docker"
+            ReferencedContainer = "container:Docker.xcodeproj">
          </BuildableReference>
       </BuildableProductRunnable>
    </ProfileAction>

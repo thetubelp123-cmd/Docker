@@ -16,7 +16,7 @@ VERSION="$(tr -d '[:space:]' < "$HERE/VERSION" 2>/dev/null || true)"
 [ -n "$VERSION" ] || VERSION="0.1"
 IFS=. read -r MAJOR MINOR PATCH _ <<< "$VERSION"
 BUILD_NUMBER=$(( 10#${MAJOR:-0} * 100 + 10#${MINOR:-0} ))
-PROJECT="$HERE/DockDoor.xcodeproj"
+PROJECT="$HERE/Docker.xcodeproj"
 WORK="$HOME/Library/Caches/DockerDoor-Installer"
 
 echo ""
@@ -29,7 +29,7 @@ fi
 
 echo "→ Baue die App (Release) …"
 set +e
-xcodebuild -project "$PROJECT" -scheme DockDoor -configuration Release \
+xcodebuild -project "$PROJECT" -scheme Docker -configuration Release \
     -destination "generic/platform=macOS" -derivedDataPath "$WORK/DerivedData" \
     MARKETING_VERSION="$VERSION" CURRENT_PROJECT_VERSION="$BUILD_NUMBER" \
     CODE_SIGN_IDENTITY="-" CODE_SIGN_STYLE=Manual DEVELOPMENT_TEAM="" \

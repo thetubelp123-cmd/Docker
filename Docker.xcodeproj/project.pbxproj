@@ -243,7 +243,7 @@
 			containerPortal = BB157B5D2C0E31CE00997315 /* Project object */;
 			proxyType = 1;
 			remoteGlobalIDString = BB157B642C0E31CE00997315;
-			remoteInfo = DockDoor;
+			remoteInfo = Docker;
 		};
 /* End PBXContainerItemProxy section */
 
@@ -339,7 +339,7 @@
 		AA11001122334455AA110011 /* DockLocker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockLocker.swift; sourceTree = "<group>"; };
 		AA11001122334455AA110033 /* DockLockingSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockLockingSettingsView.swift; sourceTree = "<group>"; };
 		AA11001122334455AA110055 /* DockLockerGeometryTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DockLockerGeometryTests.swift; sourceTree = "<group>"; };
-		AA11001122334455AA110100 /* DockDoorTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DockDoorTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AA11001122334455AA110100 /* DockerTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = DockerTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		AC298B81953848F481EE849906E0AE77 /* MediaRemoteService.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MediaRemoteService.swift; sourceTree = "<group>"; };
 		B056906A7ACD4903BD5E1627B359AE2C /* AdvancedSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AdvancedSettingsView.swift; sourceTree = "<group>"; };
 		B2C3D4E5F67890123456789A /* ActiveAppIndicatorWindow.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ActiveAppIndicatorWindow.swift; sourceTree = "<group>"; };
@@ -352,7 +352,7 @@
 		BB04405F2C77AD27009F1D33 /* CodableColor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CodableColor.swift; sourceTree = "<group>"; };
 		BB0440612C77AE85009F1D33 /* GradientColorPaletteSettingsView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = GradientColorPaletteSettingsView.swift; sourceTree = "<group>"; };
 		BB0CBE392DD8179200D55437 /* MouseEventModifier.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MouseEventModifier.swift; sourceTree = "<group>"; };
-		BB157B652C0E31CE00997315 /* DockDoor.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Docker.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		BB157B652C0E31CE00997315 /* Docker.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Docker.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		BB157B6C2C0E31CF00997315 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		BB157B6F2C0E31CF00997315 /* Preview Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = "Preview Assets.xcassets"; sourceTree = "<group>"; };
 		BB157B712C0E31CF00997315 /* DockDoor.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = DockDoor.entitlements; sourceTree = "<group>"; };
@@ -686,13 +686,13 @@
 			path = Search;
 			sourceTree = "<group>";
 		};
-		AA11001122334455AA110077 /* DockDoorTests */ = {
+		AA11001122334455AA110077 /* DockerTests */ = {
 			isa = PBXGroup;
 			children = (
 				AA11001122334455AA110055 /* DockLockerGeometryTests.swift */,
 				D00D4B366E3CF5338182E065 /* NativeTabGroupingTests.swift */,
 			);
-			path = DockDoorTests;
+			path = DockerTests;
 			sourceTree = "<group>";
 		};
 		AABBCC112233445566778899 /* Appearance */ = {
@@ -743,8 +743,8 @@
 			isa = PBXGroup;
 			children = (
 				3A1622992C8BFCE800D318EE /* Assets */,
-				BB157B672C0E31CE00997315 /* DockDoor */,
-				AA11001122334455AA110077 /* DockDoorTests */,
+				BB157B672C0E31CE00997315 /* Docker */,
+				AA11001122334455AA110077 /* DockerTests */,
 				BB157B662C0E31CE00997315 /* Products */,
 			);
 			sourceTree = "<group>";
@@ -752,13 +752,13 @@
 		BB157B662C0E31CE00997315 /* Products */ = {
 			isa = PBXGroup;
 			children = (
-				BB157B652C0E31CE00997315 /* DockDoor.app */,
-				AA11001122334455AA110100 /* DockDoorTests.xctest */,
+				BB157B652C0E31CE00997315 /* Docker.app */,
+				AA11001122334455AA110100 /* DockerTests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
 		};
-		BB157B672C0E31CE00997315 /* DockDoor */ = {
+		BB157B672C0E31CE00997315 /* Docker */ = {
 			isa = PBXGroup;
 			children = (
 				800055332EFC0DDF005CAB72 /* AppIcon.icon */,
@@ -777,7 +777,7 @@
 				BB157B712C0E31CF00997315 /* DockDoor.entitlements */,
 				BB157B6E2C0E31CF00997315 /* Preview Content */,
 			);
-			path = DockDoor;
+			path = Docker;
 			sourceTree = "<group>";
 		};
 		BB157B6E2C0E31CF00997315 /* Preview Content */ = {
@@ -1051,9 +1051,9 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
-		AA11001122334455AA110088 /* DockDoorTests */ = {
+		AA11001122334455AA110088 /* DockerTests */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = AA11001122334455AA1100DD /* Build configuration list for PBXNativeTarget "DockDoorTests" */;
+			buildConfigurationList = AA11001122334455AA1100DD /* Build configuration list for PBXNativeTarget "DockerTests" */;
 			buildPhases = (
 				AA11001122334455AA110099 /* Sources */,
 				AA11001122334455AA1100AA /* Frameworks */,
@@ -1063,14 +1063,14 @@
 			dependencies = (
 				AA11001122334455AA1100FF /* PBXTargetDependency */,
 			);
-			name = DockDoorTests;
-			productName = DockDoorTests;
-			productReference = AA11001122334455AA110100 /* DockDoorTests.xctest */;
+			name = DockerTests;
+			productName = DockerTests;
+			productReference = AA11001122334455AA110100 /* DockerTests.xctest */;
 			productType = "com.apple.product-type.bundle.unit-test";
 		};
-		BB157B642C0E31CE00997315 /* DockDoor */ = {
+		BB157B642C0E31CE00997315 /* Docker */ = {
 			isa = PBXNativeTarget;
-			buildConfigurationList = BB157B742C0E31CF00997315 /* Build configuration list for PBXNativeTarget "DockDoor" */;
+			buildConfigurationList = BB157B742C0E31CF00997315 /* Build configuration list for PBXNativeTarget "Docker" */;
 			buildPhases = (
 				054B715D2C69264800E662F3 /* Run Script */,
 				BB157B612C0E31CE00997315 /* Sources */,
@@ -1082,7 +1082,7 @@
 			);
 			dependencies = (
 			);
-			name = DockDoor;
+			name = Docker;
 			packageProductDependencies = (
 				BB1CBD5A2C1BA8DC003969BC /* Defaults */,
 				BB33E68B2C24C72F00A21D69 /* LaunchAtLogin */,
@@ -1091,8 +1091,8 @@
 				BBBD4AF72C8D71560074FFCF /* ConfettiSwiftUI */,
 				BB5C36552F6CEE9E00BE947F /* MediaRemoteAdapter */,
 			);
-			productName = DockDoor;
-			productReference = BB157B652C0E31CE00997315 /* DockDoor.app */;
+			productName = Docker;
+			productReference = BB157B652C0E31CE00997315 /* Docker.app */;
 			productType = "com.apple.product-type.application";
 		};
 /* End PBXNativeTarget section */
@@ -1114,7 +1114,7 @@
 					};
 				};
 			};
-			buildConfigurationList = BB157B602C0E31CE00997315 /* Build configuration list for PBXProject "DockDoor" */;
+			buildConfigurationList = BB157B602C0E31CE00997315 /* Build configuration list for PBXProject "Docker" */;
 			compatibilityVersion = "Xcode 14.0";
 			developmentRegion = en;
 			hasScannedForEncodings = 0;
@@ -1137,8 +1137,8 @@
 			projectDirPath = "";
 			projectRoot = "";
 			targets = (
-				BB157B642C0E31CE00997315 /* DockDoor */,
-				AA11001122334455AA110088 /* DockDoorTests */,
+				BB157B642C0E31CE00997315 /* Docker */,
+				AA11001122334455AA110088 /* DockerTests */,
 			);
 		};
 /* End PBXProject section */
@@ -1416,7 +1416,7 @@
 /* Begin PBXTargetDependency section */
 		AA11001122334455AA1100FF /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
-			target = BB157B642C0E31CE00997315 /* DockDoor */;
+			target = BB157B642C0E31CE00997315 /* Docker */;
 			targetProxy = AA11001122334455AA1100EE /* PBXContainerItemProxy */;
 		};
 /* End PBXTargetDependency section */
@@ -1593,13 +1593,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				AUTOMATION_APPLE_EVENTS = YES;
-				CODE_SIGN_ENTITLEMENTS = DockDoor/DockDoorDebug.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Docker/DockDoorDebug.entitlements;
 				CODE_SIGN_IDENTITY = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.18.3;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_ASSET_PATHS = "\"DockDoor/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Docker/Preview Content\"";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
@@ -1611,7 +1611,7 @@
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = DockDoor/Info.plist;
+				INFOPLIST_FILE = Docker/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Docker;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
@@ -1646,13 +1646,13 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_INCLUDE_ALL_APPICON_ASSETS = YES;
 				AUTOMATION_APPLE_EVENTS = YES;
-				CODE_SIGN_ENTITLEMENTS = DockDoor/DockDoor.entitlements;
+				CODE_SIGN_ENTITLEMENTS = Docker/DockDoor.entitlements;
 				"CODE_SIGN_IDENTITY[sdk=macosx*]" = "-";
 				CODE_SIGN_STYLE = Manual;
 				COMBINE_HIDPI_IMAGES = YES;
 				CURRENT_PROJECT_VERSION = 1.18.3;
 				DEAD_CODE_STRIPPING = YES;
-				DEVELOPMENT_ASSET_PATHS = "\"DockDoor/Preview Content\"";
+				DEVELOPMENT_ASSET_PATHS = "\"Docker/Preview Content\"";
 				DEVELOPMENT_TEAM = "";
 				ENABLE_HARDENED_RUNTIME = NO;
 				ENABLE_PREVIEWS = YES;
@@ -1664,7 +1664,7 @@
 				ENABLE_RESOURCE_ACCESS_PHOTO_LIBRARY = NO;
 				ENABLE_USER_SCRIPT_SANDBOXING = NO;
 				GENERATE_INFOPLIST_FILE = YES;
-				INFOPLIST_FILE = DockDoor/Info.plist;
+				INFOPLIST_FILE = Docker/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = Docker;
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.utilities";
 				INFOPLIST_KEY_LSUIElement = YES;
@@ -1694,7 +1694,7 @@
 /* End XCBuildConfiguration section */
 
 /* Begin XCConfigurationList section */
-		AA11001122334455AA1100DD /* Build configuration list for PBXNativeTarget "DockDoorTests" */ = {
+		AA11001122334455AA1100DD /* Build configuration list for PBXNativeTarget "DockerTests" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				AA11001122334455AA1100BB /* Debug */,
@@ -1703,7 +1703,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BB157B602C0E31CE00997315 /* Build configuration list for PBXProject "DockDoor" */ = {
+		BB157B602C0E31CE00997315 /* Build configuration list for PBXProject "Docker" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BB157B722C0E31CF00997315 /* Debug */,
@@ -1712,7 +1712,7 @@
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Release;
 		};
-		BB157B742C0E31CF00997315 /* Build configuration list for PBXNativeTarget "DockDoor" */ = {
+		BB157B742C0E31CF00997315 /* Build configuration list for PBXNativeTarget "Docker" */ = {
 			isa = XCConfigurationList;
 			buildConfigurations = (
 				BB157B752C0E31CF00997315 /* Debug */,

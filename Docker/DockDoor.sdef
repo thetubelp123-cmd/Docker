@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE dictionary SYSTEM "file://localhost/System/Library/DTDs/sdef.dtd">
-<dictionary title="DockDoor Terminology">
+<dictionary title="Docker Terminology">
 
     <suite name="Standard Suite" code="????" description="Common commands for all applications.">
         <command name="quit" code="aevtquit" description="Quit the application.">
@@ -8,7 +8,7 @@
         </command>
     </suite>
 
-    <suite name="DockDoor Suite" code="DKDR" description="Commands for controlling DockDoor.">
+    <suite name="Docker Suite" code="DKDR" description="Commands for controlling Docker.">
 
         <!-- Preview Commands -->
 

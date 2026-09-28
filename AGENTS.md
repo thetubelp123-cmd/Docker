@@ -1,14 +1,14 @@
-# DockDoor
+# Docker
 
 macOS dock enhancement app — window previews on dock hover, Alt+Tab window switcher, Cmd+Tab overlay. Menu bar only (`LSUIElement: true`). Swift 5.10 / SwiftUI / AppKit. GPL-3.0.
 
 ## Build
 
-Open `DockDoor.xcodeproj` in Xcode and build (Cmd+R). No CLI build commands — this is an Xcode-managed project, not SPM.
+Open `Docker.xcodeproj` in Xcode and build (Cmd+R). No CLI build commands — this is an Xcode-managed project, not SPM.
 
 ## Adding Files to the Project
 
-Every new `.swift` file must be registered in `DockDoor.xcodeproj/project.pbxproj`:
+Every new `.swift` file must be registered in `Docker.xcodeproj/project.pbxproj`:
 
 1. Generate two UUIDs: `for i in 1 2; do uuidgen | tr -d '-'; done`
 2. Add a `PBXFileReference` entry
