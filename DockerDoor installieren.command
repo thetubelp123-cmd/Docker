@@ -1,7 +1,7 @@
 #!/bin/bash
 # DockerDoor installieren / aktualisieren
 # Baut die App (Release), signiert sie mit einem festen lokalen Zertifikat,
-# legt sie in „Programme“ und startet sie.
+# legt sie in „Programme“, speichert ZIP und DMG im Ordner „Versionen“ und startet sie.
 # Start: Doppelklick im Finder. Das erste Mal dauert es einige Minuten (Pakete laden).
 set -euo pipefail
 
@@ -111,6 +111,31 @@ ditto "$APP" "$DEST/$APP_NAME.app"
 touch "$DEST/$APP_NAME.app"
 LSREGISTER="/System/Library/Frameworks/CoreServices.framework/Versions/A/Frameworks/LaunchServices.framework/Versions/A/Support/lsregister"
 "$LSREGISTER" -f "$DEST/$APP_NAME.app" || true
+
+# Kopien dieser Version für das Archiv: ZIP und DMG (mit Verknüpfung zu „Programme“)
+VERSIONS="$HERE/Versionen"
+mkdir -p "$VERSIONS"
+ZIP="$VERSIONS/$APP_NAME-$VERSION.zip"
+DMG="$VERSIONS/$APP_NAME-$VERSION.dmg"
+echo "→ Lege ZIP und DMG in „Versionen“ ab …"
+rm -f "$ZIP"
+if ditto -c -k --sequesterRsrc --keepParent "$DEST/$APP_NAME.app" "$ZIP"; then
+    echo "  ZIP: Versionen/$(basename "$ZIP")"
+else
+    echo "  Hinweis: ZIP konnte nicht erstellt werden."
+fi
+STAGE="$WORK/dmg-stage"
+rm -rf "$STAGE"
+mkdir -p "$STAGE"
+ditto "$DEST/$APP_NAME.app" "$STAGE/$APP_NAME.app"
+ln -s /Applications "$STAGE/Programme"
+rm -f "$DMG"
+if hdiutil create -volname "$APP_NAME $VERSION" -srcfolder "$STAGE" -ov -format UDZO "$DMG" >/dev/null; then
+    echo "  DMG: Versionen/$(basename "$DMG")"
+else
+    echo "  Hinweis: DMG konnte nicht erstellt werden."
+fi
+rm -rf "$STAGE"
 
 echo ""
 echo "✓ Fertig! $APP_NAME $VERSION liegt in $DEST und startet jetzt (Symbol in der Menüleiste)."
