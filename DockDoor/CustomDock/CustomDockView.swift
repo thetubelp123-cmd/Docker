@@ -3,124 +3,128 @@ import Defaults
 import SwiftUI
 import UniformTypeIdentifiers
 
-struct CustomDockMetrics {
-    let iconSize: CGFloat
-
-    var spacing: CGFloat { max(2, iconSize * 0.1) }
-    var paddingH: CGFloat { max(6, iconSize * 0.16) }
-    var paddingTop: CGFloat { max(4, iconSize * 0.12) }
-    var paddingBottom: CGFloat { max(6, iconSize * 0.18) }
-    var separatorWidth: CGFloat { max(9, iconSize * 0.3) }
-    var barHeight: CGFloat { iconSize + paddingTop + paddingBottom }
-    var cornerRadius: CGFloat { min(barHeight * 0.34, 26) }
-    var bottomMargin: CGFloat { 4 }
-    var headroom: CGFloat { 48 }
-    var panelHeight: CGFloat { bottomMargin + barHeight + headroom }
-}
-
 final class CustomDockUIState: ObservableObject {
+    @Published var layout: DockLayoutResult = .empty
+    @Published var metrics = CustomDockMetrics(iconSize: 48, magnifiedSize: 88, magnification: true, mode: .floating)
     @Published var hoveredID: String?
     @Published var dropTargetID: String?
-    @Published var barFrame: CGRect = .zero
+    @Published var isHidden = false
+    @Published var isInteracting = false
 }
 
 struct CustomDockView: View {
     @ObservedObject var store: CustomDockStore
     @ObservedObject var ui: CustomDockUIState
-    @Default(.customDockIconSize) private var iconSize
     @Default(.customDockIndicatorStyle) private var indicatorStyle
     @Default(.customDockShowAppNames) private var showAppNames
+    @Default(.customDockMaterial) private var material
+    @Default(.customDockTintOpacity) private var tintOpacity
+    @Default(.customDockShowBorder) private var showBorder
     @State private var barIsDropTarget = false
 
-    private var metrics: CustomDockMetrics { CustomDockMetrics(iconSize: CGFloat(iconSize)) }
+    private var metrics: CustomDockMetrics { ui.metrics }
+
+    private var spring: Animation {
+        ui.isInteracting
+            ? .interactiveSpring(response: 0.2, dampingFraction: 0.82, blendDuration: 0.05)
+            : .spring(response: 0.34, dampingFraction: 0.8)
+    }
 
     var body: some View {
-        VStack(spacing: 0) {
-            Spacer(minLength: 0)
-            bar
-                .padding(.bottom, metrics.bottomMargin)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .coordinateSpace(name: "dockRoot")
-    }
+        ZStack(alignment: .topLeading) {
+            barBackground
+                .frame(width: max(0, ui.layout.barRect.width), height: max(0, ui.layout.barRect.height))
+                .onDrop(of: [UTType.fileURL], isTargeted: $barIsDropTarget) { providers in
+                    DockDropLoader.loadURLs(from: providers) { urls in
+                        for url in urls { store.pin(url: url) }
+                    }
+                    return true
+                }
+                .position(x: ui.layout.barRect.midX, y: ui.layout.barRect.midY)
 
-    private var bar: some View {
-        HStack(spacing: metrics.spacing) {
-            ForEach(store.appTiles) { tile in
-                tileView(tile)
+            if let frame = ui.layout.frames["separator-0"] {
+                Rectangle()
+                    .fill(Color.primary.opacity(0.25))
+                    .frame(width: 1, height: frame.height)
+                    .position(x: frame.midX, y: frame.midY)
             }
-            if !store.otherTiles.isEmpty {
-                separator
-                ForEach(store.otherTiles) { tile in
-                    tileView(tile)
+
+            ForEach(store.allTiles) { tile in
+                if let frame = ui.layout.frames[tile.id] {
+                    tileView(tile, frame: frame)
                 }
             }
-        }
-        .padding(.horizontal, metrics.paddingH)
-        .padding(.top, metrics.paddingTop)
-        .padding(.bottom, metrics.paddingBottom)
-        .background(barBackground)
-        .background(
-            GeometryReader { proxy in
-                Color.clear
-                    .onAppear { ui.barFrame = proxy.frame(in: .named("dockRoot")) }
-                    .onChange(of: proxy.frame(in: .named("dockRoot"))) { newFrame in
-                        ui.barFrame = newFrame
-                    }
-            }
-        )
-        .onDrop(of: [UTType.fileURL], isTargeted: $barIsDropTarget) { providers in
-            DockDropLoader.loadURLs(from: providers) { urls in
-                for url in urls { store.pin(url: url) }
-            }
-            return true
-        }
-        .animation(.spring(response: 0.32, dampingFraction: 0.82), value: store.appTiles.map(\.id))
-        .animation(.spring(response: 0.32, dampingFraction: 0.82), value: store.otherTiles.map(\.id))
-    }
 
-    private var barBackground: some View {
-        ZStack {
-            DockVisualEffectView()
-                .clipShape(RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous))
-            RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous)
-                .fill(Color.white.opacity(barIsDropTarget ? 0.12 : 0))
-            RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous)
-                .strokeBorder(Color.white.opacity(0.18), lineWidth: 0.5)
+            if showAppNames, let hoveredID = ui.hoveredID,
+               let tile = store.allTiles.first(where: { $0.id == hoveredID }),
+               let frame = ui.layout.frames[hoveredID]
+            {
+                NameLabel(text: tile.name)
+                    .position(x: frame.midX, y: frame.minY - 22)
+                    .allowsHitTesting(false)
+                    .transition(.opacity)
+                    .id("label-\(hoveredID)")
+            }
         }
-        .shadow(color: .black.opacity(0.25), radius: 10, y: 3)
-    }
-
-    private var separator: some View {
-        Rectangle()
-            .fill(Color.primary.opacity(0.25))
-            .frame(width: 1, height: metrics.iconSize * 0.78)
-            .frame(width: metrics.separatorWidth - metrics.spacing)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+        .offset(y: ui.isHidden ? metrics.hiddenOffset : 0)
+        .opacity(ui.isHidden ? 0 : 1)
+        .animation(spring, value: ui.layout)
+        .animation(.easeInOut(duration: 0.25), value: ui.isHidden)
+        .animation(.easeOut(duration: 0.12), value: ui.hoveredID)
     }
 
     @ViewBuilder
-    private func tileView(_ tile: DockTile) -> some View {
+    private var barBackground: some View {
+        let shape = RoundedRectangle(cornerRadius: metrics.cornerRadius, style: .continuous)
+        ZStack {
+            switch material {
+            case .liquidGlass:
+                if #available(macOS 26.0, *) {
+                    LiquidGlassRepresentable(
+                        cornerRadius: metrics.cornerRadius,
+                        glassOpacity: 1,
+                        tintOpacity: CGFloat(tintOpacity),
+                        blurRadius: 0,
+                        saturation: 1.8,
+                        variant: 4
+                    )
+                } else {
+                    DockVisualEffectView().clipShape(shape)
+                }
+            case .frosted:
+                DockVisualEffectView().clipShape(shape)
+                shape.fill(Color(nsColor: .windowBackgroundColor).opacity(tintOpacity))
+            case .solid:
+                shape.fill(Color(nsColor: .windowBackgroundColor))
+            case .clear:
+                shape.fill(Color.primary.opacity(tintOpacity * 0.5))
+            }
+            shape.fill(Color.white.opacity(barIsDropTarget ? 0.12 : 0))
+            if showBorder {
+                shape.strokeBorder(Color.primary.opacity(0.14), lineWidth: 0.5)
+            }
+        }
+        .shadow(color: .black.opacity(material == .clear ? 0 : 0.22), radius: 10, y: 3)
+    }
+
+    @ViewBuilder
+    private func tileView(_ tile: DockTile, frame: CGRect) -> some View {
         DockTileView(
             tile: tile,
             icon: store.icon(for: tile),
-            metrics: metrics,
+            size: frame.width,
+            baseSize: metrics.iconSize,
             indicatorStyle: indicatorStyle,
-            isHovered: ui.hoveredID == tile.id,
+            indicatorOffset: metrics.paddingBottom / 2 + 2,
             isDropTarget: ui.dropTargetID == tile.id,
-            isLaunching: store.launchingIDs.contains(tile.id),
-            showName: showAppNames
+            isLaunching: store.launchingIDs.contains(tile.id)
         )
-        .onHover { hovering in
-            if hovering {
-                ui.hoveredID = tile.id
-            } else if ui.hoveredID == tile.id {
-                ui.hoveredID = nil
-            }
-        }
+        .frame(width: frame.width, height: frame.height)
         .onTapGesture {
+            CustomDockPreviews.hide()
             store.open(tile)
         }
-        .contextMenu { contextMenu(for: tile) }
         .onDrop(of: [UTType.fileURL], isTargeted: Binding(
             get: { ui.dropTargetID == tile.id },
             set: { targeted in
@@ -133,6 +137,7 @@ struct CustomDockView: View {
         )) { providers in
             handleDrop(providers, on: tile)
         }
+        .position(x: frame.midX, y: frame.midY)
         .transition(.scale(scale: 0.3).combined(with: .opacity))
     }
 
@@ -145,113 +150,79 @@ struct CustomDockView: View {
             DockDropLoader.loadURLs(from: providers) { urls in store.moveToTrash(urls) }
             return true
         case .folder:
-            if let folder = tile.url {
-                DockDropLoader.loadURLs(from: providers) { urls in
-                    for url in urls {
-                        let destination = folder.appendingPathComponent(url.lastPathComponent)
-                        guard !FileManager.default.fileExists(atPath: destination.path) else { continue }
-                        try? FileManager.default.copyItem(at: url, to: destination)
-                    }
+            guard let folder = tile.url else { return false }
+            DockDropLoader.loadURLs(from: providers) { urls in
+                for url in urls {
+                    let destination = folder.appendingPathComponent(url.lastPathComponent)
+                    guard !FileManager.default.fileExists(atPath: destination.path) else { continue }
+                    try? FileManager.default.copyItem(at: url, to: destination)
                 }
-                return true
             }
-            return false
+            return true
         case .file:
             return false
         }
     }
+}
 
-    @ViewBuilder
-    private func contextMenu(for tile: DockTile) -> some View {
-        switch tile.kind {
-        case .app:
-            if tile.isPinned {
-                if tile.bundleIdentifier != CustomDockStore.finderBundleID {
-                    Button("Aus dem Dock entfernen") { store.unpin(tile) }
-                }
-            } else if tile.url != nil {
-                Button("Im Dock behalten") { store.pin(tile) }
-            }
-            if tile.url != nil {
-                Button("Im Finder zeigen") { store.revealInFinder(tile) }
-            }
-            if tile.isRunning {
-                Divider()
-                Button("Ausblenden") { store.hide(tile) }
-                if tile.bundleIdentifier != CustomDockStore.finderBundleID {
-                    Button("Beenden") { store.quit(tile) }
-                    Button("Sofort beenden") { store.quit(tile, force: true) }
-                }
-            }
-        case .folder, .file:
-            Button("Öffnen") { store.open(tile) }
-            Button("Im Finder zeigen") { store.revealInFinder(tile) }
-            Divider()
-            Button("Aus dem Dock entfernen") { store.unpin(tile) }
-        case .trash:
-            Button("Öffnen") { store.open(tile) }
-            Button("Papierkorb entleeren …") { confirmEmptyTrash() }
-                .disabled(!store.trashIsFull)
-        }
-    }
+private struct NameLabel: View {
+    let text: String
 
-    private func confirmEmptyTrash() {
-        let alert = NSAlert()
-        alert.messageText = "Papierkorb wirklich entleeren?"
-        alert.informativeText = "Die Objekte im Papierkorb werden endgültig gelöscht."
-        alert.addButton(withTitle: "Entleeren")
-        alert.addButton(withTitle: "Abbrechen")
-        NSApp.activate(ignoringOtherApps: true)
-        if alert.runModal() == .alertFirstButtonReturn {
-            store.emptyTrash()
-        }
+    var body: some View {
+        Text(text)
+            .font(.system(size: 13, weight: .medium))
+            .lineLimit(1)
+            .fixedSize()
+            .padding(.horizontal, 10)
+            .padding(.vertical, 4)
+            .background(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .fill(.regularMaterial)
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 7, style: .continuous)
+                    .strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5)
+            )
     }
 }
 
 struct DockTileView: View {
     let tile: DockTile
     let icon: NSImage
-    let metrics: CustomDockMetrics
+    let size: CGFloat
+    let baseSize: CGFloat
     let indicatorStyle: CustomDockIndicatorStyle
-    let isHovered: Bool
+    let indicatorOffset: CGFloat
     let isDropTarget: Bool
     let isLaunching: Bool
-    let showName: Bool
 
     var body: some View {
         TimelineView(.animation(minimumInterval: nil, paused: !isLaunching)) { context in
-            iconImage
+            Image(nsImage: icon)
+                .resizable()
+                .interpolation(.high)
+                .aspectRatio(contentMode: .fit)
+                .brightness(isDropTarget ? 0.12 : 0)
+                .opacity(tile.isHidden ? 0.55 : 1)
                 .offset(y: bounceOffset(at: context.date))
         }
-        .frame(width: metrics.iconSize, height: metrics.iconSize)
         .background(cardBackground)
         .overlay(alignment: .bottom) { runningDot }
-        .overlay(alignment: .top) { nameLabel }
         .contentShape(Rectangle())
-    }
-
-    private var iconImage: some View {
-        Image(nsImage: icon)
-            .resizable()
-            .interpolation(.high)
-            .aspectRatio(contentMode: .fit)
-            .frame(width: metrics.iconSize, height: metrics.iconSize)
-            .brightness(isDropTarget ? 0.12 : 0)
-            .opacity(tile.isHidden ? 0.55 : 1)
     }
 
     private func bounceOffset(at date: Date) -> CGFloat {
         guard isLaunching else { return 0 }
         let t = date.timeIntervalSinceReferenceDate
-        return -abs(sin(t * .pi * 1.6)) * metrics.iconSize * 0.3
+        return -abs(sin(t * .pi * 1.6)) * baseSize * 0.3
     }
 
     @ViewBuilder
     private var cardBackground: some View {
         if indicatorStyle == .card, tile.isRunning {
-            RoundedRectangle(cornerRadius: metrics.iconSize * 0.24, style: .continuous)
+            RoundedRectangle(cornerRadius: size * 0.24, style: .continuous)
                 .fill(Color.primary.opacity(tile.isActive ? 0.2 : 0.12))
-                .padding(-metrics.iconSize * 0.07)
+                .padding(-size * 0.07)
         }
     }
 
@@ -261,30 +232,7 @@ struct DockTileView: View {
             Circle()
                 .fill(Color.primary.opacity(0.75))
                 .frame(width: 4, height: 4)
-                .offset(y: metrics.paddingBottom / 2 + 2)
-        }
-    }
-
-    @ViewBuilder
-    private var nameLabel: some View {
-        if showName, isHovered {
-            Text(tile.name)
-                .font(.system(size: 13, weight: .medium))
-                .lineLimit(1)
-                .fixedSize()
-                .padding(.horizontal, 10)
-                .padding(.vertical, 4)
-                .background(
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .fill(.regularMaterial)
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 7, style: .continuous)
-                        .strokeBorder(Color.primary.opacity(0.12), lineWidth: 0.5)
-                )
-                .alignmentGuide(.top) { d in d[.bottom] + metrics.paddingTop + 8 }
-                .allowsHitTesting(false)
-                .transition(.opacity)
+                .offset(y: indicatorOffset)
         }
     }
 }

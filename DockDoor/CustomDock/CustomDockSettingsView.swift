@@ -8,6 +8,15 @@ struct CustomDockSettingsView: View {
     @Default(.customDockIndicatorStyle) private var indicatorStyle
     @Default(.customDockShowTrash) private var showTrash
     @Default(.customDockShowAppNames) private var showAppNames
+    @Default(.customDockMagnification) private var magnification
+    @Default(.customDockMagnifiedSize) private var magnifiedSize
+    @Default(.customDockLayoutMode) private var layoutMode
+    @Default(.customDockMaterial) private var material
+    @Default(.customDockTintOpacity) private var tintOpacity
+    @Default(.customDockShowBorder) private var showBorder
+    @Default(.customDockAppearance) private var appearance
+    @Default(.customDockAutoHide) private var autoHide
+    @Default(.customDockShowPreviews) private var showPreviews
     @State private var showReimportConfirmation = false
 
     var body: some View {
@@ -31,16 +40,55 @@ struct CustomDockSettingsView: View {
                         }
                     }
 
-                    SettingsGroup(header: "Darstellung") {
+                    SettingsGroup(header: "Größe und Layout") {
                         VStack(alignment: .leading, spacing: 12) {
-                            HStack {
-                                Text("Symbolgröße")
-                                Slider(value: $iconSize, in: 24 ... 96, step: 1)
-                                Text("\(Int(iconSize)) pt")
-                                    .monospacedDigit()
-                                    .foregroundStyle(.secondary)
-                                    .frame(width: 48, alignment: .trailing)
+                            sliderRow("Symbolgröße", value: $iconSize, range: 24 ... 96)
+                            Toggle("Vergrößerung beim Überfahren", isOn: $magnification)
+                            if magnification {
+                                sliderRow("Vergrößert", value: $magnifiedSize, range: max(iconSize, 32) ... 192)
                             }
+                            Picker("Layout", selection: $layoutMode) {
+                                ForEach(CustomDockLayoutMode.allCases, id: \.self) { mode in
+                                    Text(mode.title).tag(mode)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            Text("Schwebend: mittig mit Abstand zum Rand. Randlos: eine Leiste über die ganze Bildschirmbreite, Ordner und Papierkorb rechts.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
+
+                    SettingsGroup(header: "Material") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Picker("Material", selection: $material) {
+                                ForEach(CustomDockMaterial.allCases, id: \.self) { item in
+                                    Text(item.title).tag(item)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                            if material != .solid {
+                                HStack {
+                                    Text("Tönung")
+                                    Slider(value: $tintOpacity, in: 0 ... 1)
+                                    Text("\(Int(tintOpacity * 100)) %")
+                                        .monospacedDigit()
+                                        .foregroundStyle(.secondary)
+                                        .frame(width: 48, alignment: .trailing)
+                                }
+                            }
+                            Toggle("Rahmen anzeigen", isOn: $showBorder)
+                            Picker("Erscheinungsbild", selection: $appearance) {
+                                ForEach(CustomDockAppearance.allCases, id: \.self) { item in
+                                    Text(item.title).tag(item)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+                        }
+                    }
+
+                    SettingsGroup(header: "Anzeige") {
+                        VStack(alignment: .leading, spacing: 12) {
                             Picker("Laufende Apps markieren", selection: $indicatorStyle) {
                                 ForEach(CustomDockIndicatorStyle.allCases, id: \.self) { style in
                                     Text(style.title).tag(style)
@@ -49,6 +97,19 @@ struct CustomDockSettingsView: View {
                             .pickerStyle(.segmented)
                             Toggle("Namen beim Überfahren anzeigen", isOn: $showAppNames)
                             Toggle("Papierkorb anzeigen", isOn: $showTrash)
+                        }
+                    }
+
+                    SettingsGroup(header: "Verhalten") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Toggle("Automatisch ausblenden", isOn: $autoHide)
+                            Text("Das Dock gleitet nach unten weg und erscheint wieder, sobald der Zeiger den unteren Bildschirmrand berührt.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Toggle("Fenstervorschauen beim Überfahren", isOn: $showPreviews)
+                            Text("Nutzt die Vorschau-Einstellungen aus „Dock Previews“ (Größe, Verzögerung, Aktionen, Vollbild beim Überfahren).")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
                         }
                     }
 
@@ -72,6 +133,17 @@ struct CustomDockSettingsView: View {
             Button("Abbrechen", role: .cancel) {}
         } message: {
             Text("Die angehefteten Apps und Ordner in DockerDoor werden durch die aus dem macOS-Dock ersetzt.")
+        }
+    }
+
+    private func sliderRow(_ title: String, value: Binding<Double>, range: ClosedRange<Double>) -> some View {
+        HStack {
+            Text(title)
+            Slider(value: value, in: range, step: 1)
+            Text("\(Int(value.wrappedValue)) pt")
+                .monospacedDigit()
+                .foregroundStyle(.secondary)
+                .frame(width: 48, alignment: .trailing)
         }
     }
 
