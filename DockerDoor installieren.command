@@ -94,6 +94,13 @@ if pgrep -x "$APP_NAME" >/dev/null; then
     echo "→ Beende die laufende $APP_NAME-App …"
     osascript -e "tell application id \"$BUNDLE_ID\" to quit" || true
     for _ in 1 2 3 4 5 6 7 8; do pgrep -x "$APP_NAME" >/dev/null || break; sleep 1; done
+    if pgrep -x "$APP_NAME" >/dev/null; then
+        echo "  Die App hat nicht reagiert – wird sofort beendet."
+        pkill -x "$APP_NAME" || true
+        for _ in 1 2 3 4 5; do pgrep -x "$APP_NAME" >/dev/null || break; sleep 1; done
+        pkill -9 -x "$APP_NAME" 2>/dev/null || true
+        sleep 1
+    fi
 fi
 
 DEST="/Applications"
