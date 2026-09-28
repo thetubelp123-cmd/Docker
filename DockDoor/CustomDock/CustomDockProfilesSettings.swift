@@ -59,7 +59,7 @@ struct CustomDockProfilesSettings: View {
                         Text(mode.title).tag(mode)
                     }
                 }
-                    .settingsSearchTarget("customDock.displays")
+                .settingsSearchTarget("customDock.displays")
                 .pickerStyle(.segmented)
 
                 switch displayMode {
@@ -237,7 +237,7 @@ struct CustomDockExtrasSettings: View {
                         Text(item.title).tag(item)
                     }
                 }
-                    .settingsSearchTarget("customDock.letterNav")
+                .settingsSearchTarget("customDock.letterNav")
                 Text("Kürzel drücken, dann Anfangsbuchstaben tippen: Das Dock springt zur passenden App. ←/→ oder Tab wechseln, ↩ öffnet, ⎋ bricht ab. Mehrmals denselben Buchstaben tippen blättert durch alle Treffer.")
                     .font(.caption)
                     .foregroundStyle(.secondary)

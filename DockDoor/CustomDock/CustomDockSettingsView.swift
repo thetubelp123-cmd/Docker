@@ -45,7 +45,7 @@ struct CustomDockSettingsView: View {
                     SettingsIllustratedToggle(isOn: $enabled, title: "Eigenes Dock verwenden") {
                         Text("DockerDoor zeigt ein eigenes Dock am Bildschirmrand – unten, links oder rechts.")
                     }
-                        .settingsSearchTarget("customDock.enabled")
+                    .settingsSearchTarget("customDock.enabled")
                     .onChange(of: enabled) { _ in applyChanges() }
                 }
 
@@ -70,7 +70,7 @@ struct CustomDockSettingsView: View {
                                     Text(item.title).tag(item)
                                 }
                             }
-                                .settingsSearchTarget("customDock.position")
+                            .settingsSearchTarget("customDock.position")
                             .pickerStyle(.segmented)
                             sliderRow("Symbolgröße", value: $iconSize, range: 24 ... 96)
                                 .settingsSearchTarget("customDock.iconSize")
@@ -84,7 +84,7 @@ struct CustomDockSettingsView: View {
                                     Text(mode.title).tag(mode)
                                 }
                             }
-                                .settingsSearchTarget("customDock.layoutMode")
+                            .settingsSearchTarget("customDock.layoutMode")
                             .pickerStyle(.segmented)
                             Text("Schwebend: mittig mit Abstand zum Rand. Randlos: eine Leiste über die ganze Bildschirmbreite, Ordner und Papierkorb rechts.")
                                 .font(.caption)
@@ -99,7 +99,7 @@ struct CustomDockSettingsView: View {
                                     Text(item.title).tag(item)
                                 }
                             }
-                                .settingsSearchTarget("customDock.material")
+                            .settingsSearchTarget("customDock.material")
                             .pickerStyle(.segmented)
                             if material != .solid {
                                 HStack {
@@ -118,7 +118,7 @@ struct CustomDockSettingsView: View {
                                     Text(item.title).tag(item)
                                 }
                             }
-                                .settingsSearchTarget("customDock.appearance")
+                            .settingsSearchTarget("customDock.appearance")
                             .pickerStyle(.segmented)
                         }
                     }
@@ -130,7 +130,7 @@ struct CustomDockSettingsView: View {
                                     Text(style.title).tag(style)
                                 }
                             }
-                                .settingsSearchTarget("customDock.indicator")
+                            .settingsSearchTarget("customDock.indicator")
                             .pickerStyle(.segmented)
                             Toggle("Namen beim Überfahren anzeigen", isOn: $showAppNames)
                                 .settingsSearchTarget("customDock.names")
@@ -168,14 +168,14 @@ struct CustomDockSettingsView: View {
                                     Text(mode.title).tag(mode)
                                 }
                             }
-                                .settingsSearchTarget("customDock.stackMode")
+                            .settingsSearchTarget("customDock.stackMode")
                             .pickerStyle(.segmented)
                             Picker("Sortieren nach", selection: $stackSort) {
                                 ForEach(StackSortOrder.allCases, id: \.self) { sort in
                                     Text(sort.title).tag(sort)
                                 }
                             }
-                                .settingsSearchTarget("customDock.stackSort")
+                            .settingsSearchTarget("customDock.stackSort")
                             Text("Gilt für alle Ordner ohne eigene Einstellung. Pro Ordner änderst du das per Rechtsklick › „Anzeigen als“ bzw. „Sortieren nach“.")
                                 .font(.caption)
                                 .foregroundStyle(.secondary)
@@ -211,7 +211,7 @@ struct CustomDockSettingsView: View {
                                     Text(style.title).tag(style)
                                 }
                             }
-                                .settingsSearchTarget("customDock.clock")
+                            .settingsSearchTarget("customDock.clock")
                             .pickerStyle(.segmented)
 
                             Divider()
@@ -248,7 +248,7 @@ struct CustomDockSettingsView: View {
                             Button("Apps und Ordner aus dem macOS-Dock neu übernehmen …") {
                                 showReimportConfirmation = true
                             }
-                                .settingsSearchTarget("customDock.reimport")
+                            .settingsSearchTarget("customDock.reimport")
                         }
                     }
                 }
