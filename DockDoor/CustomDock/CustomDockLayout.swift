@@ -68,7 +68,8 @@ enum CustomDockLayoutEngine {
         otherIDs: [String],
         size: CGSize,
         metrics: CustomDockMetrics,
-        mouseX: CGFloat?
+        mouseX: CGFloat?,
+        widthFactors: [String: CGFloat] = [:]
     ) -> DockLayoutResult {
         let barBottom = size.height - metrics.bottomMargin
         let barTop = barBottom - metrics.barHeight
@@ -85,9 +86,9 @@ enum CustomDockLayoutEngine {
         switch metrics.mode {
         case .floating:
             elements += othersElements
-            let block = layoutBlock(elements, anchorCenterX: size.width / 2, containerWidth: size.width, metrics: metrics, mouseX: mouseX)
+            let block = layoutBlock(elements, anchorCenterX: size.width / 2, containerWidth: size.width, metrics: metrics, mouseX: mouseX, widthFactors: widthFactors)
             for (id, placed) in block.items {
-                result.frames[id] = CGRect(x: placed.minX, y: iconBottom - placed.width, width: placed.width, height: placed.width)
+                result.frames[id] = CGRect(x: placed.minX, y: iconBottom - placed.height, width: placed.width, height: placed.height)
             }
             let baseWidth = block.baseWidth + metrics.paddingH * 2
             result.baseBarRect = CGRect(x: (size.width - baseWidth) / 2, y: barTop, width: baseWidth, height: metrics.barHeight)
@@ -98,16 +99,16 @@ enum CustomDockLayoutEngine {
                 height: metrics.barHeight
             )
         case .edgeToEdge:
-            let apps = layoutBlock(elements, anchorCenterX: size.width / 2, containerWidth: size.width, metrics: metrics, mouseX: mouseX)
+            let apps = layoutBlock(elements, anchorCenterX: size.width / 2, containerWidth: size.width, metrics: metrics, mouseX: mouseX, widthFactors: widthFactors)
             for (id, placed) in apps.items {
-                result.frames[id] = CGRect(x: placed.minX, y: iconBottom - placed.width, width: placed.width, height: placed.width)
+                result.frames[id] = CGRect(x: placed.minX, y: iconBottom - placed.height, width: placed.width, height: placed.height)
             }
             if !othersElements.isEmpty {
-                let othersBase = baseWidth(of: othersElements, metrics: metrics)
+                let othersBase = baseWidth(of: othersElements, metrics: metrics, widthFactors: widthFactors)
                 let center = size.width - metrics.paddingH - othersBase / 2
-                let others = layoutBlock(othersElements, anchorCenterX: center, containerWidth: size.width, metrics: metrics, mouseX: mouseX, rightAligned: true)
+                let others = layoutBlock(othersElements, anchorCenterX: center, containerWidth: size.width, metrics: metrics, mouseX: mouseX, rightAligned: true, widthFactors: widthFactors)
                 for (id, placed) in others.items {
-                    result.frames[id] = CGRect(x: placed.minX, y: iconBottom - placed.width, width: placed.width, height: placed.width)
+                    result.frames[id] = CGRect(x: placed.minX, y: iconBottom - placed.height, width: placed.width, height: placed.height)
                 }
             }
             result.baseBarRect = CGRect(x: 0, y: barTop, width: size.width, height: metrics.barHeight)
@@ -125,6 +126,7 @@ enum CustomDockLayoutEngine {
     private struct PlacedItem {
         var minX: CGFloat
         var width: CGFloat
+        var height: CGFloat
     }
 
     private struct BlockResult {
@@ -134,12 +136,16 @@ enum CustomDockLayoutEngine {
         var renderedWidth: CGFloat
     }
 
-    private static func baseWidth(of elements: [DockLayoutElement], metrics: CustomDockMetrics) -> CGFloat {
-        guard !elements.isEmpty else { return 0 }
-        let widths = elements.map { element -> CGFloat in
-            if case .separator = element { return metrics.separatorWidth }
-            return metrics.iconSize
+    private static func elementWidth(_ element: DockLayoutElement, metrics: CustomDockMetrics, widthFactors: [String: CGFloat]) -> CGFloat {
+        switch element {
+        case .separator: metrics.separatorWidth
+        case let .tile(id): metrics.iconSize * (widthFactors[id] ?? 1)
         }
+    }
+
+    private static func baseWidth(of elements: [DockLayoutElement], metrics: CustomDockMetrics, widthFactors: [String: CGFloat]) -> CGFloat {
+        guard !elements.isEmpty else { return 0 }
+        let widths = elements.map { elementWidth($0, metrics: metrics, widthFactors: widthFactors) }
         return widths.reduce(0, +) + metrics.spacing * CGFloat(elements.count - 1)
     }
 
@@ -151,16 +157,14 @@ enum CustomDockLayoutEngine {
         containerWidth: CGFloat,
         metrics: CustomDockMetrics,
         mouseX: CGFloat?,
-        rightAligned: Bool = false
+        rightAligned: Bool = false,
+        widthFactors: [String: CGFloat]
     ) -> BlockResult {
         guard !elements.isEmpty else {
             return BlockResult(items: [], baseWidth: 0, renderedMinX: anchorCenterX, renderedWidth: 0)
         }
         let spacing = metrics.spacing
-        let baseWidths = elements.map { element -> CGFloat in
-            if case .separator = element { return metrics.separatorWidth }
-            return metrics.iconSize
-        }
+        let baseWidths = elements.map { elementWidth($0, metrics: metrics, widthFactors: widthFactors) }
         let totalBase = baseWidths.reduce(0, +) + spacing * CGFloat(elements.count - 1)
         let baseStart = anchorCenterX - totalBase / 2
 
@@ -172,15 +176,20 @@ enum CustomDockLayoutEngine {
         }
 
         var renderedWidths = baseWidths
+        var renderedHeights = elements.map { _ in metrics.iconSize }
         if let mouseX, metrics.maxScale > 1 {
             let slot = metrics.iconSize + spacing
             for (index, element) in elements.enumerated() {
                 guard case .tile = element else { continue }
-                let center = baseLefts[index] + baseWidths[index] / 2
-                let distance = abs(mouseX - center) / slot
+                let left = baseLefts[index], right = left + baseWidths[index]
+                // Wide tiles count as "under the pointer" along their whole width.
+                let nearest = min(max(mouseX, left + metrics.iconSize / 2), right - metrics.iconSize / 2)
+                let distance = abs(mouseX - nearest) / slot
                 guard distance < metrics.magnificationRange else { continue }
                 let falloff = (cos(.pi * distance / metrics.magnificationRange) + 1) / 2
-                renderedWidths[index] = metrics.iconSize * (1 + (metrics.maxScale - 1) * falloff)
+                let scale = 1 + (metrics.maxScale - 1) * falloff
+                renderedWidths[index] = baseWidths[index] * scale
+                renderedHeights[index] = metrics.iconSize * scale
             }
         }
         let totalRendered = renderedWidths.reduce(0, +) + spacing * CGFloat(elements.count - 1)
@@ -207,7 +216,7 @@ enum CustomDockLayoutEngine {
         var items: [(String, PlacedItem)] = []
         var x = renderedStart
         for (index, element) in elements.enumerated() {
-            items.append((element.id, PlacedItem(minX: x, width: renderedWidths[index])))
+            items.append((element.id, PlacedItem(minX: x, width: renderedWidths[index], height: renderedHeights[index])))
             x += renderedWidths[index] + spacing
         }
         return BlockResult(items: items, baseWidth: totalBase, renderedMinX: renderedStart, renderedWidth: totalRendered)

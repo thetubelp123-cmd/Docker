@@ -19,6 +19,20 @@ struct CustomDockSettingsView: View {
     @Default(.customDockShowPreviews) private var showPreviews
     @Default(.customDockStackMode) private var stackMode
     @Default(.customDockStackSort) private var stackSort
+    @Default(.customDockPinnedItems) private var pinnedItems
+    @Default(.customDockClockStyle) private var clockStyle
+    @Default(.customDockTemperatureUnit) private var temperatureUnit
+    @Default(.customDockWeatherPlace) private var weatherPlace
+    @Default(.customDockWeatherHasLocation) private var weatherHasLocation
+    @Default(.customDockVolumeScroll) private var volumeScroll
+    @Default(.customDockLoadLyrics) private var loadLyrics
+    @Default(.customDockWidgetAutoRotate) private var autoRotate
+    @Default(.customDockWidgetRotateSeconds) private var rotateSeconds
+    @Default(.customDockWidgetSmartSwitch) private var smartSwitch
+    @ObservedObject private var weather = DockWeatherModel.shared
+    @State private var placeQuery = ""
+    @State private var placeResults: [WeatherPlace] = []
+    @State private var isSearchingPlace = false
     @State private var showReimportConfirmation = false
 
     var body: some View {
@@ -137,6 +151,53 @@ struct CustomDockSettingsView: View {
                         }
                     }
 
+                    SettingsGroup(header: "Widgets") {
+                        VStack(alignment: .leading, spacing: 12) {
+                            Text("Widget hinzufügen")
+                                .font(.subheadline.weight(.medium))
+                            LazyVGrid(columns: [GridItem(.adaptive(minimum: 130), alignment: .leading)], alignment: .leading, spacing: 8) {
+                                ForEach(DockWidgetKind.allCases, id: \.self) { kind in
+                                    Button {
+                                        CustomDockStore.appendWidget(kind)
+                                    } label: {
+                                        Label(kind.title, systemImage: kind.symbol)
+                                    }
+                                }
+                            }
+                            Text(widgetSummary)
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Text("Ein Widget auf ein anderes ziehen und kurz halten ergibt einen Widget-Stapel. Im Stapel blätterst du per Scrollen, Rechtsklick bietet weitere Optionen.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+
+                            Divider()
+                            Picker("Uhr", selection: $clockStyle) {
+                                ForEach(DockClockStyle.allCases, id: \.self) { style in
+                                    Text(style.title).tag(style)
+                                }
+                            }
+                            .pickerStyle(.segmented)
+
+                            Divider()
+                            weatherSettings
+
+                            Divider()
+                            Toggle("Lautstärke per Scrollen über Now Playing", isOn: $volumeScroll)
+                            Text("In einem Widget-Stapel mit gedrückter ⌥-Taste scrollen.")
+                                .font(.caption)
+                                .foregroundStyle(.secondary)
+                            Toggle("Songtexte laden (LRCLIB)", isOn: $loadLyrics)
+
+                            Divider()
+                            Toggle("Stapel automatisch durchblättern", isOn: $autoRotate)
+                            if autoRotate {
+                                sliderRow("Alle", value: $rotateSeconds, range: 4 ... 60, unit: "s")
+                            }
+                            Toggle("Zu Now Playing wechseln, wenn Musik startet", isOn: $smartSwitch)
+                        }
+                    }
+
                     SettingsGroup(header: "Inhalt") {
                         VStack(alignment: .leading, spacing: 8) {
                             Text("Symbole ordnest du per Ziehen neu. Nach oben aus dem Dock ziehen und loslassen entfernt sie. Laufende Apps werden angeheftet, wenn du sie zu den angehefteten ziehst.")
@@ -163,11 +224,93 @@ struct CustomDockSettingsView: View {
         }
     }
 
-    private func sliderRow(_ title: String, value: Binding<Double>, range: ClosedRange<Double>) -> some View {
+    private var widgetSummary: String {
+        let widgets = pinnedItems.filter { $0.kind == .widget }
+        guard !widgets.isEmpty else { return "Noch keine Widgets im Dock. Tipp: Rechtsklick auf eine freie Stelle im Dock › „Widget hinzufügen“." }
+        let names = widgets.map { item in (item.widgets ?? []).map(\.title).joined(separator: " + ") }
+        return "Im Dock: " + names.joined(separator: ", ")
+    }
+
+    @ViewBuilder
+    private var weatherSettings: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("Wetter-Ort")
+                Spacer()
+                Text(weatherHasLocation ? weatherPlace : "nicht festgelegt")
+                    .foregroundStyle(.secondary)
+            }
+            HStack {
+                TextField("Ort suchen, z. B. Hamburg", text: $placeQuery)
+                    .textFieldStyle(.roundedBorder)
+                    .onSubmit(searchPlace)
+                Button("Suchen", action: searchPlace)
+                    .disabled(placeQuery.trimmingCharacters(in: .whitespaces).count < 2)
+                if isSearchingPlace {
+                    ProgressView().controlSize(.small)
+                }
+            }
+            if !placeResults.isEmpty {
+                VStack(alignment: .leading, spacing: 2) {
+                    ForEach(placeResults) { place in
+                        Button {
+                            weather.choose(place)
+                            placeResults = []
+                            placeQuery = ""
+                        } label: {
+                            Label(place.label, systemImage: "mappin.and.ellipse")
+                                .frame(maxWidth: .infinity, alignment: .leading)
+                                .contentShape(Rectangle())
+                        }
+                        .buttonStyle(.plain)
+                        .padding(.vertical, 3)
+                    }
+                }
+            }
+            HStack {
+                Button {
+                    weather.useCurrentLocation()
+                } label: {
+                    Label("Aktuellen Standort verwenden", systemImage: "location")
+                }
+                Spacer()
+                Picker("Einheit", selection: $temperatureUnit) {
+                    ForEach(DockTemperatureUnit.allCases, id: \.self) { unit in
+                        Text(unit.title).tag(unit)
+                    }
+                }
+                .pickerStyle(.segmented)
+                .frame(width: 140)
+            }
+            if let message = weather.locationMessage {
+                Text(message)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+            Text("Wetterdaten von Open-Meteo (kostenlos, ohne Konto).")
+                .font(.caption)
+                .foregroundStyle(.secondary)
+        }
+    }
+
+    private func searchPlace() {
+        let query = placeQuery
+        guard query.trimmingCharacters(in: .whitespaces).count >= 2 else { return }
+        isSearchingPlace = true
+        Task {
+            let results = await DockWeatherModel.search(query)
+            await MainActor.run {
+                placeResults = results
+                isSearchingPlace = false
+            }
+        }
+    }
+
+    private func sliderRow(_ title: String, value: Binding<Double>, range: ClosedRange<Double>, unit: String = "pt") -> some View {
         HStack {
             Text(title)
             Slider(value: value, in: range, step: 1)
-            Text("\(Int(value.wrappedValue)) pt")
+            Text("\(Int(value.wrappedValue)) \(unit)")
                 .monospacedDigit()
                 .foregroundStyle(.secondary)
                 .frame(width: 48, alignment: .trailing)

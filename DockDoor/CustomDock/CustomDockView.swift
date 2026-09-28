@@ -10,6 +10,8 @@ final class CustomDockUIState: ObservableObject {
     @Published var dropTargetID: String?
     @Published var isHidden = false
     @Published var isInteracting = false
+    @Published var widgetPages: [String: Int] = [:]
+    @Published var volumeOverlay: (id: String, value: Float)?
 }
 
 struct CustomDockView: View {
@@ -58,7 +60,7 @@ struct CustomDockView: View {
             }
 
             if showAppNames, let hoveredID = ui.hoveredID,
-               let tile = store.allTiles.first(where: { $0.id == hoveredID }),
+               let tile = store.allTiles.first(where: { $0.id == hoveredID }), tile.kind != .widget,
                let frame = ui.layout.frames[hoveredID]
             {
                 NameLabel(text: tile.name)
@@ -112,6 +114,24 @@ struct CustomDockView: View {
 
     @ViewBuilder
     private func tileView(_ tile: DockTile, frame: CGRect) -> some View {
+        if tile.kind == .widget {
+            DockWidgetTileView(
+                tile: tile,
+                page: ui.widgetPages[tile.id] ?? 0,
+                size: frame.size,
+                volume: ui.volumeOverlay?.id == tile.id ? ui.volumeOverlay?.value : nil
+            )
+            .scaleEffect(ui.dropTargetID == tile.id ? 1.1 : 1)
+            .animation(.spring(response: 0.25, dampingFraction: 0.7), value: ui.dropTargetID == tile.id)
+            .position(x: frame.midX, y: frame.midY)
+            .transition(.scale(scale: 0.3).combined(with: .opacity))
+        } else {
+            iconTileView(tile, frame: frame)
+        }
+    }
+
+    @ViewBuilder
+    private func iconTileView(_ tile: DockTile, frame: CGRect) -> some View {
         DockTileView(
             tile: tile,
             icon: store.icon(for: tile),
@@ -164,7 +184,7 @@ struct CustomDockView: View {
                 }
             }
             return true
-        case .file:
+        case .file, .widget:
             return false
         }
     }

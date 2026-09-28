@@ -7,6 +7,8 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		937DE6E2CF9F4A04AC7F8F69 /* CustomDockWidgets.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A8AA10DF37543C8ADD6D8E9 /* CustomDockWidgets.swift */; };
+		B5468199DCE1433687D6CF9E /* CustomDockWidgetData.swift in Sources */ = {isa = PBXBuildFile; fileRef = C8F592EE1568424EBDDED43C /* CustomDockWidgetData.swift */; };
 		2CA2C31FB5DF4B00B13D7C2A /* CustomDockStack.swift in Sources */ = {isa = PBXBuildFile; fileRef = D2EF7850D1E643ACA9411E16 /* CustomDockStack.swift */; };
 		63BF27C1A38748148301CC06 /* CustomDockLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = 65B5BC9C4F01418A9005C48F /* CustomDockLayout.swift */; };
 		6DB12189CC274E3E8E444817 /* CustomDockPreviews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7BA7780B881C4765BD198DC4 /* CustomDockPreviews.swift */; };
@@ -252,6 +254,8 @@
 /* End PBXCopyFilesBuildPhase section */
 
 /* Begin PBXFileReference section */
+		8A8AA10DF37543C8ADD6D8E9 /* CustomDockWidgets.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockWidgets.swift; sourceTree = "<group>"; };
+		C8F592EE1568424EBDDED43C /* CustomDockWidgetData.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockWidgetData.swift; sourceTree = "<group>"; };
 		D2EF7850D1E643ACA9411E16 /* CustomDockStack.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockStack.swift; sourceTree = "<group>"; };
 		65B5BC9C4F01418A9005C48F /* CustomDockLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockLayout.swift; sourceTree = "<group>"; };
 		7BA7780B881C4765BD198DC4 /* CustomDockPreviews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CustomDockPreviews.swift; sourceTree = "<group>"; };
@@ -496,6 +500,8 @@
 		F9EFDF417AD24010B39AD8D1 /* CustomDock */ = {
 			isa = PBXGroup;
 			children = (
+				8A8AA10DF37543C8ADD6D8E9 /* CustomDockWidgets.swift */,
+				C8F592EE1568424EBDDED43C /* CustomDockWidgetData.swift */,
 				D2EF7850D1E643ACA9411E16 /* CustomDockStack.swift */,
 				65B5BC9C4F01418A9005C48F /* CustomDockLayout.swift */,
 				7BA7780B881C4765BD198DC4 /* CustomDockPreviews.swift */,
@@ -1165,6 +1171,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				937DE6E2CF9F4A04AC7F8F69 /* CustomDockWidgets.swift in Sources */,
+				B5468199DCE1433687D6CF9E /* CustomDockWidgetData.swift in Sources */,
 				2CA2C31FB5DF4B00B13D7C2A /* CustomDockStack.swift in Sources */,
 				63BF27C1A38748148301CC06 /* CustomDockLayout.swift in Sources */,
 				6DB12189CC274E3E8E444817 /* CustomDockPreviews.swift in Sources */,

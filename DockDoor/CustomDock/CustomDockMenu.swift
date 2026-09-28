@@ -51,6 +51,8 @@ final class CustomDockMenuBuilder: NSObject {
             menu.addItem(.separator())
             add(menu, "Gruppe auflösen", "square.split.2x2", #selector(dissolveGroup))
             add(menu, "Aus dem Dock entfernen", "minus.circle", #selector(unpinTile))
+        case .widget:
+            buildWidgetMenu(menu, tile: tile)
         case .trash:
             add(menu, "Öffnen", "trash", #selector(openTile))
             let empty = add(menu, "Papierkorb entleeren …", "trash.slash", #selector(emptyTrash))
@@ -183,7 +185,80 @@ final class CustomDockMenuBuilder: NSObject {
         menu.addItem(item)
     }
 
+    private func buildWidgetMenu(_ menu: NSMenu, tile: DockTile) {
+        add(menu, "Öffnen", "arrow.up.forward.app", #selector(openStack))
+        if tile.widgets.contains(.clock) {
+            let style = NSMenuItem(title: "Uhr", action: nil, keyEquivalent: "")
+            style.image = NSImage(systemSymbolName: "clock", accessibilityDescription: nil)
+            let submenu = NSMenu()
+            for clockStyle in DockClockStyle.allCases {
+                let entry = NSMenuItem(title: clockStyle.title, action: #selector(setClockStyle(_:)), keyEquivalent: "")
+                entry.target = self
+                entry.representedObject = clockStyle.rawValue
+                entry.state = Defaults[.customDockClockStyle] == clockStyle ? .on : .off
+                submenu.addItem(entry)
+            }
+            style.submenu = submenu
+            menu.addItem(style)
+        }
+        if tile.widgets.contains(.weather) {
+            add(menu, "Wetter aktualisieren", "arrow.clockwise", #selector(refreshWeather))
+            add(menu, "Wetter-Ort ändern …", "location", #selector(openSettings))
+        }
+        menu.addItem(.separator())
+
+        let missing = DockWidgetKind.allCases.filter { !tile.widgets.contains($0) }
+        if !missing.isEmpty {
+            let addItem = NSMenuItem(title: "Zum Stapel hinzufügen", action: nil, keyEquivalent: "")
+            addItem.image = NSImage(systemSymbolName: "plus.square.on.square", accessibilityDescription: nil)
+            let submenu = NSMenu()
+            for kind in missing {
+                let entry = NSMenuItem(title: kind.title, action: #selector(addWidgetToStack(_:)), keyEquivalent: "")
+                entry.target = self
+                entry.representedObject = kind.rawValue
+                entry.image = NSImage(systemSymbolName: kind.symbol, accessibilityDescription: nil)
+                submenu.addItem(entry)
+            }
+            addItem.submenu = submenu
+            menu.addItem(addItem)
+        }
+        if tile.isWidgetStack {
+            let removeItem = NSMenuItem(title: "Aus Stapel nehmen", action: nil, keyEquivalent: "")
+            removeItem.image = NSImage(systemSymbolName: "square.stack.3d.down.right", accessibilityDescription: nil)
+            let submenu = NSMenu()
+            for kind in tile.widgets {
+                let entry = NSMenuItem(title: kind.title, action: #selector(removeWidgetFromStack(_:)), keyEquivalent: "")
+                entry.target = self
+                entry.representedObject = kind.rawValue
+                entry.image = NSImage(systemSymbolName: kind.symbol, accessibilityDescription: nil)
+                submenu.addItem(entry)
+            }
+            removeItem.submenu = submenu
+            menu.addItem(removeItem)
+            add(menu, "Stapel auflösen", "square.split.2x2", #selector(dissolveWidgetStack))
+        }
+        menu.addItem(.separator())
+        add(menu, "Aus dem Dock entfernen", "minus.circle", #selector(unpinTile))
+    }
+
+    private func addWidgetMenu(to menu: NSMenu) {
+        let item = NSMenuItem(title: "Widget hinzufügen", action: nil, keyEquivalent: "")
+        item.image = NSImage(systemSymbolName: "plus.square", accessibilityDescription: nil)
+        let submenu = NSMenu()
+        for kind in DockWidgetKind.allCases {
+            let entry = NSMenuItem(title: kind.title, action: #selector(addWidget(_:)), keyEquivalent: "")
+            entry.target = self
+            entry.representedObject = kind.rawValue
+            entry.image = NSImage(systemSymbolName: kind.symbol, accessibilityDescription: nil)
+            submenu.addItem(entry)
+        }
+        item.submenu = submenu
+        menu.addItem(item)
+    }
+
     private func addDockOptions(to menu: NSMenu) {
+        addWidgetMenu(to: menu)
+        menu.addItem(.separator())
         let magnification = add(menu, "Vergrößerung", nil, #selector(toggleMagnification))
         magnification.state = Defaults[.customDockMagnification] ? .on : .off
         let autoHide = add(menu, "Automatisch ausblenden", nil, #selector(toggleAutoHide))
@@ -215,6 +290,35 @@ final class CustomDockMenuBuilder: NSObject {
     @objc private func unhideApp() { runningApp?.unhide() }
     @objc private func quitApp() { runningApp?.terminate() }
     @objc private func forceQuitApp() { runningApp?.forceTerminate() }
+
+    @objc private func addWidget(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String, let kind = DockWidgetKind(rawValue: raw) else { return }
+        store.addWidget(kind)
+    }
+
+    @objc private func addWidgetToStack(_ sender: NSMenuItem) {
+        guard let tile, let raw = sender.representedObject as? String, let kind = DockWidgetKind(rawValue: raw) else { return }
+        store.addWidget(kind, toStack: tile.id)
+    }
+
+    @objc private func removeWidgetFromStack(_ sender: NSMenuItem) {
+        guard let tile, let raw = sender.representedObject as? String, let kind = DockWidgetKind(rawValue: raw) else { return }
+        store.removeWidget(kind, fromStack: tile.id)
+    }
+
+    @objc private func dissolveWidgetStack() {
+        guard let tile else { return }
+        store.dissolveWidgetStack(tile.id)
+    }
+
+    @objc private func setClockStyle(_ sender: NSMenuItem) {
+        guard let raw = sender.representedObject as? String, let style = DockClockStyle(rawValue: raw) else { return }
+        Defaults[.customDockClockStyle] = style
+    }
+
+    @objc private func refreshWeather() {
+        DockWeatherModel.shared.refresh()
+    }
 
     @objc private func openStack() {
         guard let tile else { return }

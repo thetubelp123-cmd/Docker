@@ -107,6 +107,64 @@ enum PinnedDockItemKind: String, Codable {
     case folder
     case file
     case group
+    case widget
+}
+
+enum DockWidgetKind: String, Codable, CaseIterable, Defaults.Serializable {
+    case clock
+    case weather
+    case calendar
+    case battery
+    case nowPlaying
+
+    var title: String {
+        switch self {
+        case .clock: "Uhr"
+        case .weather: "Wetter"
+        case .calendar: "Kalender"
+        case .battery: "Akku"
+        case .nowPlaying: "Now Playing"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .clock: "clock"
+        case .weather: "cloud.sun"
+        case .calendar: "calendar"
+        case .battery: "battery.75percent"
+        case .nowPlaying: "music.note"
+        }
+    }
+
+    /// Width of the tile in icon widths.
+    var widthFactor: CGFloat {
+        self == .nowPlaying ? 2.6 : 1
+    }
+}
+
+enum DockClockStyle: String, CaseIterable, Defaults.Serializable {
+    case digital
+    case analog
+
+    var title: String {
+        switch self {
+        case .digital: "Digital"
+        case .analog: "Analog"
+        }
+    }
+}
+
+enum DockTemperatureUnit: String, CaseIterable, Defaults.Serializable {
+    case celsius
+    case fahrenheit
+
+    var title: String {
+        switch self {
+        case .celsius: "°C"
+        case .fahrenheit: "°F"
+        }
+    }
 }
 
 struct PinnedGroupMember: Codable, Hashable {
@@ -124,10 +182,13 @@ struct PinnedDockItem: Codable, Hashable, Identifiable, Defaults.Serializable {
     var members: [PinnedGroupMember]?
     var stackMode: StackDisplayMode?
     var stackSort: StackSortOrder?
+    var widgets: [DockWidgetKind]?
 
     init(kind: PinnedDockItemKind, path: String, bundleIdentifier: String? = nil, name: String? = nil,
-         members: [PinnedGroupMember]? = nil, stackMode: StackDisplayMode? = nil, stackSort: StackSortOrder? = nil)
+         members: [PinnedGroupMember]? = nil, stackMode: StackDisplayMode? = nil, stackSort: StackSortOrder? = nil,
+         widgets: [DockWidgetKind]? = nil)
     {
+        self.widgets = widgets
         self.kind = kind
         self.path = path
         self.bundleIdentifier = bundleIdentifier
@@ -143,6 +204,10 @@ struct PinnedDockItem: Codable, Hashable, Identifiable, Defaults.Serializable {
 
     static func newGroup(name: String, members: [PinnedGroupMember]) -> PinnedDockItem {
         PinnedDockItem(kind: .group, path: "group:\(UUID().uuidString)", name: name, members: members)
+    }
+
+    static func newWidget(_ widgets: [DockWidgetKind]) -> PinnedDockItem {
+        PinnedDockItem(kind: .widget, path: "widget:\(UUID().uuidString)", widgets: widgets)
     }
 }
 
@@ -166,6 +231,18 @@ extension Defaults.Keys {
     static let customDockStackSort = Key<StackSortOrder>("customDockStackSort", default: .dateAdded)
     static let customDockPinnedItems = Key<[PinnedDockItem]>("customDockPinnedItems", default: [])
     static let customDockDidImportSystemDock = Key<Bool>("customDockDidImportSystemDock", default: false)
+
+    static let customDockClockStyle = Key<DockClockStyle>("customDockClockStyle", default: .digital)
+    static let customDockTemperatureUnit = Key<DockTemperatureUnit>("customDockTemperatureUnit", default: .celsius)
+    static let customDockWeatherPlace = Key<String>("customDockWeatherPlace", default: "")
+    static let customDockWeatherLatitude = Key<Double>("customDockWeatherLatitude", default: 0)
+    static let customDockWeatherLongitude = Key<Double>("customDockWeatherLongitude", default: 0)
+    static let customDockWeatherHasLocation = Key<Bool>("customDockWeatherHasLocation", default: false)
+    static let customDockVolumeScroll = Key<Bool>("customDockVolumeScroll", default: true)
+    static let customDockLoadLyrics = Key<Bool>("customDockLoadLyrics", default: true)
+    static let customDockWidgetAutoRotate = Key<Bool>("customDockWidgetAutoRotate", default: false)
+    static let customDockWidgetRotateSeconds = Key<Double>("customDockWidgetRotateSeconds", default: 12)
+    static let customDockWidgetSmartSwitch = Key<Bool>("customDockWidgetSmartSwitch", default: true)
 
     // State of the macOS Dock before DockerDoor hid it; -1 = key was not set.
     static let customDockSystemDockHidden = Key<Bool>("customDockSystemDockHidden", default: false)

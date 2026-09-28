@@ -33,6 +33,11 @@ final class CustomDockHostingView<Content: View>: NSHostingView<Content> {
     var onMouseDown: (() -> Void)?
     var onMouseDragged: (() -> Void)?
     var onMouseUp: (() -> Void)?
+    var onScroll: ((NSEvent) -> Bool)?
+
+    override func scrollWheel(with event: NSEvent) {
+        if onScroll?(event) != true { super.scrollWheel(with: event) }
+    }
 
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 
@@ -79,6 +84,12 @@ final class CustomDockController {
     private var isMenuOpen = false
 
     let stackController = StackPanelController()
+    let popoverController = DockPopoverController()
+    private var rotateTimer: Timer?
+    private var rotationTask: Task<Void, Never>?
+    private var scrollAccumulator: CGFloat = 0
+    private var lastPageFlip = Date.distantPast
+    private var volumeClearWork: DispatchWorkItem?
     private var drag: DockDrag?
     private var ghost: DockDragGhost?
     static let gapID = "drag-gap"
@@ -92,6 +103,7 @@ final class CustomDockController {
         hostingView.onMouseDown = { [weak self] in self?.mouseDown() }
         hostingView.onMouseDragged = { [weak self] in self?.mouseDragged() }
         hostingView.onMouseUp = { [weak self] in self?.mouseUp() }
+        hostingView.onScroll = { [weak self] event in self?.handleScroll(event) ?? false }
         self.hostingView = hostingView
         panel.contentView = hostingView
         panel.ignoresMouseEvents = true
@@ -106,8 +118,27 @@ final class CustomDockController {
 
         store.$appTiles.combineLatest(store.$otherTiles)
             .receive(on: RunLoop.main)
-            .sink { [weak self] _, _ in self?.relayout() }
+            .sink { [weak self] _, _ in
+                self?.relayout()
+                self?.widgetsChanged()
+            }
             .store(in: &cancellables)
+
+        MediaRemoteService.shared.$isPlaying
+            .removeDuplicates()
+            .receive(on: RunLoop.main)
+            .sink { [weak self] playing in
+                guard playing, Defaults[.customDockWidgetSmartSwitch] else { return }
+                self?.showNowPlayingInStacks()
+            }
+            .store(in: &cancellables)
+
+        let rotationKeys: [Defaults._AnyKey] = [.customDockWidgetAutoRotate, .customDockWidgetRotateSeconds]
+        rotationTask = Task { [weak self] in
+            for await _ in Defaults.updates(rotationKeys, initial: true) {
+                await MainActor.run { self?.configureRotation() }
+            }
+        }
 
         screenObserver = NotificationCenter.default.addObserver(
             forName: NSApplication.didChangeScreenParametersNotification,
@@ -144,6 +175,11 @@ final class CustomDockController {
         screenObserver = nil
         CustomDockPreviews.hide()
         stackController.close()
+        popoverController.close()
+        rotateTimer?.invalidate()
+        rotateTimer = nil
+        rotationTask?.cancel()
+        DockWidgetHub.shared.update(activeKinds: [])
         ghost?.close()
         ghost = nil
         drag = nil
@@ -210,8 +246,13 @@ final class CustomDockController {
         var appIDs = store.appTiles.map(\.id)
         var otherIDs = store.otherTiles.map(\.id)
         var magnifyX = mouseX
+        var widthFactors: [String: CGFloat] = [:]
+        for tile in store.otherTiles where tile.kind == .widget && tile.widthFactor != 1 {
+            widthFactors[tile.id] = tile.widthFactor
+        }
         if let drag, drag.isActive {
             magnifyX = nil
+            widthFactors[Self.gapID] = drag.tile.widthFactor
             appIDs.removeAll { $0 == drag.tile.id }
             otherIDs.removeAll { $0 == drag.tile.id }
             if !drag.isRemoving {
@@ -228,7 +269,8 @@ final class CustomDockController {
             otherIDs: otherIDs,
             size: size,
             metrics: metrics,
-            mouseX: magnifyX
+            mouseX: magnifyX,
+            widthFactors: widthFactors
         )
         if layout != ui.layout { ui.layout = layout }
     }
@@ -258,7 +300,7 @@ final class CustomDockController {
         if Defaults[.customDockAutoHide] {
             let atEdge = mouse.y <= screen.frame.minY + 1.5 && mouse.x >= screen.frame.minX && mouse.x <= screen.frame.maxX
             let overDock = isRevealed && layout.contentRect.insetBy(dx: -4, dy: -8).contains(point)
-            let keep = atEdge || overDock || isMenuOpen || CustomDockPreviews.isMouseInPreview || drag != nil || stackController.isOpen
+            let keep = atEdge || overDock || isMenuOpen || CustomDockPreviews.isMouseInPreview || drag != nil || stackController.isOpen || popoverController.isOpen
             if keep { lastKeepVisible = Date() }
             if !isRevealed, atEdge {
                 isRevealed = true
@@ -308,7 +350,7 @@ final class CustomDockController {
     }
 
     private func hoverChanged(to id: String?, screen: NSScreen) {
-        guard let id, !stackController.isOpen else { return }
+        guard let id, !stackController.isOpen, !popoverController.isOpen else { return }
         guard let tile = store.allTiles.first(where: { $0.id == id }),
               let frame = ui.layout.frames[id]
         else { return }
@@ -334,7 +376,14 @@ final class CustomDockController {
 
         CustomDockPreviews.hide()
         stackController.close()
-        menuBuilder.onOpenStack = { [weak self] tile in self?.toggleStack(for: tile) }
+        popoverController.close()
+        menuBuilder.onOpenStack = { [weak self] tile in
+            if tile.kind == .widget {
+                self?.togglePopover(for: tile)
+            } else {
+                self?.toggleStack(for: tile)
+            }
+        }
         let menu = menuBuilder.menu(for: tile)
         isMenuOpen = true
         NSMenu.popUpContextMenu(menu, with: event, for: hostingView)
@@ -348,8 +397,11 @@ final class CustomDockController {
         switch tile.kind {
         case .folder, .group:
             toggleStack(for: tile)
+        case .widget:
+            togglePopover(for: tile)
         default:
             stackController.close()
+            popoverController.close()
             CustomDockPreviews.hide()
             store.open(tile)
         }
@@ -363,6 +415,7 @@ final class CustomDockController {
             return
         }
         guard let screen = dockScreen, let frame = ui.layout.frames[tile.id] else { return }
+        popoverController.close()
         let source: StackModel.Source
         if tile.kind == .group {
             source = .group(id: tile.id, members: tile.members)
@@ -390,6 +443,130 @@ final class CustomDockController {
         stackController.show(model, anchor: screenRect(fromView: frame), screen: screen, ignoringClicksIn: panel)
     }
 
+    // MARK: - Widgets
+
+    private func widgetsChanged() {
+        DockWidgetHub.shared.update(activeKinds: Set(store.otherTiles.flatMap(\.widgets)))
+    }
+
+    private func currentWidget(of tile: DockTile) -> DockWidgetKind? {
+        guard !tile.widgets.isEmpty else { return nil }
+        return tile.widgets[(ui.widgetPages[tile.id] ?? 0) % tile.widgets.count]
+    }
+
+    func togglePopover(for tile: DockTile) {
+        guard let kind = currentWidget(of: tile) else { return }
+        let key = "\(tile.id)|\(kind.rawValue)"
+        if popoverController.openKey == key {
+            popoverController.close()
+            return
+        }
+        guard let screen = dockScreen, let frame = ui.layout.frames[tile.id] else { return }
+        stackController.close()
+        CustomDockPreviews.hide()
+        switch kind {
+        case .weather:
+            let weather = DockWeatherModel.shared
+            if weather.snapshot.map({ Date().timeIntervalSince($0.fetched) > 600 }) ?? true { weather.refresh() }
+        case .calendar:
+            DockCalendarModel.shared.load()
+        case .battery:
+            DockBatteryModel.shared.read()
+        case .clock, .nowPlaying:
+            break
+        }
+        let popover = popoverController
+        popoverController.show(
+            DockWidgetPopovers.view(for: kind, close: { [weak popover] in popover?.close() }),
+            size: DockWidgetPopovers.size(for: kind),
+            key: key,
+            anchor: screenRect(fromView: frame),
+            screen: screen,
+            ignoringClicksIn: panel
+        )
+    }
+
+    private func flipPage(of tile: DockTile, by step: Int) {
+        let count = tile.widgets.count
+        guard count > 1 else { return }
+        let current = (ui.widgetPages[tile.id] ?? 0) % count
+        ui.widgetPages[tile.id] = (current + step + count) % count
+        if popoverController.openKey?.hasPrefix(tile.id + "|") == true {
+            popoverController.close()
+        }
+    }
+
+    private func showNowPlayingInStacks() {
+        for tile in store.otherTiles where tile.isWidgetStack {
+            if let index = tile.widgets.firstIndex(of: .nowPlaying) {
+                ui.widgetPages[tile.id] = index
+            }
+        }
+    }
+
+    private func configureRotation() {
+        rotateTimer?.invalidate()
+        rotateTimer = nil
+        guard Defaults[.customDockWidgetAutoRotate] else { return }
+        let interval = max(4, Defaults[.customDockWidgetRotateSeconds])
+        rotateTimer = Timer.scheduledTimer(withTimeInterval: interval, repeats: true) { [weak self] _ in
+            self?.rotateStacks()
+        }
+    }
+
+    private func rotateStacks() {
+        guard drag == nil else { return }
+        let nowPlayingActive = MediaRemoteService.shared.isPlaying && Defaults[.customDockWidgetSmartSwitch]
+        for tile in store.otherTiles where tile.isWidgetStack && tile.id != ui.hoveredID {
+            if popoverController.openKey?.hasPrefix(tile.id + "|") == true { continue }
+            // While music plays the smart stack stays on Now Playing.
+            if nowPlayingActive, currentWidget(of: tile) == .nowPlaying { continue }
+            flipPage(of: tile, by: 1)
+        }
+    }
+
+    private func handleScroll(_ event: NSEvent) -> Bool {
+        let point = viewPoint(fromScreen: NSEvent.mouseLocation)
+        guard let id = ui.layout.tileID(at: point, spacing: metrics.spacing),
+              let tile = store.allTiles.first(where: { $0.id == id }),
+              tile.kind == .widget, let current = currentWidget(of: tile)
+        else { return false }
+        guard event.momentumPhase.isEmpty else { return true }
+
+        var delta = abs(event.scrollingDeltaY) >= abs(event.scrollingDeltaX) ? event.scrollingDeltaY : -event.scrollingDeltaX
+        if event.isDirectionInvertedFromDevice { delta = -delta }
+
+        let wantsVolume = current == .nowPlaying && Defaults[.customDockVolumeScroll]
+            && (!tile.isWidgetStack || event.modifierFlags.contains(.option))
+        if wantsVolume {
+            let step = Float(delta) * (event.hasPreciseScrollingDeltas ? 0.004 : 0.03)
+            let value = max(0, min(1, AudioDeviceManager.getSystemVolume() + step))
+            AudioDeviceManager.setSystemVolume(value)
+            showVolume(value, on: tile.id)
+            return true
+        }
+
+        guard tile.isWidgetStack else { return true }
+        if event.phase == .began { scrollAccumulator = 0 }
+        scrollAccumulator += delta
+        let threshold: CGFloat = event.hasPreciseScrollingDeltas ? 28 : 0.5
+        if abs(scrollAccumulator) >= threshold, Date().timeIntervalSince(lastPageFlip) > 0.3 {
+            flipPage(of: tile, by: scrollAccumulator > 0 ? -1 : 1)
+            scrollAccumulator = 0
+            lastPageFlip = Date()
+        }
+        if event.phase == .ended || event.phase == .cancelled { scrollAccumulator = 0 }
+        return true
+    }
+
+    private func showVolume(_ value: Float, on id: String) {
+        ui.volumeOverlay = (id: id, value: value)
+        volumeClearWork?.cancel()
+        let work = DispatchWorkItem { [weak self] in self?.ui.volumeOverlay = nil }
+        volumeClearWork = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.1, execute: work)
+    }
+
     // MARK: - Dragging icons
 
     private func mouseDown() {
@@ -405,7 +582,7 @@ final class CustomDockController {
             tile: tile,
             startPoint: point,
             grabOffset: CGSize(width: point.x - frame.midX, height: point.y - frame.midY),
-            grabbedSize: max(1, frame.width)
+            grabbedSize: max(1, frame.height)
         )
     }
 
@@ -422,6 +599,7 @@ final class CustomDockController {
             drag = current
             CustomDockPreviews.hide()
             stackController.close()
+            popoverController.close()
             ui.hoveredID = nil
             mouseX = nil
             let ghost = DockDragGhost(icon: store.icon(for: current.tile), size: metrics.iconSize * 1.1)
@@ -434,6 +612,7 @@ final class CustomDockController {
     private func mouseUp() {
         guard let finished = drag else {
             stackController.close()
+            popoverController.close()
             return
         }
         drag = nil
@@ -451,6 +630,9 @@ final class CustomDockController {
     }
 
     private func canMerge(_ dragged: DockTile, onto target: DockTile) -> Bool {
+        if dragged.kind == .widget {
+            return target.kind == .widget && target.id != dragged.id
+        }
         guard dragged.id != target.id, dragged.kind == .app, dragged.url != nil, !dragged.isFinder else { return false }
         if target.kind == .group { return true }
         return target.kind == .app && target.url != nil && !target.isFinder
@@ -538,7 +720,9 @@ final class CustomDockController {
                   let target = store.allTiles.first(where: { $0.id == targetID })
         {
             ghost?.close()
-            if target.kind == .group {
+            if finished.tile.kind == .widget {
+                store.mergeWidgets(finished.tile, into: targetID)
+            } else if target.kind == .group {
                 store.add(finished.tile, toGroup: targetID)
             } else {
                 store.createGroup(from: finished.tile, with: target)

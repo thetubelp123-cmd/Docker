@@ -8,6 +8,7 @@ enum DockTileKind: Equatable {
     case file
     case trash
     case group
+    case widget
 }
 
 struct DockTile: Identifiable, Equatable {
@@ -24,8 +25,11 @@ struct DockTile: Identifiable, Equatable {
     var members: [PinnedGroupMember] = []
     var stackMode: StackDisplayMode?
     var stackSort: StackSortOrder?
+    var widgets: [DockWidgetKind] = []
 
     var isGroup: Bool { kind == .group }
+    var isWidgetStack: Bool { kind == .widget && widgets.count > 1 }
+    var widthFactor: CGFloat { kind == .widget ? (widgets.map(\.widthFactor).max() ?? 1) : 1 }
     var isFinder: Bool { bundleIdentifier == CustomDockStore.finderBundleID }
     /// Tiles the user can drag to a new place.
     var isMovable: Bool { kind != .trash && !isFinder }
@@ -158,8 +162,24 @@ final class CustomDockStore: ObservableObject {
             ))
         }
 
-        var others: [DockTile] = pinned.filter { $0.kind == .folder || $0.kind == .file }.map { item in
-            DockTile(
+        var others: [DockTile] = pinned.filter { Self.isOtherSection($0.kind) }.map { item in
+            if item.kind == .widget {
+                let widgets = item.widgets ?? []
+                return DockTile(
+                    id: item.id,
+                    kind: .widget,
+                    url: nil,
+                    bundleIdentifier: nil,
+                    name: widgets.count > 1 ? "Widget-Stapel" : (widgets.first?.title ?? "Widget"),
+                    isPinned: true,
+                    isRunning: false,
+                    isActive: false,
+                    isHidden: false,
+                    pid: nil,
+                    widgets: widgets
+                )
+            }
+            return DockTile(
                 id: item.id,
                 kind: item.kind == .folder ? .folder : .file,
                 url: item.url,
@@ -204,6 +224,9 @@ final class CustomDockStore: ObservableObject {
 
     func normalizedPinnedItems() -> [PinnedDockItem] {
         var items: [PinnedDockItem] = Defaults[.customDockPinnedItems].compactMap { item in
+            if item.kind == .widget {
+                return item.widgets?.isEmpty == false ? item : nil
+            }
             guard item.kind == .group else {
                 return FileManager.default.fileExists(atPath: item.path) ? item : nil
             }
@@ -228,6 +251,14 @@ final class CustomDockStore: ObservableObject {
         if tile.kind == .trash {
             let name = trashIsFull ? "NSTrashFull" : "NSTrashEmpty"
             return NSImage(named: NSImage.Name(name)) ?? NSWorkspace.shared.icon(for: .folder)
+        }
+        if tile.kind == .widget {
+            let kind = tile.widgets.first ?? .clock
+            let key = "widget|\(kind.rawValue)"
+            if let cached = iconCache[key] { return cached }
+            let image = Self.widgetIcon(for: kind)
+            iconCache[key] = image
+            return image
         }
         if tile.kind == .group {
             let key = "group|" + tile.members.prefix(4).map(\.path).joined(separator: "|")
@@ -291,7 +322,7 @@ final class CustomDockStore: ObservableObject {
             if let url = tile.url { NSWorkspace.shared.open(url) }
         case .trash:
             NSWorkspace.shared.open(Self.trashURL)
-        case .group:
+        case .group, .widget:
             break
         }
     }
@@ -380,8 +411,8 @@ final class CustomDockStore: ObservableObject {
         guard tile.isMovable else { return }
         let items = normalizedPinnedItems()
         let isAppSection = tile.kind == .app || tile.kind == .group
-        var section = items.filter { isAppSection ? ($0.kind == .app || $0.kind == .group) : ($0.kind == .folder || $0.kind == .file) }
-        let rest = items.filter { isAppSection ? !($0.kind == .app || $0.kind == .group) : ($0.kind == .app || $0.kind == .group) }
+        var section = items.filter { isAppSection ? !Self.isOtherSection($0.kind) : Self.isOtherSection($0.kind) }
+        let rest = items.filter { isAppSection ? Self.isOtherSection($0.kind) : !Self.isOtherSection($0.kind) }
 
         var moving: PinnedDockItem
         if let existing = section.firstIndex(where: { $0.id == tile.id }) {
@@ -395,6 +426,89 @@ final class CustomDockStore: ObservableObject {
         if isAppSection, target == 0, section.first?.bundleIdentifier == Self.finderBundleID { target = 1 }
         section.insert(moving, at: target)
         Defaults[.customDockPinnedItems] = isAppSection ? section + rest : rest + section
+    }
+
+    static func isOtherSection(_ kind: PinnedDockItemKind) -> Bool {
+        kind == .folder || kind == .file || kind == .widget
+    }
+
+    // MARK: - Widgets
+
+    func addWidget(_ kind: DockWidgetKind) {
+        Self.appendWidget(kind)
+    }
+
+    static func appendWidget(_ kind: DockWidgetKind) {
+        var items = Defaults[.customDockPinnedItems]
+        items.append(.newWidget([kind]))
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    func addWidget(_ kind: DockWidgetKind, toStack stackID: String) {
+        var items = normalizedPinnedItems()
+        guard let index = items.firstIndex(where: { $0.id == stackID }) else { return }
+        var widgets = items[index].widgets ?? []
+        if !widgets.contains(kind) { widgets.append(kind) }
+        items[index].widgets = widgets
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    /// Puts the widgets of `tile` into the stack `targetID` (a single widget becomes a stack).
+    func mergeWidgets(_ tile: DockTile, into targetID: String) {
+        var items = normalizedPinnedItems()
+        guard tile.id != targetID, let index = items.firstIndex(where: { $0.id == targetID }) else { return }
+        var widgets = items[index].widgets ?? []
+        for kind in tile.widgets where !widgets.contains(kind) {
+            widgets.append(kind)
+        }
+        items[index].widgets = widgets
+        items.removeAll { $0.id == tile.id }
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    /// Takes one widget out of a stack and puts it next to the stack.
+    func removeWidget(_ kind: DockWidgetKind, fromStack stackID: String) {
+        var items = normalizedPinnedItems()
+        guard let index = items.firstIndex(where: { $0.id == stackID }) else { return }
+        var widgets = items[index].widgets ?? []
+        widgets.removeAll { $0 == kind }
+        if widgets.isEmpty {
+            items.remove(at: index)
+        } else {
+            items[index].widgets = widgets
+            items.insert(.newWidget([kind]), at: index + 1)
+        }
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    func dissolveWidgetStack(_ stackID: String) {
+        var items = normalizedPinnedItems()
+        guard let index = items.firstIndex(where: { $0.id == stackID }) else { return }
+        let singles = (items[index].widgets ?? []).map { PinnedDockItem.newWidget([$0]) }
+        items.remove(at: index)
+        items.insert(contentsOf: singles, at: index)
+        Defaults[.customDockPinnedItems] = items
+    }
+
+    static func widgetIcon(for kind: DockWidgetKind) -> NSImage {
+        let size = NSSize(width: 256, height: 256)
+        return NSImage(size: size, flipped: false) { rect in
+            let background = NSBezierPath(roundedRect: rect.insetBy(dx: 14, dy: 14), xRadius: 56, yRadius: 56)
+            NSColor(white: 0.2, alpha: 0.9).setFill()
+            background.fill()
+            let configuration = NSImage.SymbolConfiguration(pointSize: 110, weight: .medium)
+                .applying(.init(paletteColors: [.white]))
+            if let symbol = NSImage(systemSymbolName: kind.symbol, accessibilityDescription: nil)?.withSymbolConfiguration(configuration) {
+                let symbolSize = symbol.size
+                symbol.draw(in: NSRect(
+                    x: rect.midX - symbolSize.width / 2,
+                    y: rect.midY - symbolSize.height / 2,
+                    width: symbolSize.width,
+                    height: symbolSize.height
+                ))
+            }
+            return true
+        }
     }
 
     // MARK: - App groups

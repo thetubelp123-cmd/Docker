@@ -12,6 +12,12 @@
 	<true/>
 	<key>SUEnableAutomaticChecks</key>
 	<false/>
+	<key>NSCalendarsFullAccessUsageDescription</key>
+	<string>DockerDoor zeigt deine Termine im Kalender-Widget des Docks.</string>
+	<key>NSLocationUsageDescription</key>
+	<string>DockerDoor nutzt deinen Standort nur, um das Wetter für deinen Ort anzuzeigen.</string>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>DockerDoor nutzt deinen Standort nur, um das Wetter für deinen Ort anzuzeigen.</string>
 	<key>SUPublicEDKey</key>
 	<string>ANSWtGdda5j5Jgr53GvK7uE4KLaVs2cNFD8nKWXWrlI=</string>
 </dict>
