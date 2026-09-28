@@ -1,0 +1,301 @@
+import ApplicationServices
+import Cocoa
+import Defaults
+
+// AXObserver callback for Cmd+Tab switcher changes
+func handleCmdTabSwitcherNotification(observer _: AXObserver, element _: AXUIElement, notificationName: CFString, context: UnsafeMutableRawPointer?) {
+    DockObserver.activeInstance?.processCmdTabSwitcherEvent(notificationName)
+}
+
+extension DockObserver {
+    // MARK: - Cmd+Tab Switcher Monitoring
+
+    func teardownCmdTabObserver() {
+        if let observer = cmdTabObserver {
+            CFRunLoopRemoveSource(CFRunLoopGetCurrent(), AXObserverGetRunLoopSource(observer), .commonModes)
+        }
+        cmdTabObserver = nil
+        stopCmdTabPolling()
+        DockObserver.isCmdTabSwitcherActive = false
+    }
+
+    // MARK: - On-Demand Polling (Event-Driven)
+
+    func startCmdTabPolling() {
+        guard Defaults[.enableCmdTabEnhancements] else { return }
+        guard cmdTabObserver == nil else { return }
+
+        attemptCmdTabSubscription()
+
+        if cmdTabObserver == nil {
+            cmdTabPollingTimer?.invalidate()
+            cmdTabPollingTimer = Timer.scheduledTimer(withTimeInterval: 0.1, repeats: true) { [weak self] timer in
+                guard let self else {
+                    timer.invalidate()
+                    return
+                }
+                attemptCmdTabSubscription()
+
+                if cmdTabObserver != nil {
+                    timer.invalidate()
+                    cmdTabPollingTimer = nil
+                }
+            }
+        }
+    }
+
+    func stopCmdTabPolling() {
+        cmdTabPollingTimer?.invalidate()
+        cmdTabPollingTimer = nil
+    }
+
+    private func attemptCmdTabSubscription() {
+        guard let dockApp = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.dock").first else {
+            return
+        }
+
+        let dockAppPID = dockApp.processIdentifier
+        let dockAppElement = AXUIElementCreateApplication(dockAppPID)
+
+        guard let processSwitcherList = findCmdTabSwitcherElement(in: dockAppElement) else {
+            return
+        }
+
+        stopCmdTabPolling()
+        subscribeToProcessSwitcher(processSwitcherList: processSwitcherList, dockAppPID: dockAppPID)
+        processCmdTabSwitcherChanged()
+    }
+
+    private func subscribeToProcessSwitcher(processSwitcherList: AXUIElement, dockAppPID: pid_t) {
+        if cmdTabObserver != nil {
+            teardownCmdTabObserver()
+        }
+
+        guard AXObserverCreate(dockAppPID, handleCmdTabSwitcherNotification, &cmdTabObserver) == .success,
+              let cmdTabObserver
+        else {
+            return
+        }
+
+        do {
+            try processSwitcherList.subscribeToNotification(cmdTabObserver, kAXSelectedChildrenChangedNotification as String) {
+                CFRunLoopAddSource(CFRunLoopGetCurrent(), AXObserverGetRunLoopSource(cmdTabObserver), .commonModes)
+            }
+            try processSwitcherList.subscribeToNotification(cmdTabObserver, kAXUIElementDestroyedNotification as String)
+            DockObserver.isCmdTabSwitcherActive = true
+        } catch {
+            // Ignore subscription errors
+        }
+    }
+
+    func processCmdTabSwitcherEvent(_ notification: CFString) {
+        guard Defaults[.enableCmdTabEnhancements] else { return }
+
+        let notif = notification as String
+
+        if notif == (kAXSelectedChildrenChangedNotification as String) {
+            processCmdTabSwitcherChanged()
+            return
+        }
+
+        if notif == (kAXUIElementDestroyedNotification as String) {
+            teardownCmdTabObserver()
+            return
+        }
+    }
+
+    func processCmdTabSwitcherChanged() {
+        guard Defaults[.enableCmdTabEnhancements] else { return }
+        guard let dockApp = NSRunningApplication.runningApplications(withBundleIdentifier: "com.apple.dock").first else {
+            return
+        }
+
+        let dockAppElement = AXUIElementCreateApplication(dockApp.processIdentifier)
+
+        guard let selectedItem = getSelectedCmdTabItem(dockElement: dockAppElement) else {
+            _ = findCmdTabSwitcherElement(in: dockAppElement)
+            return
+        }
+
+        let resolvedApp = selectedItem.app
+        let appName = resolvedApp?.localizedName ?? selectedItem.title ?? "Unknown"
+        let bundleId = resolvedApp?.bundleIdentifier ?? selectedItem.bundleId
+
+        var cachedWindows: [WindowInfo] = []
+        if let app = resolvedApp {
+            cachedWindows = WindowUtil.readCachedWindows(for: app.processIdentifier, sortedBy: .cmdTab)
+        }
+
+        let shouldIgnoreSingleWindowApp = Defaults[.ignoreAppsWithSingleWindowInCmdTab] && cachedWindows.count == 1
+
+        if Defaults[.showWindowsFromCurrentSpaceOnlyInCmdTab] {
+            cachedWindows = WindowUtil.filterWindowsByCurrentSpace(cachedWindows)
+        }
+
+        if Defaults[.showWindowsFromCurrentMonitorOnlyInCmdTab] {
+            cachedWindows = WindowUtil.filterWindowsByCurrentMonitor(cachedWindows)
+        }
+
+        if !Defaults[.includeHiddenWindowsInCmdTab] {
+            cachedWindows = cachedWindows.filter { !$0.isHidden && !$0.isMinimized }
+        }
+
+        let elementPos = try? selectedItem.element.position()
+        let bestScreen = if let elementPos { NSScreen.screenFromQuartzPoint(elementPos) } else { NSScreen.main! }
+
+        Task { @MainActor [weak self] in
+            guard let self else { return }
+
+            if shouldIgnoreSingleWindowApp {
+                previewCoordinator.hideWindow()
+                return
+            }
+
+            if cachedWindows.isEmpty {
+                if let app = resolvedApp, Defaults[.showWindowlessAppsInCmdTab] {
+                    cachedWindows = [WindowInfo.windowlessEntry(for: app)]
+                } else {
+                    previewCoordinator.hideWindow()
+                    return
+                }
+            }
+
+            let initialIndex = Defaults[.cmdTabAutoSelectFirstWindow] ? 0 : nil
+            previewCoordinator.showWindow(
+                appName: appName,
+                windows: cachedWindows,
+                mouseLocation: DockObserver.getMousePosition(),
+                mouseScreen: bestScreen,
+                dockItemElement: selectedItem.element,
+                overrideDelay: true,
+                centeredHoverWindowState: .none,
+                onWindowTap: { [weak self] in
+                    self?.hideWindowAndResetLastApp()
+                },
+                bundleIdentifier: bundleId,
+                bypassDockMouseValidation: true,
+                dockPositionOverride: .cmdTab,
+                initialIndex: initialIndex
+            )
+        }
+
+        if let app = resolvedApp {
+            let appPID = app.processIdentifier
+            let screenOrigin = bestScreen.frame.origin
+
+            Task.detached { [weak self] in
+                guard let self else { return }
+
+                do {
+                    var windows = try await WindowUtil.getActiveWindows(of: app, context: .cmdTab)
+
+                    if Defaults[.showWindowsFromCurrentSpaceOnlyInCmdTab] {
+                        windows = WindowUtil.filterWindowsByCurrentSpace(windows)
+                    }
+
+                    if Defaults[.showWindowsFromCurrentMonitorOnlyInCmdTab] {
+                        windows = WindowUtil.filterWindowsByCurrentMonitor(windows)
+                    }
+
+                    if !Defaults[.includeHiddenWindowsInCmdTab] {
+                        windows = windows.filter { !$0.isHidden && !$0.isMinimized }
+                    }
+
+                    let freshWindows = windows
+
+                    await MainActor.run { [weak self] in
+                        guard let self else { return }
+                        guard let screen = screenOrigin.screen() else { return }
+
+                        let didMerge = previewCoordinator.mergeWindowsIfNeeded(
+                            appPID,
+                            windows: freshWindows,
+                            dockPosition: .cmdTab,
+                            bestGuessMonitor: screen
+                        )
+                        DebugLogger.log("WindowRefresh", details: "Cmd+Tab final merge, PID: \(appPID), windows: \(freshWindows.count), merged: \(didMerge)")
+                    }
+                } catch {
+                    DebugLogger.log("DockObserver+CmdTab", details: "Failed to fetch windows for Cmd+Tab: \(error)")
+                }
+            }
+        }
+    }
+
+    // MARK: - Cmd+Tab Session State
+
+    /// Cached state tracking whether the Cmd+Tab switcher is currently active.
+    /// Updated by the AXObserver when the switcher appears/disappears.
+    static var isCmdTabSwitcherActive = false
+
+    private func getSelectedCmdTabItem(dockElement: AXUIElement) -> (element: AXUIElement, app: NSRunningApplication?, bundleId: String?, title: String?)? {
+        guard let appSwitcherElement = findCmdTabSwitcherElement(in: dockElement) else {
+            return nil
+        }
+
+        var selectedChildren: CFTypeRef?
+        let result = AXUIElementCopyAttributeValue(appSwitcherElement, kAXSelectedChildrenAttribute as CFString, &selectedChildren)
+
+        if result == .success,
+           let selectedArray = selectedChildren as? [AXUIElement],
+           let selectedElement = selectedArray.first
+        {
+            var resolvedApp: NSRunningApplication?
+            var resolvedBundleId: String?
+            var resolvedTitle: String?
+
+            if let appURL = try? selectedElement.attribute(kAXURLAttribute as String, NSURL.self)?.absoluteURL,
+               let bundle = Bundle(url: appURL),
+               let bundleIdentifier = bundle.bundleIdentifier
+            {
+                resolvedBundleId = bundleIdentifier
+                resolvedApp = NSRunningApplication.runningApplications(withBundleIdentifier: bundleIdentifier).first
+            }
+
+            if resolvedApp == nil {
+                do {
+                    if let title = try selectedElement.title(), !title.isEmpty {
+                        resolvedTitle = title
+                        let allApps = NSWorkspace.shared.runningApplications
+                        if let app = allApps.first(where: { $0.localizedName == title }) {
+                            resolvedApp = app
+                        } else {
+                            let lowerTitle = title.lowercased()
+                            if let app = allApps.first(where: { ($0.localizedName ?? "").lowercased().contains(lowerTitle) || lowerTitle.contains(($0.localizedName ?? "").lowercased()) }) {
+                                resolvedApp = app
+                            }
+                        }
+                        if resolvedBundleId == nil { resolvedBundleId = resolvedApp?.bundleIdentifier }
+                    }
+                } catch {
+                    // ignore
+                }
+            }
+
+            return (element: selectedElement, app: resolvedApp, bundleId: resolvedBundleId, title: resolvedTitle)
+        }
+
+        return nil
+    }
+
+    private func findCmdTabSwitcherElement(in dockElement: AXUIElement) -> AXUIElement? {
+        do {
+            let children = try dockElement.children() ?? []
+
+            for child in children {
+                let subrole = try? child.subrole()
+                if let subrole, subrole == "AXProcessSwitcherList" {
+                    return child
+                }
+
+                if let found = findCmdTabSwitcherElement(in: child) {
+                    return found
+                }
+            }
+        } catch {
+            // Element might not be accessible
+        }
+
+        return nil
+    }
+}

@@ -1,0 +1,287 @@
+import Cocoa
+import SwiftUI
+
+class SettingsManager: NSObject, ObservableObject {
+    private var settingsWindowController: NSWindowController?
+    private var updaterState: UpdaterState
+
+    init(updaterState: UpdaterState) {
+        self.updaterState = updaterState
+        super.init()
+    }
+
+    func close() {
+        settingsWindowController?.close()
+    }
+
+    func showSettings() {
+        if settingsWindowController == nil {
+            let settingsView = SettingsView(updaterState: updaterState)
+            let hostingController = NSHostingController(rootView: settingsView)
+            let window = NSWindow(
+                contentRect: NSRect(x: 0, y: 0, width: 900, height: 600),
+                styleMask: [.titled, .closable, .miniaturizable, .resizable, .fullSizeContentView],
+                backing: .buffered,
+                defer: false
+            )
+            window.minSize = NSSize(width: 750, height: 400)
+
+            window.contentViewController = hostingController
+            window.isReleasedWhenClosed = true
+
+            window.delegate = self
+            window.titlebarAppearsTransparent = true
+            window.title = ""
+            window.toolbarStyle = .unified
+
+            let toolbar = NSToolbar(identifier: "SettingsToolbar")
+            toolbar.delegate = self
+            toolbar.showsBaselineSeparator = false
+            toolbar.allowsUserCustomization = false
+            toolbar.autosavesConfiguration = false
+            window.toolbar = toolbar
+
+            settingsWindowController = NSWindowController(window: window)
+            installMainMenuIfNeeded()
+        }
+
+        settingsWindowController?.showWindow(nil)
+        settingsWindowController?.window?.center()
+        NSApp.activate(ignoringOtherApps: true)
+
+        DispatchQueue.main.async {
+            Task { await WindowUtil.updateNewWindowsForApp(.current) }
+        }
+    }
+
+    private func installMainMenuIfNeeded() {
+        guard NSApp.mainMenu == nil else { return }
+        let mainMenu = NSMenu()
+
+        let appMenu = NSMenu()
+        appMenu.addItem(withTitle: String(localized: "Quit DockDoor"), action: #selector(NSApplication.terminate(_:)), keyEquivalent: "q")
+        mainMenu.addItem(NSMenuItem(submenu: appMenu))
+
+        let editMenu = NSMenu(title: String(localized: "Edit"))
+        editMenu.addItem(withTitle: String(localized: "Undo"), action: Selector(("undo:")), keyEquivalent: "z")
+        editMenu.addItem(withTitle: String(localized: "Redo"), action: Selector(("redo:")), keyEquivalent: "Z")
+        editMenu.addItem(.separator())
+        editMenu.addItem(withTitle: String(localized: "Cut"), action: #selector(NSText.cut(_:)), keyEquivalent: "x")
+        editMenu.addItem(withTitle: String(localized: "Copy"), action: #selector(NSText.copy(_:)), keyEquivalent: "c")
+        editMenu.addItem(withTitle: String(localized: "Paste"), action: #selector(NSText.paste(_:)), keyEquivalent: "v")
+        editMenu.addItem(withTitle: String(localized: "Select All"), action: #selector(NSText.selectAll(_:)), keyEquivalent: "a")
+        mainMenu.addItem(NSMenuItem(submenu: editMenu))
+
+        let windowMenu = NSMenu(title: String(localized: "Window"))
+        windowMenu.addItem(withTitle: String(localized: "Close"), action: #selector(NSWindow.performClose(_:)), keyEquivalent: "w")
+        windowMenu.addItem(withTitle: String(localized: "Minimize"), action: #selector(NSWindow.performMiniaturize(_:)), keyEquivalent: "m")
+        mainMenu.addItem(NSMenuItem(submenu: windowMenu))
+
+        NSApp.mainMenu = mainMenu
+        NSApp.windowsMenu = windowMenu
+    }
+}
+
+private extension NSMenuItem {
+    convenience init(submenu: NSMenu) {
+        self.init(title: submenu.title, action: nil, keyEquivalent: "")
+        self.submenu = submenu
+    }
+}
+
+extension SettingsManager: NSToolbarDelegate {
+    func toolbarDefaultItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        []
+    }
+
+    func toolbarAllowedItemIdentifiers(_ toolbar: NSToolbar) -> [NSToolbarItem.Identifier] {
+        []
+    }
+}
+
+extension SettingsManager: NSWindowDelegate {
+    func windowDidBecomeKey(_ notification: Notification) {
+        NSApp.setActivationPolicy(.regular)
+
+        guard let window = notification.object as? NSWindow else {
+            return
+        }
+
+        func findSplitView(in view: NSView) -> NSSplitView? {
+            if let splitView = view as? NSSplitView {
+                return splitView
+            }
+            for subview in view.subviews {
+                if let found = findSplitView(in: subview) {
+                    return found
+                }
+            }
+            return nil
+        }
+
+        DispatchQueue.main.async {
+            if let contentView = window.contentView,
+               let splitView = findSplitView(in: contentView),
+               let splitViewController = splitView.delegate as? NSSplitViewController
+            {
+                splitViewController.splitViewItems.first?.isCollapsed = false
+                splitViewController.splitViewItems.first?.canCollapse = false
+                splitViewController.splitViewItems.first?.holdingPriority = .defaultHigh
+                splitViewController.splitViewItems.first?.minimumThickness = 270
+                splitViewController.splitViewItems.first?.maximumThickness = 270
+            }
+        }
+    }
+
+    func windowWillClose(_ notification: Notification) {
+        let pid = ProcessInfo.processInfo.processIdentifier
+        WindowUtil.purgeAppCache(with: pid)
+        DispatchQueue.main.asyncAfter(deadline: .now() + 11) { [weak self] in
+            if self?.settingsWindowController == nil {
+                WindowUtil.purgeAppCache(with: pid)
+            }
+        }
+        settingsWindowController?.window?.contentViewController = nil
+        settingsWindowController = nil
+        NSApp.setActivationPolicy(.accessory)
+    }
+}
+
+struct SettingsView: View {
+    @State private var selectedTab = "General"
+    @StateObject private var searchEngine = SettingsSearchEngine()
+    @State private var scrollTarget: String?
+    @ObservedObject var updaterState: UpdaterState
+
+    init(updaterState: UpdaterState) {
+        self.updaterState = updaterState
+    }
+
+    var body: some View {
+        NavigationSplitView(columnVisibility: .constant(.all), sidebar: {
+            VStack(spacing: 0) {
+                HStack(spacing: 8) {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.tertiary)
+                    TextField(String(localized: "Search settings…", comment: "Settings search placeholder"), text: $searchEngine.query)
+                        .textFieldStyle(.plain)
+                        .font(.system(size: 12))
+                    if !searchEngine.query.isEmpty {
+                        Button {
+                            searchEngine.query = ""
+                        } label: {
+                            Image(systemName: "xmark.circle.fill")
+                                .font(.system(size: 12))
+                                .foregroundStyle(.secondary)
+                        }
+                        .buttonStyle(.plain)
+                    }
+                }
+                .padding(.horizontal, 12)
+                .padding(.vertical, 8)
+
+                Divider()
+
+                if searchEngine.isSearching {
+                    SettingsSearchResultsView(engine: searchEngine) { item in
+                        selectedTab = item.tab
+                        searchEngine.query = ""
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.15) {
+                            scrollTarget = item.id
+                        }
+                    }
+                } else {
+                    List(selection: $selectedTab) {
+                        Spacer()
+                            .frame(height: 1)
+                            .listRowBackground(Color.clear)
+                            .listRowSeparator(.hidden)
+
+                        Label(String(localized: "General", comment: "Settings tab title"), systemImage: "gearshape.fill")
+                            .tag("General")
+
+                        Section(String(localized: "Features", comment: "Settings section header")) {
+                            Label(String(localized: "Dock Previews", comment: "Settings tab title"), systemImage: "dock.rectangle")
+                                .tag("DockPreviews")
+                            Label(String(localized: "Window Switcher", comment: "Settings tab title"), systemImage: "uiwindow.split.2x1")
+                                .tag("WindowSwitcher")
+                            Label(String(localized: "Cmd+Tab", comment: "Settings tab title"), systemImage: "command")
+                                .tag("CmdTab")
+                            Label(String(localized: "Dock Locking", comment: "Settings tab title"), systemImage: "lock.fill")
+                                .tag("DockLocking")
+                        }
+
+                        Section(String(localized: "Customization", comment: "Settings section header")) {
+                            Label(String(localized: "Appearance", comment: "Settings Tab"), systemImage: "wand.and.stars.inverse")
+                                .tag("Appearance")
+                            Label(String(localized: "Gestures & Keybinds", comment: "Settings tab title"), systemImage: "hand.draw.fill")
+                                .tag("GesturesKeybinds")
+                            Label(String(localized: "Filters", comment: "Filters tab title"), systemImage: "air.purifier")
+                                .tag("Filters")
+                            Label(String(localized: "Widgets", comment: "Widget settings tab title"), systemImage: "square.grid.2x2")
+                                .tag("Widgets")
+                        }
+
+                        Section(String(localized: "System", comment: "Settings section header")) {
+                            Label(String(localized: "Advanced", comment: "Settings tab title"), systemImage: "slider.horizontal.3")
+                                .tag("Advanced")
+                            Label(String(localized: "Support", comment: "Settings tab title"), systemImage: "lifepreserver.fill")
+                                .tag("Support")
+                        }
+                    }
+                    .listStyle(.sidebar)
+                }
+            }
+            .frame(minWidth: 270, maxWidth: 270)
+            .modifier(HideSidebarToggleModifier())
+        }, detail: {
+            Group {
+                switch selectedTab {
+                case "General":
+                    MainSettingsView()
+                case "DockPreviews":
+                    DockPreviewsSettingsView()
+                case "WindowSwitcher":
+                    WindowSwitcherBehaviorSettingsView()
+                case "CmdTab":
+                    CmdTabSettingsView()
+                case "DockLocking":
+                    DockLockingSettingsView()
+                case "Appearance":
+                    AppearanceSettingsView()
+                case "GesturesKeybinds":
+                    GesturesAndKeybindsSettingsView()
+                case "Filters":
+                    FiltersSettingsView()
+                case "Widgets":
+                    WidgetSettingsView()
+                case "Advanced":
+                    AdvancedSettingsView()
+                case "Support":
+                    SupportSettingsView(updaterState: updaterState)
+                default:
+                    MainSettingsView()
+                }
+            }
+            .environment(\.settingsScrollTarget, scrollTarget)
+            .onChange(of: scrollTarget) { newTarget in
+                if newTarget != nil {
+                    DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+                        scrollTarget = nil
+                    }
+                }
+            }
+        })
+    }
+}
+
+private struct HideSidebarToggleModifier: ViewModifier {
+    func body(content: Content) -> some View {
+        if #available(macOS 14.0, *) {
+            content.toolbar(removing: .sidebarToggle)
+        } else {
+            content
+        }
+    }
+}

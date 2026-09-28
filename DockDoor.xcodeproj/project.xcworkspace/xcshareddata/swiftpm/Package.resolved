@@ -1,0 +1,69 @@
+{
+  "originHash" : "25f40b762215a3088477e922d70d7d4725c1d13ef524d58154df623535380736",
+  "pins" : [
+    {
+      "identity" : "confettiswiftui",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/simibac/ConfettiSwiftUI",
+      "state" : {
+        "revision" : "f45961f97bbae6fff6e2e64546fea0189425ad92",
+        "version" : "1.1.0"
+      }
+    },
+    {
+      "identity" : "defaults",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sindresorhus/Defaults",
+      "state" : {
+        "branch" : "main",
+        "revision" : "00a7465a0668a87fa159e779b9d80f1f9652357e"
+      }
+    },
+    {
+      "identity" : "launchatlogin-modern",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sindresorhus/LaunchAtLogin-Modern",
+      "state" : {
+        "branch" : "main",
+        "revision" : "a04ec1c363be3627734f6dad757d82f5d4fa8fcc"
+      }
+    },
+    {
+      "identity" : "mediaremote-adapter",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/ejbills/mediaremote-adapter.git",
+      "state" : {
+        "branch" : "master",
+        "revision" : "5b6afde3f501a3da567e23bf7f23d562938a1809"
+      }
+    },
+    {
+      "identity" : "smoothgradient",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/raymondjavaxx/SmoothGradient",
+      "state" : {
+        "revision" : "77ac160533ce312f92b566754731e07b20315a41",
+        "version" : "1.0.1"
+      }
+    },
+    {
+      "identity" : "sparkle",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/sparkle-project/Sparkle",
+      "state" : {
+        "revision" : "ac2def288cbff5cfc7df3ffef6abdf45b72bcb0a",
+        "version" : "2.9.6"
+      }
+    },
+    {
+      "identity" : "swift-syntax",
+      "kind" : "remoteSourceControl",
+      "location" : "https://github.com/swiftlang/swift-syntax",
+      "state" : {
+        "revision" : "79e4b74a295b6eb74a8b585e3a39d29e70c1dbd1",
+        "version" : "603.0.2"
+      }
+    }
+  ],
+  "version" : 3
+}

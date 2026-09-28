@@ -1,0 +1,196 @@
+import Defaults
+import SwiftUI
+
+struct MediaControlsFullView: View {
+    @ObservedObject var mediaInfo: MediaInfo
+    let appName: String
+    let bundleIdentifier: String
+    let dockPosition: DockPosition
+    let bestGuessMonitor: NSScreen
+    let dockItemElement: AXUIElement?
+    let isPinnedMode: Bool
+    @Binding var isArtworkExpandedFull: Bool
+    @Binding var showingLyricsInFull: Bool
+    @Binding var lyricsMode: Bool
+    let artworkExpansionFullNamespace: Namespace.ID
+    let dominantArtworkColor: Color?
+    let artworkRotation: Double
+    let isLoadingMediaInfo: Bool
+    let appIcon: NSImage?
+    let hoveringAppIcon: Bool
+    let hoveringWindowTitle: Bool
+    let backgroundAppearance: BackgroundAppearance
+
+    @Default(.showAnimations) var showAnimations
+
+    @State private var initialContentSize: CGSize = .zero
+    @State private var hasSetInitialSize: Bool = false
+
+    private var displayAppName: String {
+        mediaInfo.appName.isEmpty ? appName : mediaInfo.appName
+    }
+
+    var body: some View {
+        WidgetHoverContainer(
+            appName: displayAppName,
+            bundleIdentifier: bundleIdentifier,
+            bestGuessMonitor: bestGuessMonitor,
+            dockPosition: dockPosition,
+            dockItemElement: dockItemElement,
+            isPinnedMode: isPinnedMode,
+            appIcon: appIcon,
+            hoveringAppIcon: hoveringAppIcon,
+            highlightColor: dominantArtworkColor,
+            backgroundAppearance: backgroundAppearance
+        ) {
+            mediaControlsContent()
+        }
+        .if(!isPinnedMode) { view in
+            view.pinnable(appName: appName, bundleIdentifier: bundleIdentifier, type: .media)
+        }
+        .if(isMediaApp(bundleIdentifier)) { view in
+            view.mediaScrollable(bundleIdentifier: bundleIdentifier, mediaInfo: mediaInfo, handlesSpacebar: !isPinnedMode)
+        }
+    }
+
+    @ViewBuilder
+    private func mediaControlsContent() -> some View {
+        Group {
+            if isLoadingMediaInfo || mediaInfo.title.isEmpty {
+                MediaControlsSkeleton(isEmbedded: false)
+                    .frame(width: MediaControlsLayout.compactContentWidth)
+            } else if isArtworkExpandedFull {
+                expandedMediaControlsCore()
+            } else {
+                compactMediaControlsCore()
+                    .frame(width: MediaControlsLayout.compactContentWidth)
+            }
+        }
+        .animation(showAnimations ? .spring(response: 0.45, dampingFraction: 0.8) : nil, value: isArtworkExpandedFull)
+        .animation(showAnimations ? .spring(response: 0.45, dampingFraction: 0.8) : nil, value: showingLyricsInFull)
+        .globalPadding(20)
+    }
+
+    @ViewBuilder
+    private func compactMediaControlsCore() -> some View {
+        VStack(alignment: .center, spacing: MediaControlsLayout.containerSpacing) {
+            HStack(alignment: .center, spacing: MediaControlsLayout.artworkTextSpacing) {
+                MediaArtworkView(
+                    artwork: mediaInfo.artwork,
+                    size: CGSize(width: MediaControlsLayout.artworkSize, height: MediaControlsLayout.artworkSize),
+                    cornerRadius: MediaControlsLayout.artworkCornerRadius,
+                    artworkRotation: artworkRotation
+                )
+                .matchedGeometryEffect(id: "artworkForFullView", in: artworkExpansionFullNamespace)
+                .onTapGesture {
+                    if isPinnedMode {
+                        withAnimation(showAnimations ? .smooth(duration: 0.125) : nil) {
+                            isArtworkExpandedFull = true
+                        }
+                    }
+                }
+
+                VStack(alignment: .leading, spacing: 2) {
+                    MarqueeText(
+                        text: mediaInfo.title,
+                        startDelay: 1
+                    )
+                    .fontWeight(.semibold)
+                    .id("compact-full-title-\(mediaInfo.title)")
+
+                    MarqueeText(
+                        text: mediaInfo.artist.isEmpty ? " " : mediaInfo.artist,
+                        startDelay: 1
+                    )
+                    .font(.subheadline)
+                    .foregroundColor(.secondary)
+                    .opacity(mediaInfo.artist.isEmpty ? 0 : 1)
+                    .id("compact-full-artist-\(mediaInfo.artist)")
+                }
+                .frame(height: MediaControlsLayout.artworkSize, alignment: .center)
+                Spacer(minLength: 0)
+            }
+
+            MediaPlaybackControls(
+                mediaInfo: mediaInfo,
+                isExpanded: false,
+                showingLyrics: false
+            )
+        }
+    }
+
+    @ViewBuilder
+    private func expandedMediaControlsCore() -> some View {
+        HStack(spacing: showingLyricsInFull ? 20 : 0) {
+            // Left side - Artwork and controls
+            VStack(alignment: .center, spacing: MediaControlsLayout.fullExpandedContainerSpacing) {
+                MediaArtworkView(
+                    artwork: mediaInfo.artwork,
+                    size: CGSize(width: MediaControlsLayout.fullExpandedArtworkSize, height: MediaControlsLayout.fullExpandedArtworkSize),
+                    cornerRadius: MediaControlsLayout.fullExpandedArtworkCornerRadius,
+                    artworkRotation: artworkRotation
+                )
+                .matchedGeometryEffect(id: "artworkForFullView", in: artworkExpansionFullNamespace)
+                .shadow(color: .black.opacity(0.2), radius: 8, y: 4)
+                .onTapGesture {
+                    withAnimation(showAnimations ? .smooth(duration: 0.125) : nil) {
+                        isArtworkExpandedFull = false
+                        showingLyricsInFull = false
+                    }
+                }
+
+                VStack(spacing: 3) {
+                    MarqueeText(
+                        text: mediaInfo.title,
+                        startDelay: 1
+                    )
+                    .font(.title3)
+                    .fontWeight(.bold)
+                    .id("expanded-full-title-\(mediaInfo.title)")
+
+                    if !mediaInfo.artist.isEmpty {
+                        MarqueeText(
+                            text: mediaInfo.artist,
+                            startDelay: 1
+                        )
+                        .font(.callout)
+                        .foregroundColor(.secondary)
+                        .id("expanded-full-artist-\(mediaInfo.artist)")
+                    }
+                }
+
+                MediaPlaybackControls(
+                    mediaInfo: mediaInfo,
+                    isExpanded: true,
+                    showingLyrics: showingLyricsInFull,
+                    lyricsMode: $lyricsMode,
+                    showingLyricsInFull: $showingLyricsInFull
+                )
+            }
+            .if(!hasSetInitialSize) { view in
+                view.measure($initialContentSize)
+                    .onPreferenceChange(ViewSizeKey.self) { size in
+                        if !hasSetInitialSize {
+                            initialContentSize = size
+                            hasSetInitialSize = true
+                        }
+                    }
+            }
+            .if(isPinnedMode && !showingLyricsInFull && hasSetInitialSize && lyricsMode) { view in
+                view.frame(width: initialContentSize.width)
+            }
+
+            // Right side - Lyrics view
+            if showingLyricsInFull {
+                MediaLyricsView(
+                    mediaInfo: mediaInfo,
+                    width: MediaControlsLayout.fullLyricsViewWidth + 80,
+                    maxHeight: 300,
+                    isFullMode: true,
+                    backgroundAppearance: backgroundAppearance
+                )
+            }
+        }
+        .animation(showAnimations ? .smooth(duration: 0.2) : nil, value: "\(mediaInfo.title)\(mediaInfo.artist)")
+    }
+}

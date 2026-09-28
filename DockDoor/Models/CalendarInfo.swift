@@ -1,0 +1,98 @@
+import Defaults
+import EventKit
+import Foundation
+
+extension DailyCalendarInfo.Event: Identifiable {
+    var id: String { title + startDate.timeIntervalSince1970.description + (location ?? "") }
+}
+
+class DailyCalendarInfo: ObservableObject {
+    struct Event {
+        let title: String
+        let startDate: Date
+        let endDate: Date
+        let location: String?
+        let calendarColor: CGColor?
+    }
+
+    private let eventStore = EKEventStore()
+
+    @Published private(set) var events: [Event] = []
+    @Published private(set) var eventAuthStatus: EKAuthorizationStatus = .notDetermined
+
+    init() {
+        eventAuthStatus = EKEventStore.authorizationStatus(for: .event)
+        requestAccessIfNeededAndFetch()
+    }
+
+    private func requestAccessIfNeededAndFetch() {
+        if eventAuthStatus == .notDetermined {
+            eventStore.requestAccess(to: .event) { [weak self] granted, error in
+                DispatchQueue.main.async {
+                    guard let self else { return }
+                    self.eventAuthStatus = EKEventStore.authorizationStatus(for: .event)
+                    self.fetchDataBasedOnCurrentPermissions()
+                }
+            }
+        } else {
+            DispatchQueue.main.async { [weak self] in
+                self?.fetchDataBasedOnCurrentPermissions()
+            }
+        }
+    }
+
+    private func fetchDataBasedOnCurrentPermissions() {
+        if eventAuthStatus == .authorized {
+            fetchTodaysEvents()
+        } else {
+            if !events.isEmpty { events = [] }
+        }
+    }
+
+    func reloadData() {
+        DispatchQueue.main.async { [weak self] in
+            guard let self else { return }
+            eventAuthStatus = EKEventStore.authorizationStatus(for: .event)
+            fetchDataBasedOnCurrentPermissions()
+        }
+    }
+
+    private func fetchTodaysEvents() {
+        guard eventAuthStatus == .authorized else {
+            if !events.isEmpty {
+                DispatchQueue.main.async { [weak self] in self?.events = [] }
+            }
+            return
+        }
+
+        let filteredIdentifiers = Defaults[.filteredCalendarIdentifiers]
+        let calendars = eventStore.calendars(for: .event).filter { cal in
+            !filteredIdentifiers.contains(cal.calendarIdentifier)
+        }
+
+        let startOfDay = Calendar.current.startOfDay(for: Date())
+        guard let endOfDay = Calendar.current.date(byAdding: .day, value: 1, to: startOfDay) else {
+            if !events.isEmpty {
+                DispatchQueue.main.async { [weak self] in self?.events = [] }
+            }
+            return
+        }
+
+        let predicate = eventStore.predicateForEvents(withStart: startOfDay, end: endOfDay, calendars: calendars)
+        let ekEvents = eventStore.events(matching: predicate)
+
+        DispatchQueue.main.async { [weak self] in
+            let newEvents = ekEvents.map {
+                Event(
+                    title: $0.title,
+                    startDate: $0.startDate,
+                    endDate: $0.endDate,
+                    location: $0.location,
+                    calendarColor: $0.calendar.cgColor
+                )
+            }.sorted(by: { $0.startDate < $1.startDate })
+
+            self?.events = newEvents
+        }
+    }
+}

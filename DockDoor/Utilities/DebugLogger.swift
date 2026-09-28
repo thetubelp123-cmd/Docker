@@ -1,0 +1,152 @@
+import Defaults
+import Foundation
+import os.log
+
+/// Debug logger for tracking performance-critical operations
+enum DebugLogger {
+    private static let log = OSLog(subsystem: Bundle.main.bundleIdentifier ?? "DockDoor", category: "Debug")
+    private static let queue = DispatchQueue(label: "DebugLogger", qos: .utility)
+    private static let logFileURL: URL = {
+        let tempDir = FileManager.default.temporaryDirectory
+        return tempDir.appendingPathComponent("DockDoor-Debug.log")
+    }()
+
+    private static let timestampFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.locale = Locale(identifier: "en_US_POSIX")
+        formatter.timeZone = TimeZone(secondsFromGMT: 0)
+        formatter.dateFormat = "yyyy-MM-dd HH:mm:ss.SSS"
+        return formatter
+    }()
+
+    private static func formattedTimestamp() -> String { timestampFormatter.string(from: Date()) }
+
+    private static func writeToFile(_ line: String) {
+        os_log("%{public}@", log: log, type: .debug, line)
+
+        queue.async {
+            guard let data = (line + "\n").data(using: .utf8) else { return }
+
+            if FileManager.default.fileExists(atPath: logFileURL.path) {
+                if let fileHandle = try? FileHandle(forWritingTo: logFileURL) {
+                    fileHandle.seekToEndOfFile()
+                    fileHandle.write(data)
+                    try? fileHandle.close()
+                }
+            } else {
+                try? data.write(to: logFileURL, options: .atomic)
+            }
+        }
+    }
+
+    /// Log an operation with optional details
+    static func log(_ operation: String, details: String? = nil) {
+        guard Defaults[.debugMode] else { return }
+
+        var logLine = "[\(formattedTimestamp())] \(operation)"
+        if let details {
+            logLine += " - \(details)"
+        }
+        writeToFile(logLine)
+    }
+
+    /// Log an operation with measured duration
+    static func logWithDuration(_ operation: String, details: String? = nil, duration: TimeInterval) {
+        guard Defaults[.debugMode] else { return }
+
+        var logLine = "[\(formattedTimestamp())] \(operation)"
+        logLine += String(format: " (%.3fms)", duration * 1000)
+        if let details {
+            logLine += " - \(details)"
+        }
+        writeToFile(logLine)
+    }
+
+    /// Measure and log the execution time of a block
+    @discardableResult
+    static func measure<T>(_ operation: String, details: String? = nil, block: () throws -> T) rethrows -> T {
+        guard Defaults[.debugMode] else {
+            return try block()
+        }
+
+        let startTime = Date()
+        let result = try block()
+        let duration = Date().timeIntervalSince(startTime)
+
+        logWithDuration(operation, details: details, duration: duration)
+        return result
+    }
+
+    /// Measure and log the execution time of an async block
+    @discardableResult
+    static func measureAsync<T>(_ operation: String, details: String? = nil, block: () async throws -> T) async rethrows -> T {
+        guard Defaults[.debugMode] else {
+            return try await block()
+        }
+
+        let startTime = Date()
+        let result = try await block()
+        let duration = Date().timeIntervalSince(startTime)
+
+        logWithDuration(operation, details: details, duration: duration)
+        return result
+    }
+
+    /// Measure and log only if execution time exceeds threshold (in milliseconds)
+    @discardableResult
+    static func measureSlow<T>(_ operation: String, thresholdMs: Double = 50, details: @autoclosure () -> String? = nil, block: () throws -> T) rethrows -> T {
+        guard Defaults[.debugMode] else {
+            return try block()
+        }
+
+        let startTime = CFAbsoluteTimeGetCurrent()
+        let result = try block()
+        let durationMs = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+
+        if durationMs > thresholdMs {
+            logWithDuration(operation, details: details(), duration: durationMs / 1000)
+        }
+        return result
+    }
+
+    /// Measure and log only if async execution time exceeds threshold (in milliseconds)
+    @discardableResult
+    static func measureSlowAsync<T>(_ operation: String, thresholdMs: Double = 50, details: @autoclosure () -> String? = nil, block: () async throws -> T) async rethrows -> T {
+        guard Defaults[.debugMode] else {
+            return try await block()
+        }
+
+        let startTime = CFAbsoluteTimeGetCurrent()
+        let result = try await block()
+        let durationMs = (CFAbsoluteTimeGetCurrent() - startTime) * 1000
+
+        if durationMs > thresholdMs {
+            logWithDuration(operation, details: details(), duration: durationMs / 1000)
+        }
+        return result
+    }
+
+    /// Export logs to a file and return the URL
+    static func exportLogs() -> URL? {
+        guard FileManager.default.fileExists(atPath: logFileURL.path) else { return nil }
+        return logFileURL
+    }
+
+    /// Clear all logs
+    static func clearLogs() {
+        queue.async {
+            try? FileManager.default.removeItem(at: logFileURL)
+        }
+    }
+
+    /// Get log count
+    static func getLogCount() -> Int {
+        queue.sync {
+            guard FileManager.default.fileExists(atPath: logFileURL.path),
+                  let content = try? String(contentsOf: logFileURL, encoding: .utf8)
+            else { return 0 }
+
+            return content.components(separatedBy: .newlines).filter { !$0.isEmpty }.count
+        }
+    }
+}

@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Support DockDoor - Donate | GitHub Sponsors</title>
+    <meta name="description"
+        content="Support DockDoor's development through GitHub Sponsors. Help keep this free, privacy-first Mac app alive and growing.">
+    <meta property="og:title" content="Support DockDoor - Donate">
+    <meta property="og:description"
+        content="Support DockDoor's development through GitHub Sponsors. Help keep this free, privacy-first Mac app alive and growing.">
+    <meta property="og:type" content="website">
+    <meta property="og:url" content="https://dockdoor.net/donate">
+    <meta property="og:image" content="/Assets/Assets.xcassets/AppIcon.appiconset/AppIcon-iOS-Default-512x512@1x.png">
+    <link rel="canonical" href="https://dockdoor.net/donate">
+    <link rel="icon" href="/Assets/Assets.xcassets/AppIcon.appiconset/AppIcon-iOS-Default-512x512@1x.png">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        header {
+            position: fixed;
+            width: 100%;
+        }
+
+        .donate-hero {
+            min-height: 100dvh;
+            display: grid;
+            place-items: center;
+            background: var(--light);
+        }
+
+        .donate-content {
+            text-align: center;
+            max-width: 580px;
+        }
+
+        .donate-headline {
+            font-size: 4rem;
+            font-weight: 700;
+            line-height: 1.05;
+            margin-bottom: 1.5rem;
+            color: var(--text-primary);
+            letter-spacing: -0.03em;
+        }
+
+        .donate-subheadline {
+            font-size: 1.25rem;
+            font-weight: 400;
+            color: var(--text-secondary);
+        }
+
+        .donate-options {
+            display: flex;
+            flex-direction: column;
+            gap: 1rem;
+            margin-block: 3rem;
+        }
+
+        .donate-note {
+            font-size: 0.95rem;
+            color: var(--text-secondary);
+        }
+
+        @media (max-width: 768px) {
+            .donate-headline {
+                font-size: 2.75rem;
+            }
+
+            .donate-subheadline {
+                font-size: 1.1rem;
+                margin-bottom: 3rem;
+            }
+        }
+    </style>
+</head>
+
+<body>
+    <!-- Header -->
+    <header id="header">
+        <div class="container header-container">
+            <a href="index.html" class="logo">
+                <img src="/Assets/Assets.xcassets/AppIcon.appiconset/AppIcon-iOS-Default-512x512@1x.png" alt="DockDoor Logo">
+                <span class="logo-text" data-text="DockDoor">DockDoor</span>
+            </a>
+            <nav>
+                <ul class="nav-links">
+                    <li><a href="index.html#privacy" class="nav-link">Privacy</a></li>
+                    <li><a href="index.html#features" class="nav-link">Features</a></li>
+                    <li><a href="index.html#faq" class="nav-link">FAQ</a></li>
+                    <li><a href="donate.html" class="nav-link active">Donate</a></li>
+                </ul>
+            </nav>
+            <div class="header-actions">
+                <a href="index.html#download" class="btn btn-primary">Download</a>
+                <button class="mobile-menu-btn" id="mobile-menu-btn" aria-label="Toggle mobile menu">☰</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- Donate Hero Section -->
+    <section class="donate-hero">
+        <div class="container">
+            <div class="donate-content">
+                <h1 class="donate-headline">Support DockDoor</h1>
+                <p class="donate-subheadline">
+                    Choose your preferred way to support development
+                </p>
+
+                <div class="donate-options">
+                    <a href="https://github.com/sponsors/ejbills" class="btn btn-primary btn-large" target="_blank" rel="noopener noreferrer" style="gap: 0.75rem;">
+                        <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
+                            <path d="M8 1.314C12.438-3.248 23.534 4.735 8 15-7.534 4.736 3.562-3.248 8 1.314z"/>
+                        </svg>
+                        GitHub Sponsors
+                    </a>
+
+                    <a href="https://www.buymeacoffee.com/keplercafe" class="btn btn-secondary btn-large" target="_blank" rel="noopener noreferrer" style="gap: 0.75rem;">
+                        ☕ Buy Me a Coffee
+                    </a>
+                </div>
+
+                <p class="donate-note">
+                    Built by a solo developer with no venture funding. Every contribution helps keep it free, open-source, and privacy-focused.
+                </p>
+            </div>
+        </div>
+    </section>
+
+    <!-- Script -->
+    <script src="scripts.js"></script>
+</body>
+
+</html>

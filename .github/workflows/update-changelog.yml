@@ -1,0 +1,79 @@
+name: Update changelog on release published
+on:
+  release:
+    types: [published]
+  workflow_dispatch:
+
+jobs:
+  changelog:
+    name: Update changelog
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+        with:
+          token: ${{ secrets.REPO_TOKEN }}
+          fetch-depth: 0
+
+      - name: Checkout main branch
+        run: git checkout main
+
+      - name: Update changelog from release
+        uses: rhysd/changelog-from-release/action@v3
+        with:
+          file: CHANGELOG.md
+          github_token: ${{ secrets.REPO_TOKEN }}
+          commit_summary_template: "chore: update changelog for %s"
+          header: |
+            <style>
+              h1:first-of-type {
+                display: none;
+              }
+              .my-5 {
+                margin: unset !important;
+              }
+              .markdown-body img {
+                max-width: 50%;
+              }
+              @media (prefers-color-scheme: dark) {
+                body {
+                  color-scheme: dark;
+                  color: white;
+                  background: transparent;
+                }
+                a, :link {
+                  color: #419cff;
+                }
+                a:active, link:active {
+                  color: #ff1919;
+                }
+              }
+               .donation-link {
+                  display: inline-block;
+                  margin-top: 10px;
+                  padding: 5px 10px;
+                  background-color: #FFDD00;
+                  color: #000000 !important;
+                  text-decoration: none;
+                  font-size: 0.9em;
+                  font-weight: bold;
+                  border-radius: 3px;
+                }
+                .donation-link:hover {
+                  background-color: #E5C700;
+                }
+            </style>
+            <div class="donation-link" target="_blank">☕ Support kepler.cafe at https://dockdoor.net/donate</div>
+
+      - name: Set file permissions
+        run: sudo chown -R $(whoami) .
+
+      - name: Commit changes
+        run: |
+          git config --global user.name "ejbills"
+          git config --global user.email "ejbills@users.noreply.github.com"
+          git add CHANGELOG.md
+          git commit -m "chore: update changelog for ${{ github.event.release.tag_name || 'manual trigger' }}" || echo "No changes to commit"
+
+      - name: Push changes
+        run: git push origin main

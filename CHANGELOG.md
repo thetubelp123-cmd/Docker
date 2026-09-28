@@ -1,0 +1,2512 @@
+<style>
+  h1:first-of-type {
+    display: none;
+  }
+  .my-5 {
+    margin: unset !important;
+  }
+  .markdown-body img {
+    max-width: 50%;
+  }
+  @media (prefers-color-scheme: dark) {
+    body {
+      color-scheme: dark;
+      color: white;
+      background: transparent;
+    }
+    a, :link {
+      color: #419cff;
+    }
+    a:active, link:active {
+      color: #ff1919;
+    }
+  }
+   .donation-link {
+      display: inline-block;
+      margin-top: 10px;
+      padding: 5px 10px;
+      background-color: #FFDD00;
+      color: #000000 !important;
+      text-decoration: none;
+      font-size: 0.9em;
+      font-weight: bold;
+      border-radius: 3px;
+    }
+    .donation-link:hover {
+      background-color: #E5C700;
+    }
+</style>
+<div class="donation-link" target="_blank">☕ Support kepler.cafe at https://dockdoor.net/donate</div>
+
+<a id="1.40.1"></a>
+# [Release 1.40.1](https://github.com/ejbills/DockDoor/releases/tag/1.40.1) - 2026-09-03
+
+## 🐛 Bug Fixes
+- Hot fix for macos 26.3+ where clicks were not reacting inside dock windows
+
+
+[Changes][1.40.1]
+
+
+<a id="1.40.0"></a>
+# [Release 1.40.0](https://github.com/ejbills/DockDoor/releases/tag/1.40.0) - 2026-09-03
+
+## ✨ New Features
+- Browse and control every window from the menu bar
+  - New "Window Actions" submenu lists every open app and window with actions like minimize, close, quit, and quarter/half placement
+  - Click the DockDoor menu bar icon > Window Actions
+- Bigger right-click menu on previews
+  - Right-clicking a window preview now offers the full set of actions (quarter/half placement, centering, app controls), grouped by Window, Arrange, and Application
+  - Windowless apps get the same full action set in their right-click menu, not just Open New Window and Quit
+- Keep dock previews open after activating a window
+  - New "Keep preview open after hover activation" option in Settings > Dock Previews, for comparing or switching between windows without reopening the preview
+  - Only available when hovering is set to bring windows to the front; off by default
+- New "System Main Display" option for Dock Locking
+  - Settings > Dock Locking > "Lock Dock to" > System Main Display always tracks whichever screen currently has the menu bar
+  - DockDoor now moves the real Dock onto your locked display automatically a couple seconds after login or a display change
+  - Your locked display choice, and your pinned switcher display, now survive reboots reliably
+- Independent modifier and Escape support for the alternate switcher shortcut
+  - Settings > Gestures & Keybinds > Window Switcher > Alternate Shortcut now has its own Control/Option/Command modifier picker
+  - Escape can now be captured as the alternate shortcut key
+- Drag items out of the Folder widget
+  - Click and drag a file or folder from an open Folder widget into Finder, Mail, or another app
+- DockDoor Pro is now easier to find
+  - "Get DockDoor Pro…" added to the menu bar menu, linking to the paid Pro app
+
+## 🔧 Improvements & Stability
+- Faster, smoother window switcher and dock previews, especially with many windows open
+- Window switcher stays in sync with your desktop
+  - Opening the switcher refreshes the window list immediately, including terminal-launched apps like mpv and non-bundled games
+  - Closed windows from separate instances of the same app (e.g. a terminal app launched with special flags) no longer linger as stale entries
+  - Background refresh dropped from a 60-second to a 5-second interval, and no longer resets your current selection
+  - Live preview thumbnails and title updates now reach the switcher while it's open
+- Dock hover and scroll gestures are only intercepted when your cursor is actually near the Dock
+- DockDoor recovers automatically after sleep, screen wake, or a display/resolution change, instead of keybinds or previews going unresponsive
+- DockDoor backs off from an unresponsive app instead of stalling on it
+- "Quit app on last window close" is more reliable and less likely to misfire while an app is still working
+- New windows appear in previews and the switcher faster after being opened, and a slow app opening a window no longer delays detection of new windows in other apps
+- Press Return (not just numpad Enter or your custom key) to select the highlighted window in the switcher
+- Traffic-light-style preview buttons (close, minimize, quit, etc.) now render as glossy macOS 27-style orbs, unless "monochrome" buttons are enabled in Settings > Appearance
+- Settings now warns when your locked display can't hold the Dock because another display blocks its edge, with a suggestion to rearrange displays
+
+## 🐛 Bug Fixes
+- Fixed the Dock staying stuck out of its auto-hide state after clicking a Dock icon
+- Selected window in the switcher/preview now stays visible with an accent border when "Hide card background" is enabled
+- Floating notification-style popups (e.g. Outlook's meeting reminder) no longer show up as window entries
+- Fixed dock preview scrolling being broken
+- Untitled toolbar/overlay windows no longer get mistaken for real app windows
+- Fixed blank/transparent preview thumbnails under Stage Manager
+- Windows on other Spaces now show up correctly and separately instead of merging with the current Space's windows
+- "Quit app on last window close" now reliably triggers when you close the final window, and no longer quits apps that are just briefly busy
+- Apps that quit without a clean termination notice no longer leave stale entries behind
+- Detached native tabs now each show as a separate entry instead of collapsing into one
+- Window titles (e.g. browser tab titles) update more reliably
+- Pinned media widgets no longer intercept the spacebar meant for another app
+- Closing or minimizing a window from the switcher keeps it open until there's nothing left to show
+- Closing the Settings window now cleans up its window tracking more reliably
+- Cmd+W, Cmd+M, and standard Edit menu shortcuts (undo, cut, copy, paste, select all) now work in the Settings window
+- Preview mockups shown in Settings' appearance options no longer respond to clicks or hover as if they were a real window preview
+- Switcher stays centered instead of drifting while you type to filter
+- Fixed a crash that could occur while typing to search in the window switcher
+- Clicking a window in a Dock preview no longer briefly shrinks it, and clicking a Dock icon no longer triggers a stray delayed preview
+- Newly opened windows now reliably replace an app's "no windows" placeholder, even outside an active switcher session
+- Fixed a slight height mismatch in the title pill for minimized/hidden window cards
+- The switcher now closes reliably after external triggers and after releasing its modifier key
+- Fixed a hang that could occur when opening Settings
+
+
+[Changes][1.40.0]
+
+
+<a id="1.39.5"></a>
+# [Release 1.39.5](https://github.com/ejbills/DockDoor/releases/tag/1.39.5) - 2026-08-01
+
+## ✨ New Features
+- Choose how dock previews open
+  - Pick Hover, Middle Click, or Modifier Click with the "Dock Preview Trigger" option in Settings > Dock Previews > Dock Interaction
+  - Modifier Click lets you choose the key with the "Dock Preview Modifier" picker: Option (default), Control, Shift, or Command
+- Press Space to play or pause music in media previews
+  - Works whenever a single media preview is on screen, no mouse needed
+- New Liquid Glass variant 20 with adjustable blur
+  - Combines variant 19's native glass look with working blur and saturation sliders
+  - Find it in Settings > Appearance by moving the glass variant control to 20
+- New "Open App Window" action for middle-clicking a preview
+  - Brings the window to the front, restoring it if minimized or hidden
+  - On previews of apps with no open windows, it opens the app instead
+  - Assign it in Settings > Gestures & Keybinds > Mouse Actions > Middle Click
+
+## 🔧 Improvements & Stability
+- Folder previews are faster and smoother
+- Window switcher opens faster and responds more quickly to selection changes
+- Lower background activity when apps rapidly change window titles, such as plugin windows
+- Updated translations across the app
+- Updated internal components for reliability and security
+
+## 🐛 Bug Fixes
+- No longer crashes Ableton Live's plugin scanner
+  - DockDoor no longer inspects invisible background helper processes
+  - Also prevents similar conflicts with other apps that use background helpers
+- Switching to a Chrome or Brave web app no longer quits it
+  - Also avoids a potential crash when focusing windows on macOS 14.7.4 and later
+- Previews for windows close to the display edge, or any window touching the very top of a screen, appear on the correct monitor in multi-display setups
+- Clicks inside an open preview are no longer mistaken for dock clicks
+
+
+[Changes][1.39.5]
+
+
+<a id="1.39.4"></a>
+# [Release 1.39.4](https://github.com/ejbills/DockDoor/releases/tag/1.39.4) - 2026-07-05
+
+## ✨ New Features
+- Collapse native tabs into one preview
+  - Tabbed apps like Safari, Finder, Terminal, and Ghostty can show a single preview per window instead of one per tab
+  - Turn on "Collapse native tabs into a single window" under Settings > Dock Previews > Window Display, then restart the app
+  - Off by default
+- New glass Variant control for the dock preview
+  - A Variant slider picks between different liquid glass looks for a richer, more reflective background
+  - Find it under Settings > Appearance > Background > Glass Tuning > Variant (macOS 26 and later)
+
+## 🔧 Improvements & Stability
+- Folder preview options moved into dock preview tab
+- Steadier previews with less flicker
+  - Dock and Cmd+Tab previews settle in one clean pass instead of visibly redrawing while they refresh
+- Updated interface translations across languages
+
+## 🐛 Bug Fixes
+- Apps no longer quit by mistake on view changes
+  - With quit-on-last-window-close on, apps like Microsoft Office and Chrome web apps are re-checked before quitting so they aren't closed mid-transition
+- Media widget play/pause responds reliably
+  - The button no longer flickers between states or makes elapsed time jump when you pause or resume
+- Closed or stale windows stop lingering in previews
+  - Each window is re-checked against the system before it's shown
+- Fewer crashes while DockDoor reads your dock items
+
+
+[Changes][1.39.4]
+
+
+<a id="1.39.3"></a>
+# [Release 1.39.3](https://github.com/ejbills/DockDoor/releases/tag/1.39.3) - 2026-06-02
+
+## 🐛 Bug Fixes
+- Fixed universal media source matching
+  - More reliable detection in universal mode
+  - Fix high CPU for nintendo music center
+- Dock lock unlock shortcut now reliable
+
+
+[Changes][1.39.3]
+
+
+<a id="1.39.2"></a>
+# [Release 1.39.2](https://github.com/ejbills/DockDoor/releases/tag/1.39.2) - 2026-05-31
+
+## 🔧 Improvements & Stability
+- Sort folder previews by date added
+
+## 🐛 Bug Fixes
+- Window previews return after granting screen recording
+- - Fix for users who experienced 'stuck' compact mode
+- Compact mode no longer skips items with keyboard controls
+
+
+[Changes][1.39.2]
+
+
+<a id="1.39.1"></a>
+# [Release 1.39.1](https://github.com/ejbills/DockDoor/releases/tag/1.39.1) - 2026-05-27
+
+## 🔧 Improvements & Stability
+- Skipping screen recording no longer repeatedly asks for permission
+- More reliable accessibility queries on background threads (crash fix)
+
+## 🐛 Bug Fixes
+- Active app indicator positions correctly across multiple displays
+- Folders no longer re-prompt for permission after denial (choose folder prompt)
+
+
+[Changes][1.39.1]
+
+
+<a id="1.39"></a>
+# [Release 1.39](https://github.com/ejbills/DockDoor/releases/tag/1.39) - 2026-05-26
+
+## ✨ New Features
+- Folder previews when hovering Dock folders
+  - Browse contents directly from the Dock
+  - Sort by name, date, kind, or size
+  - Remember sort order per folder
+- Bring app windows to your current Space
+  - New traffic light button on previews
+  - New scroll-on-dock-icon action
+
+## 🐛 Bug Fixes
+- Hover delay no longer cancels when sliding between Dock icons
+- More accurate grouping for helper-owned windows
+
+
+[Changes][1.39]
+
+
+<a id="1.38.1"></a>
+# [Release 1.38.1](https://github.com/ejbills/DockDoor/releases/tag/1.38.1) - 2026-05-24
+
+## 🐛 Bug Fixes
+- Separate instances of the same app no longer get ignored
+- Dock background style names now have translation registration
+- Sync translations with Crowdin entries
+
+
+[Changes][1.38.1]
+
+
+<a id="1.38"></a>
+# [Release 1.38](https://github.com/ejbills/DockDoor/releases/tag/1.38) - 2026-05-23
+
+## ✨ New Features
+- Drag previews to move windows between Spaces
+- Control Window Switcher app icon size
+- Choose whether dock clicks restore minimized windows
+- Ignore single-window apps in Cmd+Tab previews
+- Leave Product Hunt reviews from General settings
+
+## 🔧 Improvements & Stability
+- Window Switcher previews better match window shapes
+- Drag-hover now updates Window Switcher selection
+- Fullscreen and tiling actions focus targeted windows
+- Minimized labels respect pill styling settings
+- Removed wake activation to prevent surprise focus
+- Widget settings wording is clearer
+- Updated translations across supported languages
+
+## 🐛 Bug Fixes
+- Fixed Dock Locking disabling after display changes
+- Fixed other-Space windows appearing windowless
+- Fixed Vim motions with custom switcher modifiers
+- Fixed stream keep-alive duration selection
+- Fixed rounded-corner icon alignment issues
+- Fixed last-window close quit behavior
+- Fixed custom Cmd+Tab routing conflicts
+- Fixed helper-owned app windows being missed
+- Fixed dock hover preview cancellation race
+
+
+
+[Changes][1.38]
+
+
+<a id="1.37"></a>
+# [Release 1.37](https://github.com/ejbills/DockDoor/releases/tag/1.37) - 2026-04-23
+
+## ✨ New Features
+- Shift+click on an icon in the dock opens a new app window 
+- Auto-open windows for windowless apps when selected in switcher - default OFF
+
+## 🔧 Improvements & Stability
+- Apps with no windows now respect relevant appearance options
+- Fix window previews rendering too wide
+- Fix music widget rendering in random sizes
+- Window titles no longer scroll, now they truncate in the center by default
+  - Customizable title overflow styles for window titles - can configure types of truncation or switch back to marquee for window titles
+
+## 🐛 Bug Fixes
+- Improved Cmd+Tab reliability
+  - Works when window switcher is off
+  - App matching works correctly
+  - Previews dismiss properly
+- Tapping music widget background now switches apps correctly
+- Media widget no longer resizes on hover
+- Title styles no longer inflate preview width
+- Fix artwork being stale when new media has no artwork
+- Window switcher respects limit to active app only for windowless apps
+- Cmd-tab preview should no longer remain on screen consistently (better coverage)
+
+
+[Changes][1.37]
+
+
+<a id="1.36"></a>
+# [Release 1.36](https://github.com/ejbills/DockDoor/releases/tag/1.36) - 2026-04-20
+
+## ✨ New Features
+- Searchable settings across all pages
+- Disable dock widgets per app
+- Mouse Follows Focus in Window Switcher
+
+## 🔧 Improvements & Stability
+- Search bar auto-focus option in switcher
+- Control app activation on wake from sleep
+
+## 🐛 Bug Fixes
+- No flash when clicking dock to minimize
+- Scroll fade only shows when scrolled
+- Media scroll only responds over widget
+- Glass background corner artifacts resolved
+- Compact mode highlight and edge clicks fixed
+
+
+[Changes][1.36]
+
+
+<a id="1.35.1"></a>
+# [Release 1.35.1](https://github.com/ejbills/DockDoor/releases/tag/1.35.1) - 2026-04-17
+
+## 🔧 Improvements & Stability
+- Smoother window preview scrolling
+- More consistent backgrounds across hover windows
+- Smoother scrolling title marquee
+- Fewer redraws when settings are unchanged
+- Unified background styling in widgets and search
+
+
+[Changes][1.35.1]
+
+
+<a id="1.35"></a>
+# [Release 1.35](https://github.com/ejbills/DockDoor/releases/tag/1.35) - 2026-04-16
+
+## ✨ New Features
+- Dock Locking! Lock the Dock in place on a certain display - no strings attached. Thanks [@mattwilkinsonn](https://github.com/mattwilkinsonn)!
+- Scroll on the title bar of any window to resize or center - thanks [@hunn1](https://github.com/hunn1) and [@lasncc2](https://github.com/lasncc2)!
+- Running apps with no windows appear in switcher, feature is opt-in for dock previews and cmd-tab
+- Customizable Liquid Glass dock preview background appearance controls
+
+## 🔧 Improvements & Stability
+- App name no longer crowded in window switcher
+- Preview stays visible after quitting an app
+- Cmd-tab preview hidden on app with no windows
+- Onboarding improvements
+- More reliable screen recording permission detection
+- Localized "last update check" text
+
+## 🐛 Bug Fixes
+- Cmd+Tab preview now appears on the correct screen
+- Finder no longer quits unexpectedly
+- Scroll gesture no longer stalls the interface for Logitech mice with horizontal scrolling
+- Stale previews no longer linger after hiding
+- More stable Liquid Glass rendering
+- Misc improvements and patches
+
+
+[Changes][1.35]
+
+
+<a id="1.34.1"></a>
+# [Release 1.34.1](https://github.com/ejbills/DockDoor/releases/tag/1.34.1) - 2026-04-06
+
+## 🐛 Bug Fixes
+- Arrow keys work in window switcher again
+  - New option to pass Ctrl+Arrow to macOS Spaces in window switcher keybind settings, if required
+
+
+[Changes][1.34.1]
+
+
+<a id="1.34"></a>
+# [Release 1.34](https://github.com/ejbills/DockDoor/releases/tag/1.34) - 2026-04-05
+
+## ✨ New Features
+- Vim-style navigation in window switcher
+  - Use H/J/K/L to move between windows
+  - Automatically disabled while searching
+- Custom background color for previews
+  - Pick any color via the new color picker
+  - Replaces the default blur or opaque background
+
+## 🔧 Improvements & Stability
+- Smoother media playback progress tracking
+  - Progress bar updates more reliably during playback
+  - Seeking snaps to the correct position instantly
+
+
+[Changes][1.34]
+
+
+<a id="1.33.1"></a>
+# [Release 1.33.1](https://github.com/ejbills/DockDoor/releases/tag/1.33.1) - 2026-04-05
+
+- Sync translations with Crowdin submissions
+
+
+[Changes][1.33.1]
+
+
+<a id="1.33"></a>
+# [Release 1.33](https://github.com/ejbills/DockDoor/releases/tag/1.33) - 2026-04-05
+
+## ✨ New Features
+- Universal media controls
+  - Works with any app playing audio
+  - Choose universal or Spotify/Apple Music only
+- Filter windows by current monitor
+  - Supported in dock, switcher, and Cmd+Tab
+- Live appearance preview restored in settings
+
+## 🔧 Improvements & Stability
+- Toggle media and calendar widgets independently
+- Progress bar in embedded media widget
+- Active app indicator animates smoothly
+- Centered layout options for window controls/titles
+- Option to increase the size of traffic light buttons (scaling)
+- Customizable window switcher selection key
+- Option to hide Close All / Minimize All buttons
+- Option to show small windows (under 100px, for example the copy progress window for finder)
+- Clicking preview background focuses the app
+- Check for Updates in menu bar
+- Settings reopen after settings-triggered restart
+- Window title font size setting
+
+## 🐛 Bug Fixes
+- Cmd+Tab preview no longer stuck on screen in most scenarios
+- Reliable recovery after sleep/wake cycles
+- Minimized windows kept when filtering by Space
+- Ctrl+Arrow still switches Spaces in switcher while preview is active
+- Preview dismisses correctly on Space change
+- Search bar no longer renders without a window
+- Window previews no longer flash blank briefly
+- Fixed memory leaks in audio device listener
+
+
+[Changes][1.33]
+
+
+<a id="1.32.2"></a>
+# [Release 1.32.2](https://github.com/ejbills/DockDoor/releases/tag/1.32.2) - 2026-03-13
+
+## 🔧 Improvements & Stability
+- Fully customizable backward key in window switcher
+  - Any key can be assigned, not just modifiers
+  - Reset button to restore default
+- Window counts update reliably in hover previews. (thanks [@ScavengerCoA](https://github.com/ScavengerCoA))
+
+[Changes][1.32.2]
+
+
+<a id="1.32.1"></a>
+# [Release 1.32.1](https://github.com/ejbills/DockDoor/releases/tag/1.32.1) - 2026-03-02
+
+Please see the warning in the previous patch. 
+
+## 🐛 Bug Fixes
+ - Fixed window switcher layout
+  - Correct column usage now
+  - Better grid navigation
+
+
+[Changes][1.32.1]
+
+
+<a id="1.32"></a>
+# [Release 1.32](https://github.com/ejbills/DockDoor/releases/tag/1.32) - 2026-03-02
+
+WARNING: There is a fradulent DockDoor clone currently on the Mac App Store charging a monthly subscription. This is not affiliated with DockDoor whatsoever, the only official source is dockdoor.net. DockDoor is, and always will be, completely free.
+
+## ✨ New Features
+- Customizable Cmd+Tab cycle keys
+  - Forward and backward keys
+  - Auto-select first window option
+- Manual dark mode setting
+- Opaque preview background option
+- Customizable search trigger key
+- Quit app on window close option (swift quit replacement option)
+- Window switcher scroll direction
+  - Horizontal or vertical option
+
+## 🔧 Improvements & Stability
+- Reorganized settings into tabs
+  - Dock, Cmd+Tab, Switcher tabs
+- Improved window space filtering
+  - Per-feature hidden window toggle
+- Anchored dock preview position
+- Compact mode hide close buttons
+- Customizable swipe gesture threshold
+- Improved live preview sizing
+
+## 🐛 Bug Fixes
+- Fixed liquid glass freezing
+- Fixed stale space ID windows
+- Fixed media scroll hijacking
+- Fixed dock preview gap when using live video preview
+- Fixed sleep wake reliability
+  - Event tap auto-recovery
+- Better health check detection when observer stops responding on dock previews
+- Fixed window switcher orientation
+- Fixed accidental swipe taps
+
+
+[Changes][1.32]
+
+
+<a id="1.31.2"></a>
+# [Release 1.31.2](https://github.com/ejbills/DockDoor/releases/tag/1.31.2) - 2026-01-23
+
+## ✨ New Features
+- Separate widget background toggle
+  - Hide widget backgrounds independently
+  - Applies to media and calendar
+
+## 🔧 Improvements & Stability
+- Reorganized settings interface
+- Better preview panel resizing
+
+## 🐛 Bug Fixes
+- Fixed active app indicator position
+  - Correct alignment in fullscreen
+  - Updates with dock changes
+- Fixed hover window behavior
+- Fixed window failing to present after sleep wake
+- Fixed dock click detection
+
+
+[Changes][1.31.2]
+
+
+<a id="1.31.1"></a>
+# [Release 1.31.1](https://github.com/ejbills/DockDoor/releases/tag/1.31.1) - 2026-01-17
+
+Apologies for the double update in one night, missed this bug.
+
+## 🐛 Bug Fixes
+- Fixed dock hover window updates
+  - Shows newly opened windows by updating cache in background 
+
+
+[Changes][1.31.1]
+
+
+<a id="1.31"></a>
+# [Release 1.31](https://github.com/ejbills/DockDoor/releases/tag/1.31) - 2026-01-17
+
+Thank you for the recent support and publications about DockDoor, you are all awesome!
+
+Special thanks to **great2bnaustin**, **Larsen2k4**, **clementcampagna**, **gwmerritt-lgtm**, and **balazsnasz** for their extensive beta testing across 28 releases. Their feedback was invaluable in identifying and solving many issues.
+
+## ✨ New Features 
+- AppleScript scripting support for external automation
+  - Run `tell application "DockDoor" to get help` to see all commands
+- Reworked window presentation entirely to resolve hangs and stutters while using DockDoor
+  - DockDoor is now faster than ever!
+
+## 🔧 Improvements & Stability
+- Moved AX observer work off main thread to prevent UI hangs
+- Added timeout limits to AX operations
+- Debounced AX observer callbacks to reduce processing overhead
+- Switched to lazy stacks for better scroll performance
+
+## 🐛 Bug Fixes 
+- Fixed AppleScript causing silent crashes and music preview failures 
+- Fixed window previews from different instances of same app not showing correctly 
+- Fixed liquid glass not updating background dynamically 
+- Fixed window switching failing when front app has heavy workload 
+- Fixed dockobserver becoming unresponsive after extended use 
+- Fixed window switcher animation lag 
+- Fixed media widget memory leak and process pileup 
+- Fixed preview frame getting cut off and using too much space 
+- Fixed marquee text rendering when content fits 
+- Fixed pinned widget corner radius not matching dock preview
+
+
+
+[Changes][1.31]
+
+
+<a id="1.30.1"></a>
+# [Release 1.30.1](https://github.com/ejbills/DockDoor/releases/tag/1.30.1) - 2026-01-02
+
+## ✨ New Features
+- --Added command line control-- DEPRECATED
+- Redesigned welcome experience
+
+## 🔧 Improvements & Stability
+- Remembers windows after restart
+- Improved window order preservation
+- Better button hover effects
+
+## 🐛 Bug Fixes
+- Fixed dock click behavior
+- Fixed window title updates
+
+
+[Changes][1.30.1]
+
+
+<a id="1.30"></a>
+# [Release 1.30](https://github.com/ejbills/DockDoor/releases/tag/1.30) - 2025-12-26
+
+🎄 Merry X-Mas!
+
+## ✨ New Features
+- Parallel title/controls layout options (thanks [@X1nto](https://github.com/X1nto))
+  - Title and controls stacked
+  - Four new position choices
+- Shift+Tab navigation option (thanks [@maddada](https://github.com/maddada))
+  - Requires key combo backward
+  - Support to hold tab to iterate automatically
+
+## 🔧 Improvements & Stability
+- Improved keyboard shortcut matching
+
+## 🐛 Bug Fixes
+- Fixed ghost window detection
+- Fixed full preview activation
+
+
+[Changes][1.30]
+
+
+<a id="1.29"></a>
+# [Release 1.29](https://github.com/ejbills/DockDoor/releases/tag/1.29) - 2025-12-23
+
+This is a re-release due to some issues with the original 1.29 release.
+## ✨ New Features 
+- Added window grouping option
+- Group windows per app
+- Calendar event filtering options
+- Media widget seek control
+- Restart option in menu
+
+## 🔧 Improvements & Stability
+- Improved dock observer efficiency
+- Enhanced volume control scrolling
+  - Natural scrolling support
+- Better permission checking performance
+- Improved window switcher positioning
+  - Alignment options added
+  - Position adjustment sliders
+
+## 🐛 Bug Fixes
+- Window names update correctly
+- Screen recording permission prompt
+- Dock click behavior fixed
+  - Apps without windows
+- Minimized windows label display
+- Hidden windows label display
+
+
+[Changes][1.29]
+
+
+<a id="1.28.1"></a>
+# [Release 1.28.1](https://github.com/ejbills/DockDoor/releases/tag/1.28.1) - 2025-12-16
+
+## 🔧 Improvements & Stability
+- Improved window switcher navigation
+  - Better mouse hover detection
+  - Auto-scroll near edges
+
+## 🐛 Bug Fixes
+- Fixed app filtering logic
+- Fixed preview window layering
+
+
+[Changes][1.28.1]
+
+
+<a id="1.28"></a>
+# [Release 1.28](https://github.com/ejbills/DockDoor/releases/tag/1.28) - 2025-12-10
+
+## ✨ New Features
+- Trackpad swipe gesture controls (default ON)
+  - Swipe toward dock to minimize
+  - Swipe away to maximize
+  - New Gestures & Keybinds settings
+- Live window video previews (default OFF) - thanks [@suatkocar](https://github.com/suatkocar)
+  - Granular live preview settings
+  - Separate Dock/Switcher settings
+  - More quality and FPS options
+- Active app dock indicator (default OFF) - thanks [@maddada](https://github.com/maddada)
+- Compact list view mode (default OFF) - thanks [@maddada](https://github.com/maddada)
+- Fuzzy search with fuzziness levels - thanks [@maddada](https://github.com/maddada)
+- Instant window switcher toggle - thanks [@maddada](https://github.com/maddada)
+- Skip screen recording permission - thanks [@maddada](https://github.com/maddada)
+- Scroll to show/hide apps (default OFF)
+- New window sort options
+- Alternate window switcher shortcut
+- Maximize traffic light button
+- Extensive gesture customization redesign
+
+## 🔧 Improvements & Stability
+- Window Switcher scope options
+- LiveWindowCapture performance improvements
+- Per-window capture management
+- Smart search window positioning
+- Centralized sorting logic
+- Improved compact mode support
+
+## 🐛 Bug Fixes
+- High window count startup
+- Filtered navigation with arrows
+- Removed deprecated sort option
+
+
+
+[Changes][1.28]
+
+
+<a id="1.27"></a>
+# [Release 1.27](https://github.com/ejbills/DockDoor/releases/tag/1.27) - 2025-12-05
+
+# DockDoor v1.27
+
+## ✨ New Features
+- Space-based window filtering (thanks [@YiwenZhu77](https://github.com/YiwenZhu77))
+  - Dock hover filtering
+  - Window switcher filtering
+  - Command-Tab enhancement filtering
+- Debug logging system (default OFF)
+  - Log export functionality
+
+## 🔧 Improvements & Stability
+- Improved dock click behavior
+- Faster window state updates
+- Enhanced Command-Tab integration
+- Optimized app startup performance
+- Better window switcher throttling
+
+## 🐛 Bug Fixes
+- Fixed window restoration timing 
+- Corrected state tracking accuracy
+- Fixed CMD+TAB enhancement causing lag while holding key
+
+
+
+[Changes][1.27]
+
+
+<a id="1.26"></a>
+# [Release 1.26](https://github.com/ejbills/DockDoor/releases/tag/1.26) - 2025-11-20
+
+## ✨ New Features
+- CMD + Right Click quits apps (thanks [@danieletieghi](https://github.com/danieletieghi))
+  - Hold Option to force quit
+- Enhanced CMD + Tab switching
+  - CMD + A can now be pressed repeatedly for window cycling
+- Arrow keys now jump over rows and columns (up/down works in window switcher)
+
+## 🔧 Improvements & Stability
+- Better window state tracking (should track window order better)
+- Improved window discovery accuracy
+- Only intended window will be raised to front (rather than activating all windows)
+
+## 🐛 Bug Fixes
+- Dock click to hide window behavior fixed
+- Fixed CMD-TAB enhancement ceasing to function
+- No more cmd-tab overlay after acknowledgement
+- Restores stage manager previews
+
+
+[Changes][1.26]
+
+
+<a id="1.25.5"></a>
+# [Release 1.25.5](https://github.com/ejbills/DockDoor/releases/tag/1.25.5) - 2025-11-01
+
+## Features
+- Added option to prevent preview reappearance during fade-out
+
+## 🔧 Improvements & Stability
+- Improved settings window layout
+- Fixed window switcher index not being set
+- Fixed window switcher index being set by mouse hover
+
+## 🐛 Bug Fixes
+- Prevented fade-out reset issue
+
+
+[Changes][1.25.5]
+
+
+<a id="1.25.4"></a>
+# [Release 1.25.4](https://github.com/ejbills/DockDoor/releases/tag/1.25.4) - 2025-10-30
+
+## 🔧 Improvements & Stability
+- Fixed window preview losing track of minimized windows, windows in other spaces
+- Enhanced window state tracking
+- Optimized window discovery performance
+- Much more reliable dock preview hover detection and presentation
+  - Removed the 'lateral movement' checkbox
+- Hovered window switcher window now selected on release of initalizer key
+- Cmd tab enhancement now selects selected window on release of CMD 
+- Cleaned up code
+
+## 🐛 Bug Fixes
+- Fixed cmd-tab window positioning on bottom left side of screen
+
+[Changes][1.25.4]
+
+
+<a id="1.25.3"></a>
+# [Release 1.25.3](https://github.com/ejbills/DockDoor/releases/tag/1.25.3) - 2025-09-26
+
+## 🐛 Bug Fixes 
+- Fixed invisible OK button
+- Fixed unreadable support section
+
+
+[Changes][1.25.3]
+
+
+<a id="1.25.2"></a>
+# [Release 1.25.2](https://github.com/ejbills/DockDoor/releases/tag/1.25.2) - 2025-09-24
+
+## 🔧 Improvements & Stability
+- Better window recognition
+    - Fixes issue where Termius and Microsoft Teams showed additional windows incorrectly
+
+
+[Changes][1.25.2]
+
+
+<a id="1.25.1"></a>
+# [Release 1.25.1](https://github.com/ejbills/DockDoor/releases/tag/1.25.1) - 2025-09-24
+
+## 🔧 Improvements & Stability
+- Fixes transient windows rendering inside DockDoor
+    - Fixes Chrome search window registering as window
+    - Fixes microsoft teams transient windows
+
+
+[Changes][1.25.1]
+
+
+<a id="1.25"></a>
+# [Release 1.25](https://github.com/ejbills/DockDoor/releases/tag/1.25) - 2025-09-23
+
+## ✨ New Features
+- Added native cmd+tab app switcher previews (defaults to off)
+  - Keyboard driven navigation
+  - Window actions shortcuts work (cmd+m - minimize, cmd+w - close, cmd+q - quit)
+  - <img width="200" alt="output-compressed" src="https://github.com/user-attachments/assets/74798f00-e351-45f9-964e-5a2b7e6c93ed" />
+
+## 🔧 Improvements & Stability
+- Helpful on-screen tips for cmd-tab enhancement feature
+- Adjustable blur background (option to disable liquid glass)
+- Avoids app switcher conflicts, you can still use app expose shortcuts
+
+
+[Changes][1.25]
+
+
+<a id="1.24.1"></a>
+# [Release 1.24.1](https://github.com/ejbills/DockDoor/releases/tag/1.24.1) - 2025-09-23
+
+## ✨ New Features
+- Better coverage of missing app windows
+  - Works with more apps (Adobe Illustrator)
+  - Captures previews reliably
+- Added preview background option
+  - Hide panel behind previews
+
+## 🔧 Improvements & Stability
+- Cleaner full-size previews
+- Improved performance defaults
+
+## 🐛 Bug Fixes
+- Fixed wrong minimized status
+  - Hidden state syncs correctly
+
+
+[Changes][1.24.1]
+
+
+<a id="1.24"></a>
+# [Release 1.24](https://github.com/ejbills/DockDoor/releases/tag/1.24) - 2025-09-22
+
+## ✨ New Features
+- Shows minimized windows and windows from other desktops on launch
+- Added preview quality setting
+  - Sharper window previews option
+- Added title style option
+  - Disable rounded label
+
+## 🔧 Improvements & Stability
+- More reliable window detection
+- Cleaner full-size previews
+
+
+[Changes][1.24]
+
+
+<a id="1.23.1"></a>
+# [Release 1.23.1](https://github.com/ejbills/DockDoor/releases/tag/1.23.1) - 2025-09-17
+
+
+## 🐛 Bug Fixes
+- Fixed window switcher functionality
+  - Works without dock previews
+  - Improved initialization reliability
+
+
+[Changes][1.23.1]
+
+
+<a id="1.23"></a>
+# [Release 1.23](https://github.com/ejbills/DockDoor/releases/tag/1.23) - 2025-09-16
+
+## ✨ New Features
+- Search for open windows (default off)
+  - Press / to start
+  - Type to filter list
+  - <img width="1326" height="614" alt="CleanShot 2025-09-16 at 11 34 35@2x" src="https://github.com/user-attachments/assets/ce0c8c1a-a32f-4dae-b94f-359a7747feb9" />
+
+## 🔧 Improvements & Stability
+- Improved window preview quality
+  - Better Stage Manager support
+- Better update status messages
+- Improved keybind display text
+- Improved button text contrast
+
+## 🐛 Bug Fixes
+- Fixed keybind detection issues
+- Fixed window selection stability
+- Fixed preview interaction issues
+
+
+[Changes][1.23]
+
+
+<a id="1.22"></a>
+# [Release 1.22](https://github.com/ejbills/DockDoor/releases/tag/1.22) - 2025-09-07
+
+
+## ✨ New Features
+- Marquee scrolling toggle
+  - Static titles option
+  - Settings control added
+
+## 🔧 Improvements & Stability
+- Enhanced settings window
+  - Better window raising
+  - Improved focus handling
+- Refined preview display
+  - Better dock validation
+  - Improved hover accuracy
+
+
+[Changes][1.22]
+
+
+<a id="1.21.4"></a>
+# [Release 1.21.4](https://github.com/ejbills/DockDoor/releases/tag/1.21.4) - 2025-08-24
+
+
+## 🔧 Improvements & Stability
+- Allow transparent preview background
+- Tweaked default opacity settings
+
+## 🐛 Bug Fixes
+- Fixed window preview stretching
+
+
+[Changes][1.21.4]
+
+
+<a id="1.21.3"></a>
+# [Release 1.21.3](https://github.com/ejbills/DockDoor/releases/tag/1.21.3) - 2025-08-20
+
+
+## 🐛 Bug Fixes
+- Fixed blank previews
+
+
+[Changes][1.21.3]
+
+
+<a id="1.21.2"></a>
+# [Release 1.21.2](https://github.com/ejbills/DockDoor/releases/tag/1.21.2) - 2025-08-13
+
+## ✨ New Features
+- Added window state options (disable minimize/hidden label text)
+
+
+[Changes][1.21.2]
+
+
+<a id="1.21.1"></a>
+# [Release 1.21.1](https://github.com/ejbills/DockDoor/releases/tag/1.21.1) - 2025-08-08
+
+## 🔧 Improvements & Stability
+- Fixed border cutoff issues
+  - Improved component borders
+  - Enhanced UI consistency
+
+
+[Changes][1.21.1]
+
+
+<a id="1.21"></a>
+# [Release 1.21](https://github.com/ejbills/DockDoor/releases/tag/1.21) - 2025-08-06
+
+## ✨ New Features
+- New options for diagonal window title and controls positioning
+- Embed controls in previews
+  - New compact layout option
+  - Supports diagonal control positions
+- Keep previews after app quit
+- Customize unselected window opacity
+- Customize traffic light buttons
+  - Disable pill background style
+
+## 🔧 Improvements & Stability
+- Improved window switcher stability
+- Refined preview list appearance
+  - Fades out list edges
+  - Improved preview border rendering
+- Improved application resource handling
+- Updated force quit icon
+
+
+[Changes][1.21]
+
+
+<a id="1.20"></a>
+# [Release 1.20](https://github.com/ejbills/DockDoor/releases/tag/1.20) - 2025-08-05
+
+## ✨ New Features
+- Quick window switcher, no more lag
+- Liquid glass (if on macOS 26)
+
+## 🔧 Improvements & Stability
+- Window switching animation
+- Preview window timing
+
+## 🐛 Bug Fixes
+- Window tap cancellation
+- Preview window hiding
+
+
+[Changes][1.20]
+
+
+<a id="1.19"></a>
+# [Release 1.19](https://github.com/ejbills/DockDoor/releases/tag/1.19) - 2025-08-02
+
+# DockDoor v1.19
+
+## ✨ New Features
+- You can now specify exact pixel values for DockDoor windows
+- Added contributor section to support tab
+- Added code to prepare for liquid glass in macOS 26
+- Clicking dock icon with the app already focused will bring forward the dock preview
+
+## 🎨 UI/UX Redesigns
+- Completely redesigned the dock preview UI to be consistent with window switcher
+- Completely redesigned window sizing options
+- UX improvements across the board for more consistent visuals
+
+## 🔧 Improvements & Stability
+- Improved visual elements consistency
+- Enhanced glass effects support
+- Better window preview updates
+- Enhanced window sizing control
+- Improved dock preview styling
+
+⚠️ This  update changes a lot of code. Report issues if you find them.
+
+
+
+[Changes][1.19]
+
+
+<a id="1.18.5"></a>
+# [Release 1.18.5](https://github.com/ejbills/DockDoor/releases/tag/1.18.5) - 2025-07-27
+
+
+## ✨ New Features
+- Added dock click options
+  - Hide windows option
+  - Minimize windows option
+
+## 🔧 Improvements & Stability
+- Improved dock click detection
+- Enhanced settings layout scaling
+
+
+[Changes][1.18.5]
+
+
+<a id="1.18.4"></a>
+# [Release 1.18.4](https://github.com/ejbills/DockDoor/releases/tag/1.18.4) - 2025-07-26
+
+## ✨ New Features
+- Added update channel options
+  - Beta channel support
+  - Stable channel selection
+
+## 🔧 Improvements & Stability
+- Improved dock click behavior
+  - Hide option available
+  - Minimize option available
+- Enhanced flow layout controls
+  - Separate row settings
+  - Separate column settings
+- Improved window restoration system
+
+
+[Changes][1.18.4]
+
+
+<a id="v1.18.3"></a>
+# [v1.18.3](https://github.com/ejbills/DockDoor/releases/tag/v1.18.3) - 2025-07-18
+
+## 🐛 Bug Fixes
+
+### Window Switcher MRU Ordering
+* **Fixed critical window switcher bug**: Resolved issue where Window Switcher would incorrectly switch to unused windows of the same app instead of maintaining proper Most Recently Used (MRU) ordering
+* **Improved window timestamp management**: Implemented a single point of entry for updating window timestamps, ensuring reliable and consistent MRU tracking
+* **Enhanced cross-application switching**: Window Switcher now properly alternates between different applications without unexpectedly jumping to inactive windows of the same app
+
+[Changes][v1.18.3]
+
+
+<a id="v1.18.2"></a>
+# [v1.18.2](https://github.com/ejbills/DockDoor/releases/tag/v1.18.2) - 2025-07-11
+
+- Fixed issue where window timestamps weren't updating when clicking on dock icons or directly clicking on windows. The app now properly detects these interactions and updates only the specific window that was clicked, ensuring accurate MRU (Most Recently Used) ordering in the window switcher.
+
+---
+  Note: This addresses a remaining issue from the previous window ordering fix that was missed in the earlier release.
+
+[Changes][v1.18.2]
+
+
+<a id="v1.18.1"></a>
+# [v1.18.1](https://github.com/ejbills/DockDoor/releases/tag/v1.18.1) - 2025-07-10
+
+- Fixes window ordering 
+
+[Changes][v1.18.1]
+
+
+<a id="v1.18"></a>
+# [v1.18](https://github.com/ejbills/DockDoor/releases/tag/v1.18) - 2025-07-02
+
+🎯 New Features
+
+  Windows-Style Navigation Enhancement
+  - Improved keyboard navigation: Replace Shift+Tab with standalone Shift key for
+  backwards navigation
+  - Simplified controls: Tab always goes forward, Shift always goes backwards in
+  Window Switcher
+
+  Frontmost App Filtering
+  - Active app only mode: New option to limit Window Switcher to show only windows
+  from the currently active application
+  - Fullscreen app blacklist: Prevent DockDoor key combinations when specific apps
+  are in fullscreen mode
+
+  🔧 Technical Improvements
+  - Better keybind handling: Improved KeybindHelper with support for new navigation
+   patterns
+  - Window utility enhancements: Enhanced WindowUtil with frontmost app filtering
+  capabilities
+  - Better lyric timing
+
+  📚 Documentation
+
+  Website Updates
+  - Updated keyboard shortcuts documentation: Reflect new Windows-style navigation
+  behavior
+  - Improved user guidance: Better documentation of new filtering and navigation
+  features
+
+
+[Changes][v1.18]
+
+
+<a id="v1.17.3"></a>
+# [v1.17.3](https://github.com/ejbills/DockDoor/releases/tag/v1.17.3) - 2025-06-24
+
+- **Fixed preview window re-opening issue** - Resolved bug where preview windows would reappear after clicking an app icon and moving cursor away from dock
+- Updates translations
+
+[Changes][v1.17.3]
+
+
+<a id="v1.17.2"></a>
+# [v1.17.2](https://github.com/ejbills/DockDoor/releases/tag/v1.17.2) - 2025-06-24
+
+### Fixed
+
+- **Resolved orphaned windows remaining in the app switcher:** A persistent bug has been fixed where windows from applications that were already closed would incorrectly continue to appear in the window switcher.
+
+[Changes][v1.17.2]
+
+
+<a id="v1.17.1"></a>
+# [v1.17.1](https://github.com/ejbills/DockDoor/releases/tag/v1.17.1) - 2025-06-22
+
+- Fixes crash when pinning calendar
+- Fixes dock hide manager positioning issue
+
+[Changes][v1.17.1]
+
+
+<a id="v1.17"></a>
+# [v1.17](https://github.com/ejbills/DockDoor/releases/tag/v1.17) - 2025-06-19
+
+## 🎵 New Features
+
+### Audio Output Configuration
+- **Added audio output selection** in expanded artwork mode for pinned media widgets
+- ![CleanShot 2025-06-18 at 20 42 58](https://github.com/user-attachments/assets/8680e257-1bff-4c68-aadd-179b627fdac7)
+
+### Lyric Experience
+- **Improved lyric UX** with refined display and interaction patterns
+- **Better synchronization** for more accurate lyric timing
+
+[Changes][v1.17]
+
+
+<a id="v1.16"></a>
+# [v1.16](https://github.com/ejbills/DockDoor/releases/tag/v1.16) - 2025-06-18
+
+## 🎵 New Features
+
+### Lyric Mode for Pinned Media Controls
+- **Added expandable lyric mode** to pinned media control widgets
+- **Tap album artwork** on pinned widgets to expand and reveal additional controls
+- **Lyrics toggle button** appears in expanded view to enable/disable lyric display
+- **Real-time lyric synchronization** displays current lyrics alongside music playback
+- **Seamless integration** works with existing pinned Spotify and Apple Music widgets
+
+### Enhanced Pinned Widget Experience
+- **Interactive album artwork** now serves as an expansion trigger for additional features
+- **Expanded control panel** provides access to advanced media features beyond basic playback
+- **Compact and expanded modes** allow users to choose between minimal and feature-rich widget displays
+- **Persistent lyric display** remains active while widget is pinned and lyrics are enabled
+
+## 🔧 Improvements
+- **Optimized widget performance** maintains smooth operation even with lyric data processing
+- **Optimized memory** by removing SwiftUI uses of .system() fonts which caused abandoned memory
+
+## 🎬 Demo
+
+![Clipboard-20250618-014356-811(1)](https://github.com/user-attachments/assets/756f3f45-f363-4ecc-b1a8-a9f6dadf1ed7)
+
+
+
+
+[Changes][v1.16]
+
+
+<a id="v1.15.2"></a>
+# [v1.15.2](https://github.com/ejbills/DockDoor/releases/tag/v1.15.2) - 2025-06-16
+
+- Resolves missing entitlements that prevented Apple Music and Spotify from displaying music controls
+
+[Changes][v1.15.2]
+
+
+<a id="v1.15.1"></a>
+# [v1.15.1](https://github.com/ejbills/DockDoor/releases/tag/v1.15.1) - 2025-06-15
+
+## 🔧 Improvements
+- **Cleaned up DockObserver processing logic** for more reliable window placement detection
+- **Refined window pinning logic** for more consistent floating widget behavior
+
+## 🐛 Bug Fixes
+- **Fixed various pinning bugs** that could cause inconsistent widget behavior
+- **Improved reliability** of pin/unpin operations for floating widgets
+
+## 📝 Notes
+This patch release focuses on improving the core reliability of window detection and pinning systems introduced in v1.15.
+
+[Changes][v1.15.1]
+
+
+<a id="v1.15"></a>
+# [v1.15](https://github.com/ejbills/DockDoor/releases/tag/v1.15) - 2025-06-14
+
+## 🎨 New Features
+
+### Floating Widget Controls
+- **Pin special controls as desktop widgets** - Right-click on music and calendar controls to pin them as floating widgets
+- **Persistent desktop presence** - Pinned controls remain visible on desktop for quick access without dock interaction
+- **Widget-style behavior** - Pinned controls float above other windows and maintain their functionality
+- **Easy unpinning** - Right-click pinned widgets to unpin and return to dock-only behavior
+![CleanShot 2025-06-13 at 23 13 03@2x](https://github.com/user-attachments/assets/e3fc4a05-eda9-4555-93bb-548f62629a4c)
+![CleanShot 2025-06-13 at 23 14 10@2x](https://github.com/user-attachments/assets/4ee3eb8c-16a0-4341-9880-6c490223687b)
+
+### Global Padding Control
+- **Added global padding control** for appearance customization
+- **Fine-tune spacing** across all preview elements for personalized visual experience
+- **Consistent padding application** throughout the interface for improved visual coherence
+
+## 📝 Notes
+
+This release introduces significant workflow enhancements, allowing users to transform dock previews into persistent desktop widgets. The floating widget feature is particularly useful for users who frequently interact with music controls or need quick calendar access throughout their workflow, eliminating the need to repeatedly hover over dock items.
+
+[Changes][v1.15]
+
+
+<a id="v1.14.4"></a>
+# [v1.14.4](https://github.com/ejbills/DockDoor/releases/tag/v1.14.4) - 2025-06-13
+
+## Fixed Apple Music Support
+- **Fixed**: Apple Music artwork now properly converts binary data to base64 data URLs
+- **Improved**: Error handling for artwork retrieval failures
+
+[Changes][v1.14.4]
+
+
+<a id="v1.14.3"></a>
+# [v1.14.3](https://github.com/ejbills/DockDoor/releases/tag/v1.14.3) - 2025-06-13
+
+## 🐛 Bug Fixes
+-   Refined the display logic for special app controls (e.g., Music, Spotify, Calendar):
+    -   When "Show media/calendar controls on Dock hover" (`showSpecialAppControls`) is enabled:
+        -   If "Embed controls with window previews" (`useEmbeddedMediaControls`) is also enabled:
+            -   Special controls will be embedded within the preview area alongside actual window previews if any are visible.
+            -   If no window previews are visible (e.g., app has no open windows or all are minimized), the special controls will be shown in a larger, standalone embedded format.
+        -   If "Embed controls with window previews" is disabled:
+            -   The special controls will be shown in a larger, standalone format, replacing any window previews for that app.
+    -   When "Show media/calendar controls on Dock hover" is disabled:
+        -   Standard window previews will be shown for all apps, including those that have special controls available.
+-   Updated the "Interaction & Behavior (Dock Previews)" section in Main Settings to include a new toggle for "Embed controls with window previews", which is active when "Show media/calendar controls on Dock hover" is enabled. This provides users with finer control over how these special app integrations are displayed.
+
+
+[Changes][v1.14.3]
+
+
+<a id="v1.14.2"></a>
+# [v1.14.2](https://github.com/ejbills/DockDoor/releases/tag/v1.14.2) - 2025-06-13
+
+## 🐛 Bug Fixes
+
+### Music Controls Fixes
+- **Fixed album artwork display issue** in Music app previews where artwork was not being shown properly
+- **Resolved progress bar display** for music timestamps for international users
+
+[Changes][v1.14.2]
+
+
+<a id="v1.14.1"></a>
+# [v1.14.1](https://github.com/ejbills/DockDoor/releases/tag/v1.14.1) - 2025-06-12
+
+## 🐛 Bug Fixes
+- **Extended lateral movement coverage** to the dismissal container for more consistent behavior
+
+[Changes][v1.14.1]
+
+
+<a id="v1.14"></a>
+# [v1.14](https://github.com/ejbills/DockDoor/releases/tag/v1.14) - 2025-06-12
+
+## 🎵 New Features
+
+### Music Controls Integration
+- **Added music preview controls** for Spotify and Apple Music when hovering over music apps in the dock
+- **Now playing information** displays album artwork, track title, artist, and playback controls
+- **Media control buttons** allow play/pause, skip forward/backward directly from the dock preview
+- **Real-time synchronization** with current playback state and track information
+- ![image](https://github.com/user-attachments/assets/06448a31-9116-4de8-9d42-f51eaf952d1c)
+
+### Calendar Integration  
+- **Added calendar preview** when hovering over the Calendar app in the dock
+- **Daily events overview** shows upcoming events and appointments at a glance
+- **Clean, intuitive interface** displays event times, titles, and calendar information
+- **Quick schedule checking** without needing to open the Calendar app
+- ![image](https://github.com/user-attachments/assets/321926af-6f99-4ba5-aaa1-ad99a5b21b33)
+
+## 🐛 Bug Fixes
+
+### Window Preview Issues
+- **Fixed lateral movement behavior** where window previews would incorrectly persist when moving between dock items
+- **Resolved issue** where apps with zero open windows would incorrectly display previews from previously hovered apps
+- **Improved preview state management** to ensure consistent behavior when hovering over closed applications
+- **Fixed race condition** in preview processing that could cause stale previews to remain visible
+
+### Technical Improvements
+- **Enhanced task cancellation** by properly resetting `isProcessing` flag when cancelling existing preview tasks
+- **Improved preview reliability** by fixing defer block execution in cancelled operations
+- **Better state management** prevents new preview requests from being blocked by stale state from previous operations
+
+## 📝 Notes
+
+- Music controls feature supports **Apple Music and Spotify only** due to Apple's restrictions on the MRMediaRemote private API (locked down in macOS 15.4)
+
+[Changes][v1.14]
+
+
+<a id="v1.13.1"></a>
+# [v1.13.1](https://github.com/ejbills/DockDoor/releases/tag/v1.13.1) - 2025-06-04
+
+### 🛠 Improvements & Fixes
+
+* **Real-time Preview Updates**: Window previews in both the Dock Previews and Window Switcher now update immediately when windows are closed or new windows from an already previewed application are opened. This eliminates stale previews and ensures the UI accurately reflects the current window state.
+
+
+
+[Changes][v1.13.1]
+
+
+<a id="v1.13"></a>
+# [v1.13](https://github.com/ejbills/DockDoor/releases/tag/v1.13) - 2025-06-02
+
+It is my cat's 7th birthday 🎂
+<img src="https://github.com/user-attachments/assets/bf6cba2d-643a-42cb-aa7c-d89c6a16800e" width="200" alt="Cat's 7th birthday celebration">
+
+⚠️ This update changes a large amount of code. Be sure to report bugs if encountered.
+
+### 🆕 What's New in DockDoor
+
+* **Arrow Key Navigation**
+  Navigate through windows in both the Window Switcher and Dock Previews using arrow keys and Tab, then press Return to select your desired window—perfect for keyboard-driven workflows.
+
+* **Enhanced Keyboard Shortcuts**
+  Added essential keyboard shortcuts to selected windows in previews: use Tab or arrow keys to select a window, then press `CMD + W` to close, `CMD + Q` to quit the app, or `CMD + M` to minimize—all without touching your mouse.
+
+* **Improved Window State Management**
+  Completely redesigned the underlying window tracking system using observed objects for better memory efficiency and more reliable window state synchronization across all views.
+
+---
+
+### 🛠 Improvements & Fixes
+
+* **Performance Optimizations**
+  - Refactored memory management by removing redundant window states
+  - Implemented queued window switcher for smoother operation
+  - Enhanced flow algorithm for better responsiveness
+
+* **Window Tracking Reliability**
+  - Fixed issue where closed windows would still appear in the Window Switcher
+  - Improved window filter validation to ensure only active windows are displayed
+  - Better activation attempt handling for more consistent behavior
+
+* **Architecture Improvements**
+  - Streamlined window state orchestration between dock previews and child window views
+  - Reduced memory bloat by eliminating duplicate window object copies
+  - Enhanced cross-view communication for better action synchronization
+
+[Changes][v1.13]
+
+
+<a id="v1.12.1"></a>
+# [v1.12.1](https://github.com/ejbills/DockDoor/releases/tag/v1.12.1) - 2025-05-29
+
+- Updates default dock buffer values
+
+[Changes][v1.12.1]
+
+
+<a id="v1.12"></a>
+# [v1.12](https://github.com/ejbills/DockDoor/releases/tag/v1.12) - 2025-05-29
+
+### 🆕 What's New in DockDoor
+
+* **Keep Window Switcher Open**
+  New option to keep the window switcher visible after releasing the shortcut key—great for slower switching or multitasking.
+
+  ![Window Switcher](https://github.com/user-attachments/assets/1fc40025-b273-4bef-b7ac-3672b0bec156)
+
+* **Settings Pane in Window Switcher**
+  You can now access DockDoor settings directly from the window switcher.
+
+* **Update Notification in Dock Previews**
+  When a new DockDoor version is available, a handy **"Update available"** button will appear in Dock Previews.
+
+* **"New Window" Button**
+  Adds a new button that attempts to trigger `CMD + N` in the selected app. In some apps (like Finder), this opens a new window. In others, it might do something else—depends on the app.
+
+  ![New Window Button](https://github.com/user-attachments/assets/07748c68-ac21-4b15-b93d-5e47313066db)
+
+---
+
+### 🛠 Improvements & Fixes
+
+* Restored window filter validation logic.
+* Refactored memory management for better performance.
+
+
+
+[Changes][v1.12]
+
+
+<a id="v1.11"></a>
+# [v1.11](https://github.com/ejbills/DockDoor/releases/tag/v1.11) - 2025-05-20
+
+- Updates app icon
+- Adds experimental option to show hover window above app icon labels in the dock
+![CleanShot 2025-05-20 at 15 37 57@2x](https://github.com/user-attachments/assets/5aebda35-b121-4795-9bfe-d8228d7eac70)
+- Updates translations
+- Fixes no dock preview for apps with multiple instances
+
+[Changes][v1.11]
+
+
+<a id="v1.10"></a>
+# [v1.10](https://github.com/ejbills/DockDoor/releases/tag/v1.10) - 2025-05-17
+
+- Entirely new settings design (thanks to [@apotenza92](https://github.com/apotenza92) for inspiration in settings design)
+- - ![CleanShot 2025-05-17 at 13 48 10@2x](https://github.com/user-attachments/assets/ca22de6b-de36-4515-9e85-1b16974e3308)
+- - Simplified settings and profiles for easy customization
+- - ![CleanShot 2025-05-17 at 13 48 38@2x](https://github.com/user-attachments/assets/df5734af-c630-46bf-9f8f-890de0aa4ba0)
+- - Live hover previews in the settings to make customization a breeze
+- Middle mouse click on a window preview to close it
+- Option to hide app name in window previews
+- Misc. bug fixes
+
+[Changes][v1.10]
+
+
+<a id="v1.9.1"></a>
+# [v1.9.1](https://github.com/ejbills/DockDoor/releases/tag/v1.9.1) - 2025-05-11
+
+- Fixes window dismissal container logic
+
+[Changes][v1.9.1]
+
+
+<a id="v1.9"></a>
+# [v1.9](https://github.com/ejbills/DockDoor/releases/tag/v1.9) - 2025-05-10
+
+## New features
+- Click app icon to minimize all windows of an app ([#505](https://github.com/ejbills/DockDoor/issues/505))
+- - https://github.com/user-attachments/assets/e6deb2c9-0468-431d-9d40-66e959fc5df2
+- - ![CleanShot 2025-05-10 at 11 22 21@2x](https://github.com/user-attachments/assets/db6105e5-9298-4bae-b7e7-6a0d2a0fd5fd)
+- Remove DockDoor icon bouncing in dock with silent startup ([#539](https://github.com/ejbills/DockDoor/issues/539) thanks [@ShlomoCode](https://github.com/ShlomoCode))
+
+## Bug fixes
+- Window preview will be hidden on app icon click 
+- Hide window when a click is outside of it's bounds
+- Window preview showing under the dock ([#542](https://github.com/ejbills/DockDoor/issues/542))
+- Ensure app re-attaches to Dock process if Dock is ever killed while DockDoor is running
+
+[Changes][v1.9]
+
+
+<a id="v1.8"></a>
+# [v1.8](https://github.com/ejbills/DockDoor/releases/tag/v1.8) - 2025-05-05
+
+- Window switcher performance improvements
+- Window switcher control settings enhancements
+- Misc. bug fixes
+
+[Changes][v1.8]
+
+
+<a id="v1.7.1"></a>
+# [v1.7.1](https://github.com/ejbills/DockDoor/releases/tag/v1.7.1) - 2025-05-04
+
+- Select windows while dragging files
+- - In apps that support it, hovering over an app or preview while dragging a file will auto select target window.
+- - ![Built-in Retina Display](https://github.com/user-attachments/assets/e85d136e-43bb-4874-abbb-7ecbfbc407f8)
+- Better window capture logic
+- - Majority of invalid windows will no longer be recorded (windows that are blank, chrome toolbars, UI elements, etc.)
+- Some minor bug fixes and clean up
+
+[Changes][v1.7.1]
+
+
+<a id="v1.7"></a>
+# [v1.7](https://github.com/ejbills/DockDoor/releases/tag/v1.7) - 2025-05-02
+
+## What's Changed
+* chore: better ux for sizing options (closes [#513](https://github.com/ejbills/DockDoor/issues/513))
+* feat: customizable window inactivity timer
+  - reworks event timeout to prevent preview flickering
+  - reduces default inactivity timeout from 10 seconds to 1.5 seconds
+  - closes [#472](https://github.com/ejbills/DockDoor/issues/472)
+  - ![CleanShot 2025-05-02 at 06 47 12@2x](https://github.com/user-attachments/assets/ed1a6601-5dec-4bb4-b915-a443db31e14e)
+* chore: sync website localizations with Crowdin 
+* chore: sync macOS app localizations with Crowdin
+
+**Full Changelog**: https://github.com/ejbills/DockDoor/compare/v1.6.2...v1.7
+
+[Changes][v1.7]
+
+
+<a id="v1.6.2"></a>
+# [v1.6.2](https://github.com/ejbills/DockDoor/releases/tag/v1.6.2) - 2025-02-21
+
+- Improved Window Focus Behavior: When classic ordering is enabled and there are at least two windows, the initial focus will now be set on the second window preview instead of the first for a smoother user experience. (thanks [@bestbandari](https://github.com/bestbandari))
+- Fixed window switcher keybind failing after DockDoor remained open for long periods of time
+
+[Changes][v1.6.2]
+
+
+<a id="v1.6.1"></a>
+# [v1.6.1](https://github.com/ejbills/DockDoor/releases/tag/v1.6.1) - 2025-01-09
+
+- Fixes dock preview rendering too high when primary monitor was oriented vertically ([#447](https://github.com/ejbills/DockDoor/issues/447))
+- Adds missing localization strings
+- Syncs translations with Crowdin
+
+[Changes][v1.6.1]
+
+
+<a id="v1.6"></a>
+# [v1.6](https://github.com/ejbills/DockDoor/releases/tag/v1.6) - 2025-01-09
+
+# Changelog v1.6 🎉
+
+## New Features
+- **Aero Shake**
+- - Shake window to minimize other/all windows
+- - Configurable in General settings
+- - ![aeroshake-ezgif com-speed](https://github.com/user-attachments/assets/afda2b3f-21ed-4bd0-b826-0205e02320b6)
+
+- **Traffic Light Button Customizations**
+- - New customization options for window controls in appearance settings, disable any of the buttons!
+- - ![CleanShot 2025-01-08 at 16 12 36@2x](https://github.com/user-attachments/assets/6fe2bb44-f43a-42c4-9f40-313ebd66b523)
+
+## Bug Fixes
+- Fixed window switcher ordering. Windows will no longer be erratically shuffled.
+- Fixed window flow breaking when extending off screen
+- Fixed flow container being artificially capped at 3 rows
+- Resolved lateral movement issues with non-running applications in dock
+- Corrected window registration timing on application launch
+
+## Enhancements
+- Window sizing controls visualization
+- Reworded and moved some settings options
+- Windows now registered in DockDoor upon creation
+- Quicker tabbing animation in window switcher
+- Updated localizations via Crowdin integration
+
+[Changes][v1.6]
+
+
+<a id="v1.5.1"></a>
+# [v1.5.1](https://github.com/ejbills/DockDoor/releases/tag/v1.5.1) - 2025-01-03
+
+- Fixes preview intermittently failing to present when hovering over app icon
+- Reworked "See full preview" hover action to display window previews at their exact size and position on the correct monitor, matching the real window's dimensions and location for a more accurate preview experience. 
+- - This provides better context when switching between windows and eliminates scaling issues on large displays.
+- Reduces memory usage
+
+[Changes][v1.5.1]
+
+
+<a id="v1.5"></a>
+# [v1.5](https://github.com/ejbills/DockDoor/releases/tag/v1.5) - 2024-12-30
+
+**This is a big update, folks.** 
+这是一个重大更新。C'est une mise à jour majeure. Questo è un importante aggiornamento. Esta es una actualización importante.
+
+If you find DockDoor helpful in your daily workflow, please consider supporting its development at https://buymeacoffee.com/keplercafe. Your contribution helps keep the project alive and growing! ❤️
+
+# Changelog v1.5 🎉
+## New Features
+- **Window Switcher Enhancements**
+ - - Completely redesigned interface with app titles and customizable window controls
+ - - Screen placement options (mouse position, specific screen, or last active window)
+ - - Dimmed inactive windows option
+ - -  ![window switcher redesign](https://github.com/user-attachments/assets/b074d07e-7cc2-4d36-bd6a-ac571d5c0b1b)
+- **Flow Container**
+ - - Multi-row window preview layout for better organization of many windows
+ - - Customizable row count for preview display
+ - - ![CleanShot 2024-12-30 at 13 33 42@2x](https://github.com/user-attachments/assets/4c83e163-77ec-4795-bf85-018190623f56)
+- - ![dockdoor flow container(1)](https://github.com/user-attachments/assets/bdc373bc-a171-40fc-9dbc-c4cc2562488a)
+- Adjustable selection highlight color and opacity
+- Added "Close All" and "Minimize All" window management options, on hover of app title.
+- **This update has many customization options, take a look!**
+- - To see it in motion, view the video here: https://youtu.be/ReEPCWaomlY
+## Enhancements
+- Myriad of UI/UX changes
+- Optimized memory usage through removal of outdated cache code
+- Support for custom application directories in filters
+- Improved window capture system for better stability
+- Enhanced dark mode support for capsule rendering
+- Updated localizations via Crowdin integration
+- Minimized and hidden window previews will now have refreshed screenshots
+## Bug Fixes
+- Resolved minimum window sizing for edge cases
+- Fixed application filtering for apps outside `/Applications` folder
+- Addressed preview display issues with minimized windows
+- Corrected window positioning when closing windows
+- Fixed popover window title rendering
+- Many other bug fixes
+
+[Changes][v1.5]
+
+
+<a id="v1.4"></a>
+# [v1.4](https://github.com/ejbills/DockDoor/releases/tag/v1.4) - 2024-12-22
+
+# Changelog v1.4 🎄
+
+## New Features
+- **Window Dragging**:
+  - Drag and reposition windows directly from DockDoor previews onto your macOS desktop.
+  - ![window drag](https://github.com/user-attachments/assets/772ba9ad-84fd-41c5-9599-4069f6e80288)
+- **Window Title Filters and Application Filters**:
+  - Exclude windows or applications from being captured based on title or app name.
+  - Example: Filtering "google" prevents windows containing "google" in their title from being managed.
+  - ![CleanShot 2024-12-21 at 22 53 17](https://github.com/user-attachments/assets/b81df915-f082-49ff-8324-817bebce9e03)
+- **Window Switcher option**:
+  - Holding `Command` and pressing `Tab` twice now switches to the second last used window, addressing usability feedback.
+  - ![image](https://github.com/user-attachments/assets/ae9e2221-5dd9-4676-9e13-b5f541eb1a04)
+
+## Enhancements
+- Less lingering windows!
+  - Auto-dismissal of inactive window previews after 10 seconds to avoid clutter.
+  - Improved preview dismissal logic when clicking outside the window area.
+- Centered window previews relative to the current Dock icon for more reliable window placements.
+- Improved user experience in keybind recording view.
+- Refined settings placements for better navigation and discoverability.
+- Enhanced permission messaging for clearer instructions.
+- Synchronized localizations for both the macOS app and website with Crowdin.
+
+## Bug Fixes
+- Resolved window preview sizing issues across multiple displays.
+- Fixed scaling for windows intersecting multiple screens.
+- Dismissal of hover containers now properly occurs when interacting outside the window.
+- Fixed gradient alerts to ensure proper localization.
+- Addressed issues with window switcher behavior during initial app launch and desktop space switches.
+
+[Changes][v1.4]
+
+
+<a id="v1.3.3"></a>
+# [v1.3.3](https://github.com/ejbills/DockDoor/releases/tag/v1.3.3) - 2024-12-07
+
+# Changelog
+
+## Fixes
+- Fixed window presentation delay issues
+- - Users with long hover delay times will no longer experience hanging windows
+- Default "prevent dock hide" functionality is now disabled by default due to windows resizing
+- Fixed missing window close animations when using traffic light buttons
+- Fixed delayed window presentation timing
+- Corrected issue where dockdoor settings window didn't close before new window presentation
+
+## Chores
+- Added clarifying comments for lingering window detection
+- Updated macOS app localizations via Crowdin sync ([#389](https://github.com/ejbills/DockDoor/issues/389))
+
+[Changes][v1.3.3]
+
+
+<a id="v1.3.2"></a>
+# [v1.3.2](https://github.com/ejbills/DockDoor/releases/tag/v1.3.2) - 2024-11-30
+
+- Fixes issue where dock stays visible when not invoking previews when '_Ignore Apps with One Window_' option is checked
+- Moved '_Include Hidden and Minimized Windows in the Window Switcher_' option to Window Switcher category
+
+[Changes][v1.3.2]
+
+
+<a id="v1.3.1"></a>
+# [v1.3.1](https://github.com/ejbills/DockDoor/releases/tag/v1.3.1) - 2024-11-29
+
+# 🦃 Changelog
+
+## Features
+- Dock with auto-hide enabled will now remain open when interacting with window previews (changable in settings)
+- Window switcher now has option to exclude hidden and minimized windows
+- Window selection is now more visually prominent
+
+## Fixes
+- Window previews now work properly with custom dock animation speeds ([#297](https://github.com/ejbills/DockDoor/issues/297))
+- Window previews no longer disappear when moving between windows/apps ([#364](https://github.com/ejbills/DockDoor/issues/364))
+- - This fixes the frustrating behavior where previews would vanish during normal window navigation.
+- Windows can now be activated correctly when dock is set to auto-hide ([#371](https://github.com/ejbills/DockDoor/issues/371))
+- Window previews now properly dismiss when moving cursor away ([#374](https://github.com/ejbills/DockDoor/issues/374))
+- Slider fields now show decimal values for more precise control
+
+## Chores
+- Added Portuguese (Brazil) translation to https://dockdoor.net ([#383](https://github.com/ejbills/DockDoor/issues/383))
+- Updated all system translations via Crowdin ([#377](https://github.com/ejbills/DockDoor/issues/377), [#386](https://github.com/ejbills/DockDoor/issues/386))
+
+[Changes][v1.3.1]
+
+
+<a id="v1.3"></a>
+# [v1.3](https://github.com/ejbills/DockDoor/releases/tag/v1.3) - 2024-11-22
+
+# Changelog
+
+## 🚀 New Features
+- **Window Preview Preservation**: Preview will no longer hide when traffic light buttons are used to manage window state ([#376](https://github.com/ejbills/DockDoor/issues/376))
+- **Natural Mouse Movement**: Allow natural lateral mouse movements between active app icons
+- Added app icon and app title information to window switcher
+
+## 🛠️ Fixes
+- **Window Cache Management**: Regularly purge invalid cached windows
+- **Window Closing**: Fixed handling of invalid dock notifications for window closure
+- **Window Sizing**: Improved UX for window sizing options (is now a slider based on screen dimensions)
+
+## 🧹 Chores
+- **macOS Localization**: Synced macOS app localizations with Crowdin ([#369](https://github.com/ejbills/DockDoor/issues/369))
+- **Website Localization**: Synced website localizations with Crowdin ([#370](https://github.com/ejbills/DockDoor/issues/370))
+
+## ↩️ Reverts
+- Reverted fix for invalid dock notification window closure handling
+
+[Changes][v1.3]
+
+
+<a id="v1.2.9"></a>
+# [v1.2.9](https://github.com/ejbills/DockDoor/releases/tag/v1.2.9) - 2024-09-17
+
+- Fixes a bug where windows in the cache were not being properly updated
+
+[Changes][v1.2.9]
+
+
+<a id="v1.2.8"></a>
+# [v1.2.8](https://github.com/ejbills/DockDoor/releases/tag/v1.2.8) - 2024-09-13
+
+We now have a website, it was created by the wonderful [@illavoluntas](https://github.com/illavoluntas)! https://dockdoor.net
+
+# Changelog
+
+## 🚀 New Features
+
+- **Ignore Single-Window Apps**: Added an option to ignore apps that only have one window, improving focus on multi-window applications.
+
+## 🎨 Redesigns
+
+- **Update Page**: Redesigned the update page for a more modern and intuitive user experience.
+
+## 🛠️ Fixes
+
+- **Date Window Sorting**: Fixed an issue with sorting windows by date, ensuring correct chronological order.
+- **Window Info Fetching**: Refactored the `fetchWindowInfo` method for improved performance and reliability.
+- **Resizable Settings Pane**: Enabled the settings pane to be resized and adjusted the layout for slider settings to improve usability.
+- **Localized Strings**: Fixed an issue where localized strings sometimes did not fit properly within UI elements.
+
+## 🛠️ Chores
+
+- **Localization Sync**: Synced macOS app localizations with Crowdin, keeping translations up to date ([#318](https://github.com/ejbills/DockDoor/issues/318)).
+- **Website Localization Sync**: Updated website localizations using Crowdin ([#316](https://github.com/ejbills/DockDoor/issues/316)).
+
+
+[Changes][v1.2.8]
+
+
+<a id="v1.2.7"></a>
+# [v1.2.7](https://github.com/ejbills/DockDoor/releases/tag/v1.2.7) - 2024-09-13
+
+# Changelog
+
+No more dock alignment issues. It will now be placed accurately 100% of the time.
+
+## 🛠️ Fixes
+
+- **Dock Item Hover Preview**: The hover preview is now placed using the Dock item’s Accessibility (AX) element, ensuring accurate positioning even on multi-monitor setups ([#277](https://github.com/ejbills/DockDoor/issues/277)).
+
+
+[Changes][v1.2.7]
+
+
+<a id="v1.2.6"></a>
+# [v1.2.6](https://github.com/ejbills/DockDoor/releases/tag/v1.2.6) - 2024-09-10
+
+# Changelog
+
+## 🚀 New Features
+
+- **Help Settings**: Introduced a new section in the settings to provide help and support to users.
+
+## 🛠️ Fixes
+
+- **Window Validation**: Fixed an issue where windows were not properly validated when a window UI element was changed ([#310](https://github.com/ejbills/DockDoor/issues/310)).
+- **Fluid Gradient Package Removal**: Removed the fluid gradient package in favor of a custom implementation to fix a small memory leak.
+
+
+[Changes][v1.2.6]
+
+
+<a id="v1.2.5"></a>
+# [v1.2.5](https://github.com/ejbills/DockDoor/releases/tag/v1.2.5) - 2024-09-08
+
+- ⚠️ Note: Fixes critical v1.2.4 crash. 
+- ⚠️ This update sets the default app name label style to "embedded" and changes the window switcher keybind to Option + Tab. You can customize these settings if preferred.
+
+# Changelog
+
+## 🚀 New Features
+
+- **Custom Menu Bar Icon**: Introduced a custom menu bar icon for DockDoor, offering a fresh, distinct look for users.
+- **Embedded App Title Style**: The embedded app title style is now set as the default, providing a more cohesive visual experience.
+
+## 🎨 Redesigns
+
+- **First-Time Launch Experience**: Completely redesigned the first-time launch flow of DockDoor for a more intuitive and modern onboarding experience.
+- **Permissions View**: Redesigned the permissions view for clarity and ease of use, enhancing the overall user experience.
+
+## 🛠️ Changes
+
+- **Window Switcher Keybind Change**: The window switcher now defaults to `Option + Tab` instead of `Command + Tab`.
+
+## 🎨 Visual Updates
+
+- **New App Icon**: Introduced another new icon, giving DockDoor a fresh, updated look.
+
+
+[Changes][v1.2.5]
+
+
+<a id="v1.2.3"></a>
+# [v1.2.3](https://github.com/ejbills/DockDoor/releases/tag/v1.2.3) - 2024-09-05
+
+- Adds option to disable window sorting - [#292](https://github.com/ejbills/DockDoor/issues/292) 
+
+[Changes][v1.2.3]
+
+
+<a id="v1.2.2"></a>
+# [v1.2.2](https://github.com/ejbills/DockDoor/releases/tag/v1.2.2) - 2024-09-04
+
+- Fixes far windows being impossible to reach [#291](https://github.com/ejbills/DockDoor/issues/291) 
+
+[Changes][v1.2.2]
+
+
+<a id="v1.2.1"></a>
+# [v1.2.1](https://github.com/ejbills/DockDoor/releases/tag/v1.2.1) - 2024-09-04
+
+- Fixes windows having wrong size while they are not in the main screen [#288](https://github.com/ejbills/DockDoor/issues/288) 
+
+[Changes][v1.2.1]
+
+
+<a id="v1.2.0"></a>
+# [v1.2.0](https://github.com/ejbills/DockDoor/releases/tag/v1.2.0) - 2024-09-04
+
+# Changelog
+
+## 🚀 New Features
+
+- **Efficient Dock Item Detection and Improved Window Management**: [@ShlomoCode](https://github.com/ShlomoCode), [@ejbills](https://github.com/ejbills) 
+  - **Dock Item Detection**: The current Dock item is now detected using macOS Dock's native detection (`kAXSelectedChildrenChangedNotification` and `kAXSelectedChildrenAttribute`) instead of relying on mouse position calculations.
+  - **Performance Improvement**: Removed the global listener for mouse events, which significantly reduces CPU usage to 0% when not interacting or hovering with the Dock.
+  - **Window Cache Management**: Windows are now cached by PID instead of BundleID, improving compatibility with apps like scrcpy that do not have a BundleID.
+  - **Window State Management**: Enhanced logic for managing window states, including addressing window switcher update inconsistencies.
+  - **Window Fade Out Animations**: Introduced window fade-out animations and added configuration options for customization.
+
+## 🛠️ Fixes
+
+- **Fix Window Close Update**: Resolved an issue where the window was not updating its state upon closing. - [@ejbills](https://github.com/ejbills)
+- **Window Placement and Configuration**: Fixed inaccurate window placement and configuration when using SCWindow. - [@ejbills](https://github.com/ejbills)
+- **Invisible Window Switcher**: Corrected an issue where the window switcher would become invisible under certain conditions. - [@ejbills](https://github.com/ejbills)
+- **Window Raise and Matching Logic**: Addressed problems with the logic that raises windows and matches them correctly. - [@ejbills](https://github.com/ejbills)
+- **Window Switcher Update Inconsistency**: Fixed inconsistencies when updating the window switcher. - [@ejbills](https://github.com/ejbills)
+
+## 🧹 Chores
+
+- **Localization Sync**: Regular synchronization of localizations with Crowdin. [[#286](https://github.com/ejbills/DockDoor/issues/286), [#287](https://github.com/ejbills/DockDoor/issues/287)] - [@ejbills](https://github.com/ejbills), [@crowdin-bot](https://github.com/crowdin-bot)
+- **Remove Unused Methods and Code**: Cleaned up the codebase by removing unused methods and outdated logic. - [@ejbills](https://github.com/ejbills)
+- **Update Appcast for 1.1.6**: Updated the appcast to point to the patched version 1.1.6. - [@ejbills](https://github.com/ejbills)
+- **Improve Button Reliability**: Enhancements were made to improve the reliability of buttons within the application. - [@ejbills](https://github.com/ejbills)
+
+## 🎨 Refactor
+
+- **Window Dismissal Improvements**: Applied debounce cancellation logic and refined mouse position checks to improve window dismissal. - [@ejbills](https://github.com/ejbills)
+- **Smart Distance Threshold**: Implemented a smart distance threshold for hiding lingering windows. - [@ejbills](https://github.com/ejbills)
+
+### Shoutout to [@ShlomoCode](https://github.com/ShlomoCode) for his amazing contributions!
+
+
+[Changes][v1.2.0]
+
+
+<a id="v1.1.6"></a>
+# [v1.1.6](https://github.com/ejbills/DockDoor/releases/tag/v1.1.6) - 2024-08-30
+
+## 🛠️ Fixes
+
+- **Window Switcher Lag**: Resolved lag issues when switching windows, enhancing overall responsiveness. [[#280](https://github.com/ejbills/DockDoor/issues/280)] - [@ejbills](https://github.com/ejbills)
+- **Previous Traffic Light Buttons Position**: Updated the logic to correctly position traffic light buttons on the “OK” dialog. [[#271](https://github.com/ejbills/DockDoor/issues/271)] - [@ShlomoCode](https://github.com/ShlomoCode)
+- **Gradient Twitching**: Fixed an issue where gradients would twitch when using DockDoor within a fullscreen application. [[#267](https://github.com/ejbills/DockDoor/issues/267)] - [@ejbills](https://github.com/ejbills)
+- **RTL Layout Rendering**: Corrected the right-to-left layout rendering for user-defined element positions. [[#262](https://github.com/ejbills/DockDoor/issues/262)] - [@ShlomoCode](https://github.com/ShlomoCode)
+- **Bring Window to Front Logic**: Restored the original logic for bringing windows to the front, improving window management. [[#246](https://github.com/ejbills/DockDoor/issues/246)] - [@ShlomoCode](https://github.com/ShlomoCode)
+
+## 🚀 New Features
+
+- **macOS 13 Ventura Support**: Added full support for macOS 13 Ventura. [[#267](https://github.com/ejbills/DockDoor/issues/267)] - [@ShlomoCode](https://github.com/ShlomoCode), [@ejbills](https://github.com/ejbills)
+- **Customizable Highlight Gradient Colors**: Introduced customizable highlight gradient colors for enhanced user interface personalization. [[#265](https://github.com/ejbills/DockDoor/issues/265)] - [@ejbills](https://github.com/ejbills)
+- **Escape to Close Preview**: Added the ability to press the Escape key to close the preview window, streamlining user interactions. [[#255](https://github.com/ejbills/DockDoor/issues/255)] - [@ShlomoCode](https://github.com/ShlomoCode)
+
+## 🔧 Maintenance
+
+- **Localization Sync**: Regular synchronization of localizations with Crowdin to keep translations up-to-date. [[#270](https://github.com/ejbills/DockDoor/issues/270)], [[#266](https://github.com/ejbills/DockDoor/issues/266)], [[#263](https://github.com/ejbills/DockDoor/issues/263)], [[#249](https://github.com/ejbills/DockDoor/issues/249)] - [@ejbills](https://github.com/ejbills), [@crowdin-bot](https://github.com/crowdin-bot)
+- **Format Preservation**: Preserved unused arguments in code formatting to maintain consistency. [[#252](https://github.com/ejbills/DockDoor/issues/252)] - [@ShlomoCode](https://github.com/ShlomoCode)
+- **Localizable.xcstrings Update**: Updated the Localizable.xcstrings file with new keys to support additional translations. [[#255](https://github.com/ejbills/DockDoor/issues/255)] - [@ShlomoCode](https://github.com/ShlomoCode)
+- **SwiftFormat Lint**: Integrated SwiftFormat linting to ensure consistent code style. [[#250](https://github.com/ejbills/DockDoor/issues/250)] - [@ShlomoCode](https://github.com/ShlomoCode)
+- **Autogenerated Xcode File Headers**: Removed unnecessary autogenerated file headers in Xcode for cleaner codebase. [[#251](https://github.com/ejbills/DockDoor/issues/251)] - [@ShlomoCode](https://github.com/ShlomoCode)
+- **CNAME Management**: Created and deleted CNAME records as part of domain management efforts. - [@ejbills](https://github.com/ejbills)
+
+## 🛠️ Refactoring
+
+- **AXUIElement Extension**: Refactored code to use an `AXUIElement` extension for improved accessibility and cleaner code. [[#242](https://github.com/ejbills/DockDoor/issues/242)] - [@ShlomoCode](https://github.com/ShlomoCode)
+
+
+[Changes][v1.1.6]
+
+
+<a id="v1.1.5"></a>
+# [v1.1.5](https://github.com/ejbills/DockDoor/releases/tag/v1.1.5) - 2024-08-02
+
+# Changelog
+## Features
+- Introducing ability to track & navigate to windows from all applications across all spaces, along with support for window previews on minimized and hidden windows. [@hasansultan92](https://github.com/hasansultan92) & [@ejbills](https://github.com/ejbills) 
+- - Note: This is the initial rollout of this feature and things may be buggy. Please report any bugs you encounter. It works as follows: as you navigate, window states are tracked and stored across spaces, allowing support for windows in other spaces, along with tracking minimized and hidden windows (which are displayed in a faded-greyed out look in the window preview).
+- Restart the app when needed instead of just quitting [@ShlomoCode](https://github.com/ShlomoCode)
+- Open app settings by relaunch [@ShlomoCode](https://github.com/ShlomoCode)
+- Add ability to choose traffic light buttons position [@ShlomoCode](https://github.com/ShlomoCode)
+- Add quit button [@ShlomoCode](https://github.com/ShlomoCode)
+## Fixes
+- Disable fullscreen button in settings window [@ShlomoCode](https://github.com/ShlomoCode)
+- Use decimalFormatter in 'preview hover delay' setting [@ShlomoCode](https://github.com/ShlomoCode)
+## Chore
+- Sync localizations with Crowdin [@ejbills](https://github.com/ejbills)
+- Clearer wording in settings [@ShlomoCode](https://github.com/ShlomoCode)
+- GitHub issue template enforcement [@ejbills](https://github.com/ejbills)
+- Add manual run ability to stale issues action [@ejbills](https://github.com/ejbills)
+- Create pull request template [@ejbills](https://github.com/ejbills)
+- Add Homebrew installation instructions [@ejbills](https://github.com/ejbills)
+- Show copy button for brew command [@ShlomoCode](https://github.com/ShlomoCode)
+
+[Changes][v1.1.5]
+
+
+<a id="v1.1.4"></a>
+# [v1.1.4](https://github.com/ejbills/DockDoor/releases/tag/v1.1.4) - 2024-07-16
+
+# Changelog
+
+## Fixes
+- No longer filter out windows with empty titles
+- Blurry window preview images
+- Traffic light buttons visibility picker width ([#193](https://github.com/ejbills/DockDoor/issues/193)) [@ShlomoCode](https://github.com/ShlomoCode)
+
+## Chore
+- Clearer wording in settings ([#194](https://github.com/ejbills/DockDoor/issues/194)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Typo in settings ([#197](https://github.com/ejbills/DockDoor/issues/197)) [@ShlomoCode](https://github.com/ShlomoCode)
+
+[Changes][v1.1.4]
+
+
+<a id="v1.1.3"></a>
+# [v1.1.3](https://github.com/ejbills/DockDoor/releases/tag/v1.1.3) - 2024-07-16
+
+# Changelog
+
+## Features
+- Add option to select window title visibility (whenOveringPreview/alwaysVisible) ([#188](https://github.com/ejbills/DockDoor/issues/188)) [@ShlomoCode](https://github.com/ShlomoCode)
+- [SharedPreviewWindowCoordinator] add fall back ([#186](https://github.com/ejbills/DockDoor/issues/186)) [@chrisharper22](https://github.com/chrisharper22)
+- Center Dock Tile Preview horizontally/vertically to icon ([#182](https://github.com/ejbills/DockDoor/issues/182)) [@chrisharper22](https://github.com/chrisharper22)
+- Clearer wording ([#181](https://github.com/ejbills/DockDoor/issues/181)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Suggest users contribute translations ([#178](https://github.com/ejbills/DockDoor/issues/178)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Improve settings layout ([#175](https://github.com/ejbills/DockDoor/issues/175)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Add app icon to readme ([#176](https://github.com/ejbills/DockDoor/issues/176)) [@ShlomoCode](https://github.com/ShlomoCode)
+
+## Fixes
+- Lingering full screen preview in certain scenarios
+- Minimized and hidden windows showing empty squircle
+
+## Refactor
+- HoverTimerActions -> PreviewHoverAction ([#173](https://github.com/ejbills/DockDoor/issues/173))
+
+## Chore
+- License change from MIT to GPL-3.0 ([#191](https://github.com/ejbills/DockDoor/issues/191))
+- Add release publish to crowdin sync action
+- Sync localizations with Crowdin [@ejbills](https://github.com/ejbills) [@crowdin-bot](https://github.com/crowdin-bot)
+
+[Changes][v1.1.3]
+
+
+<a id="v1.1.2"></a>
+# [v1.1.2](https://github.com/ejbills/DockDoor/releases/tag/v1.1.2) - 2024-07-12
+
+# Changelog
+
+## Features
+- Preview window hover actions, with time and action customizations ([#171](https://github.com/ejbills/DockDoor/issues/171))
+- ![popup preview](https://github.com/user-attachments/assets/bd6ee1c8-3cff-492a-8d60-b4c40157f908)
+- More localizations! You can now contribute to the translation here: https://crowdin.com/project/dockdoor/invite?h=895e3c085646d3c07fa36a97044668e02149115
+- Make more strings localizable ([#168](https://github.com/ejbills/DockDoor/issues/168)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Settings: scale pickers and add number fields next to sliders ([#170](https://github.com/ejbills/DockDoor/issues/170)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Add top right window title position option ([#150](https://github.com/ejbills/DockDoor/issues/150)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Crowdin localization and automation ([#155](https://github.com/ejbills/DockDoor/issues/155))
+- Add Crowdin localization support and actions ([#151](https://github.com/ejbills/DockDoor/issues/151))
+
+## Fixes
+- Local labels are cutting ([#169](https://github.com/ejbills/DockDoor/issues/169)) [@ShlomoCode](https://github.com/ShlomoCode) [@ejbills](https://github.com/ejbills)
+- Better setting names for preview hover action items
+- Release notes loading ([#148](https://github.com/ejbills/DockDoor/issues/148)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Invalid formatting in changelog ([#147](https://github.com/ejbills/DockDoor/issues/147)) [@ShlomoCode](https://github.com/ShlomoCode)
+
+## Chore
+- Sync localizations with Crowdin ([#165](https://github.com/ejbills/DockDoor/issues/165)) [@ejbills](https://github.com/ejbills) [@crowdin-bot](https://github.com/crowdin-bot)
+- Set commit_message in crowdin-sync.yml ([#158](https://github.com/ejbills/DockDoor/issues/158)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Initialize workflow file on main branch
+- Revert "fix: invalid formatting in changelog ([#147](https://github.com/ejbills/DockDoor/issues/147))" ([#149](https://github.com/ejbills/DockDoor/issues/149))
+- Patch: Update crowdin-sync.yml to not run based on push to main (was creating loop) ([#167](https://github.com/ejbills/DockDoor/issues/167))
+- New Crowdin translations by GitHub Action ([#156](https://github.com/ejbills/DockDoor/issues/156)) [@ejbills](https://github.com/ejbills) [@crowdin-bot](https://github.com/crowdin-bot)
+
+[Changes][v1.1.2]
+
+
+<a id="v1.1.1"></a>
+# [v1.1.1](https://github.com/ejbills/DockDoor/releases/tag/v1.1.1) - 2024-07-11
+
+# Changelog
+
+## Features
+- Update app icon to new design (Thanks to the awesome artwork by [@VisualisationExpo](https://github.com/VisualisationExpo))
+- Traffic light button display customization options
+- Make traffic lights symbols dark in light theme ([#135](https://github.com/ejbills/DockDoor/issues/135)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Added customization options for Window Titles ([#128](https://github.com/ejbills/DockDoor/issues/128)) [@chrisharper22](https://github.com/chrisharper22)
+- Improve release notes style ([#125](https://github.com/ejbills/DockDoor/issues/125)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Show changelog in in-app update ([#120](https://github.com/ejbills/DockDoor/issues/120)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Localize to FR ([#115](https://github.com/ejbills/DockDoor/issues/115)) [@illavoluntas](https://github.com/illavoluntas)
+- Focus when unminimized ([#118](https://github.com/ejbills/DockDoor/issues/118)) [@UnknownCrafts](https://github.com/UnknownCrafts)
+
+## Fixes
+- Incorrect placement of traffic light setting
+- Window should not be draggable
+- Accidentally deleted download link from readme
+- Chrome PWA's ([#126](https://github.com/ejbills/DockDoor/issues/126)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Sparkle release notes in dark mode ([#124](https://github.com/ejbills/DockDoor/issues/124)) [@ShlomoCode](https://github.com/ShlomoCode)
+
+## Refactor
+- Replace numeric enums with named enums; reword keys and variables ([#141](https://github.com/ejbills/DockDoor/issues/141)) [@ShlomoCode](https://github.com/ShlomoCode)
+
+## Chore
+- Update he localization ([#143](https://github.com/ejbills/DockDoor/issues/143)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Add readme badges
+- Remove useless maxwidth
+- Create xcscheme file ([#127](https://github.com/ejbills/DockDoor/issues/127)) [@ShlomoCode](https://github.com/ShlomoCode)
+- Create pr-lint.yml ([#122](https://github.com/ejbills/DockDoor/issues/122)) [@ShlomoCode](https://github.com/ShlomoCode)
+
+[Changes][v1.1.1]
+
+
+<a id="v1.1.0"></a>
+# [v1.1.0](https://github.com/ejbills/DockDoor/releases/tag/v1.1.0) - 2024-07-09
+
+## Features
+- Add Hover App Title Styling options ([#101](https://github.com/ejbills/DockDoor/pull/101)) ([@chrisharper22](https://github.com/chrisharper22))
+- - ![image](https://github.com/ejbills/DockDoor/assets/74191134/1e34a398-2f6f-4a6b-ba23-6893f6e2d17a)
+- - ![image](https://github.com/ejbills/DockDoor/assets/74191134/eec2c1a2-912e-40d1-9ca3-f1f87dfc7c3c)
+- Window title alignment option
+- Use "hidden" word for window title hidden style ([#112](https://github.com/ejbills/DockDoor/pull/112)) ([@ShlomoCode](https://github.com/ShlomoCode))
+- Subtle traffic light buttons
+- Add an "Appearance" tab in app settings ([#106](https://github.com/ejbills/DockDoor/pull/106)) ([@ShlomoCode](https://github.com/ShlomoCode))
+- Make more strings localizable ([#105](https://github.com/ejbills/DockDoor/pull/105), [#102](https://github.com/ejbills/DockDoor/pull/102)) ([@ShlomoCode](https://github.com/ShlomoCode))
+- Localize Hebrew ([#100](https://github.com/ejbills/DockDoor/pull/100)) ([@ShlomoCode](https://github.com/ShlomoCode))
+- Close preview when dock icon is clicked ([#62](https://github.com/ejbills/DockDoor/pull/62)) ([@ShlomoCode](https://github.com/ShlomoCode))
+
+## Fixes
+- Show menu bar icon only on app reopen, not on interact ([#98](https://github.com/ejbills/DockDoor/pull/98)) ([@ShlomoCode](https://github.com/ShlomoCode))
+- OpenDelay display format ([#99](https://github.com/ejbills/DockDoor/pull/99)) ([@ShlomoCode](https://github.com/ShlomoCode))
+
+## Other
+- Remove xcuserdata files ([#113](https://github.com/ejbills/DockDoor/pull/113)) ([@ShlomoCode](https://github.com/ShlomoCode))
+- Scale effect
+
+[Changes][v1.1.0]
+
+
+<a id="v1.0.17"></a>
+# [v1.0.17](https://github.com/ejbills/DockDoor/releases/tag/v1.0.17) - 2024-07-08
+
+- Fixes bug: Impossible to use Tab with default MacOS keybind activated ([#92](https://github.com/ejbills/DockDoor/issues/92)) [@hasansultan92](https://github.com/hasansultan92) 
+- Adds option to not use uniform window radius, so that you can see an entire window preview without it getting cropped. ([#93](https://github.com/ejbills/DockDoor/pull/93)) [@ShlomoCode](https://github.com/ShlomoCode) 
+
+[Changes][v1.0.17]
+
+
+<a id="v1.0.16"></a>
+# [v1.0.16](https://github.com/ejbills/DockDoor/releases/tag/v1.0.16) - 2024-07-08
+
+- Adds window switcher key bind customization (thanks to [@hasansultan92](https://github.com/hasansultan92))
+- Show menu bar icon when app icon is clicked (thanks to [@ShlomoCode](https://github.com/ShlomoCode))
+- Fixes the title label UI flashing on hover
+
+[Changes][v1.0.16]
+
+
+<a id="v1.0.15"></a>
+# [v1.0.15](https://github.com/ejbills/DockDoor/releases/tag/v1.0.15) - 2024-07-06
+
+### Quick patch for:
+- Windows that are on separate monitors not showing up
+- Some users were experiencing blurry windows (not sure if this is fully fixed)
+
+[Changes][v1.0.15]
+
+
+<a id="v1.0.14"></a>
+# [v1.0.14](https://github.com/ejbills/DockDoor/releases/tag/v1.0.14) - 2024-07-05
+
+- Initial support for hidden apps (CMD+H). If an app is hidden, its windows will show up as ‘hidden’ and will be displayed similarly to minimized windows. If you click a hidden window from the window preview, the owning application will be marked as unhidden, and that window will be brought to the front.
+- More changes to update page [@ShlomoCode](https://github.com/ShlomoCode) 
+
+[Changes][v1.0.14]
+
+
+<a id="v1.0.13"></a>
+# [v1.0.13](https://github.com/ejbills/DockDoor/releases/tag/v1.0.13) - 2024-07-04
+
+# Changelog
+
+## New features:
+- Feat: add quit app button to preview window ([#51](https://github.com/ejbills/DockDoor/issues/51)) [@ShlomoCode](https://github.com/ShlomoCode) 
+- Feat: change sizingMultiplier setting without restarting the app ([#50](https://github.com/ejbills/DockDoor/issues/50)) [@ShlomoCode](https://github.com/ShlomoCode) 
+
+## Misc.
+- Update page overhaul
+- Fixes title UI inconsistencies for small window sizing
+- Moves window title to bottom
+- Update README.md documentation for new traffic light button
+- Fixes jagged gradient animation
+- Fully finish transition to ScreenCaptureKit in preparation for macOS Sequoia (remove CoreGraphics usage)
+- Removes unnecessary ".00" in Window Cache Lifespan
+- Enhances window filtering for certain applications ([issue 1](https://github.com/ejbills/DockDoor/issues/55) [issue 2](https://github.com/ejbills/DockDoor/issues/36))
+
+[Changes][v1.0.13]
+
+
+<a id="v1.0.12"></a>
+# [v1.0.12](https://github.com/ejbills/DockDoor/releases/tag/v1.0.12) - 2024-07-02
+
+- Only shows window's title when you hover over the window
+- Reduces animations to make it feel more polished
+- Customizable screenshot caching timer (you can set it to 0 so window previews are always fresh)
+- Adds support for maximizing a window from the window preview (thanks to [@ShlomoCode](https://github.com/ShlomoCode))
+- Migrates screenshot manager to new ScreenCaptureKit API to prevent deprecated warning in macOS sequoia
+
+
+What's upcoming?
+- Full size window previews on hover
+- Window switcher keybind customization
+- Homebrew releases
+
+[Changes][v1.0.12]
+
+
+<a id="v1.0.11"></a>
+# [v1.0.11](https://github.com/ejbills/DockDoor/releases/tag/v1.0.11) - 2024-06-30
+
+- Adds window title to window previews
+- Adds ability to minimize window via window previews
+- Hides window when dock icon is clicked
+- Hides window when dock item is right clicked
+- UI tweaks
+- Sets minimum width for settings pane to fix jagged resizing (thanks [@ShlomoCode](https://github.com/ShlomoCode))
+- Fixes button to open recording preferences (thanks [@ShlomoCode](https://github.com/ShlomoCode))
+
+[Changes][v1.0.11]
+
+
+<a id="v1.0.10"></a>
+# [v1.0.10](https://github.com/ejbills/DockDoor/releases/tag/v1.0.10) - 2024-06-30
+
+- Adds option to disable menu bar icon
+
+Note:
+When DockDoor initially opens, the menu icon will be visible for 10 seconds, until it disappears. This way, you can access the settings even with the icon disabled. Just relaunch the app and click it before it disappears if you need to change some settings.
+
+[Changes][v1.0.10]
+
+
+<a id="v1.0.9"></a>
+# [v1.0.9](https://github.com/ejbills/DockDoor/releases/tag/v1.0.9) - 2024-06-30
+
+- Adds option to disable window switcher entirely (so you can use more mature apps, like AltTab, alongside DockDoor) - thanks [@hasansultan92](https://github.com/hasansultan92) 
+
+[Changes][v1.0.9]
+
+
+<a id="v1.0.7patch2"></a>
+# [v1.0.8 patch (v1.0.7patch2)](https://github.com/ejbills/DockDoor/releases/tag/v1.0.7patch2) - 2024-06-27
+
+- Patches the tab menu incorrectly showing desktop widgets
+
+[Changes][v1.0.7patch2]
+
+
+<a id="v1.0.7"></a>
+# [v1.0.7 patch](https://github.com/ejbills/DockDoor/releases/tag/v1.0.7) - 2024-06-26
+
+- Fixes window buffer being on the wrong axis while the dock is on the bottom
+- Better memory management code
+
+[Changes][v1.0.7]
+
+
+<a id="v1.0.6"></a>
+# [v1.0.6](https://github.com/ejbills/DockDoor/releases/tag/v1.0.6) - 2024-06-26
+
+- Fixes localized apps not showing their windows
+- Adds option "window buffer" which can be used to tweak the hover window location (if it's too far away, for example)
+- Adds donation link in settings
+
+[Changes][v1.0.6]
+
+
+<a id="v1.0.5"></a>
+# [v1.0.5](https://github.com/ejbills/DockDoor/releases/tag/v1.0.5) - 2024-06-25
+
+- Quick patch to fix window previews for chromium browsers
+
+[Changes][v1.0.5]
+
+
+<a id="v1.0.4"></a>
+# [v1.0.4](https://github.com/ejbills/DockDoor/releases/tag/v1.0.4) - 2024-06-25
+
+- Introduces minimized window support. Minimized windows will show up in a little box which will show you all of the hidden windows for that given application. It is scrollable (horizontally if the dock is on the left or right, vertically if on bottom.)
+- Hopefully remedies the selected window not being brought to front in browsers
+- UI Tweaks
+
+[Changes][v1.0.4]
+
+
+<a id="v1.0.3"></a>
+# [v1.0.3](https://github.com/ejbills/DockDoor/releases/tag/v1.0.3) - 2024-06-24
+
+- Adjustments to app text label UI (you can now read it)
+- Added option to delay hover window opening, up to 2 seconds
+- Added option to disable the hover window sliding animation
+
+[Changes][v1.0.3]
+
+
+<a id="v1.0.1"></a>
+# [v1.0.1](https://github.com/ejbills/DockDoor/releases/tag/v1.0.1) - 2024-06-23
+
+This release is a quick patch to (hopefully) fix DMG notarization.
+
+[Changes][v1.0.1]
+
+
+<a id="releases"></a>
+# [v1.0 (releases)](https://github.com/ejbills/DockDoor/releases/tag/releases) - 2024-06-23
+
+v1.0
+
+[Changes][releases]
+
+
+[1.40.1]: https://github.com/ejbills/DockDoor/compare/1.40.0...1.40.1
+[1.40.0]: https://github.com/ejbills/DockDoor/compare/1.39.5...1.40.0
+[1.39.5]: https://github.com/ejbills/DockDoor/compare/1.39.4...1.39.5
+[1.39.4]: https://github.com/ejbills/DockDoor/compare/1.39.3...1.39.4
+[1.39.3]: https://github.com/ejbills/DockDoor/compare/1.39.2...1.39.3
+[1.39.2]: https://github.com/ejbills/DockDoor/compare/1.39.1...1.39.2
+[1.39.1]: https://github.com/ejbills/DockDoor/compare/1.39...1.39.1
+[1.39]: https://github.com/ejbills/DockDoor/compare/1.38.1...1.39
+[1.38.1]: https://github.com/ejbills/DockDoor/compare/1.38...1.38.1
+[1.38]: https://github.com/ejbills/DockDoor/compare/1.37...1.38
+[1.37]: https://github.com/ejbills/DockDoor/compare/1.36...1.37
+[1.36]: https://github.com/ejbills/DockDoor/compare/1.35.1...1.36
+[1.35.1]: https://github.com/ejbills/DockDoor/compare/1.35...1.35.1
+[1.35]: https://github.com/ejbills/DockDoor/compare/1.34.1...1.35
+[1.34.1]: https://github.com/ejbills/DockDoor/compare/1.34...1.34.1
+[1.34]: https://github.com/ejbills/DockDoor/compare/1.33.1...1.34
+[1.33.1]: https://github.com/ejbills/DockDoor/compare/1.33...1.33.1
+[1.33]: https://github.com/ejbills/DockDoor/compare/1.32.2...1.33
+[1.32.2]: https://github.com/ejbills/DockDoor/compare/1.32.1...1.32.2
+[1.32.1]: https://github.com/ejbills/DockDoor/compare/1.32...1.32.1
+[1.32]: https://github.com/ejbills/DockDoor/compare/1.31.2...1.32
+[1.31.2]: https://github.com/ejbills/DockDoor/compare/1.31.1...1.31.2
+[1.31.1]: https://github.com/ejbills/DockDoor/compare/1.31...1.31.1
+[1.31]: https://github.com/ejbills/DockDoor/compare/1.30.1...1.31
+[1.30.1]: https://github.com/ejbills/DockDoor/compare/1.30...1.30.1
+[1.30]: https://github.com/ejbills/DockDoor/compare/1.29...1.30
+[1.29]: https://github.com/ejbills/DockDoor/compare/1.28.1...1.29
+[1.28.1]: https://github.com/ejbills/DockDoor/compare/1.28...1.28.1
+[1.28]: https://github.com/ejbills/DockDoor/compare/1.27...1.28
+[1.27]: https://github.com/ejbills/DockDoor/compare/1.26...1.27
+[1.26]: https://github.com/ejbills/DockDoor/compare/1.25.5...1.26
+[1.25.5]: https://github.com/ejbills/DockDoor/compare/1.25.4...1.25.5
+[1.25.4]: https://github.com/ejbills/DockDoor/compare/1.25.3...1.25.4
+[1.25.3]: https://github.com/ejbills/DockDoor/compare/1.25.2...1.25.3
+[1.25.2]: https://github.com/ejbills/DockDoor/compare/1.25.1...1.25.2
+[1.25.1]: https://github.com/ejbills/DockDoor/compare/1.25...1.25.1
+[1.25]: https://github.com/ejbills/DockDoor/compare/1.24.1...1.25
+[1.24.1]: https://github.com/ejbills/DockDoor/compare/1.24...1.24.1
+[1.24]: https://github.com/ejbills/DockDoor/compare/1.23.1...1.24
+[1.23.1]: https://github.com/ejbills/DockDoor/compare/1.23...1.23.1
+[1.23]: https://github.com/ejbills/DockDoor/compare/1.22...1.23
+[1.22]: https://github.com/ejbills/DockDoor/compare/1.21.4...1.22
+[1.21.4]: https://github.com/ejbills/DockDoor/compare/1.21.3...1.21.4
+[1.21.3]: https://github.com/ejbills/DockDoor/compare/1.21.2...1.21.3
+[1.21.2]: https://github.com/ejbills/DockDoor/compare/1.21.1...1.21.2
+[1.21.1]: https://github.com/ejbills/DockDoor/compare/1.21...1.21.1
+[1.21]: https://github.com/ejbills/DockDoor/compare/1.20...1.21
+[1.20]: https://github.com/ejbills/DockDoor/compare/1.19...1.20
+[1.19]: https://github.com/ejbills/DockDoor/compare/1.18.5...1.19
+[1.18.5]: https://github.com/ejbills/DockDoor/compare/1.18.4...1.18.5
+[1.18.4]: https://github.com/ejbills/DockDoor/compare/v1.18.3...1.18.4
+[v1.18.3]: https://github.com/ejbills/DockDoor/compare/v1.18.2...v1.18.3
+[v1.18.2]: https://github.com/ejbills/DockDoor/compare/v1.18.1...v1.18.2
+[v1.18.1]: https://github.com/ejbills/DockDoor/compare/v1.18...v1.18.1
+[v1.18]: https://github.com/ejbills/DockDoor/compare/v1.17.3...v1.18
+[v1.17.3]: https://github.com/ejbills/DockDoor/compare/v1.17.2...v1.17.3
+[v1.17.2]: https://github.com/ejbills/DockDoor/compare/v1.17.1...v1.17.2
+[v1.17.1]: https://github.com/ejbills/DockDoor/compare/v1.17...v1.17.1
+[v1.17]: https://github.com/ejbills/DockDoor/compare/v1.16...v1.17
+[v1.16]: https://github.com/ejbills/DockDoor/compare/v1.15.2...v1.16
+[v1.15.2]: https://github.com/ejbills/DockDoor/compare/v1.15.1...v1.15.2
+[v1.15.1]: https://github.com/ejbills/DockDoor/compare/v1.15...v1.15.1
+[v1.15]: https://github.com/ejbills/DockDoor/compare/v1.14.4...v1.15
+[v1.14.4]: https://github.com/ejbills/DockDoor/compare/v1.14.3...v1.14.4
+[v1.14.3]: https://github.com/ejbills/DockDoor/compare/v1.14.2...v1.14.3
+[v1.14.2]: https://github.com/ejbills/DockDoor/compare/v1.14.1...v1.14.2
+[v1.14.1]: https://github.com/ejbills/DockDoor/compare/v1.14...v1.14.1
+[v1.14]: https://github.com/ejbills/DockDoor/compare/v1.13.1...v1.14
+[v1.13.1]: https://github.com/ejbills/DockDoor/compare/v1.13...v1.13.1
+[v1.13]: https://github.com/ejbills/DockDoor/compare/v1.12.1...v1.13
+[v1.12.1]: https://github.com/ejbills/DockDoor/compare/v1.12...v1.12.1
+[v1.12]: https://github.com/ejbills/DockDoor/compare/v1.11...v1.12
+[v1.11]: https://github.com/ejbills/DockDoor/compare/v1.10...v1.11
+[v1.10]: https://github.com/ejbills/DockDoor/compare/v1.9.1...v1.10
+[v1.9.1]: https://github.com/ejbills/DockDoor/compare/v1.9...v1.9.1
+[v1.9]: https://github.com/ejbills/DockDoor/compare/v1.8...v1.9
+[v1.8]: https://github.com/ejbills/DockDoor/compare/v1.7.1...v1.8
+[v1.7.1]: https://github.com/ejbills/DockDoor/compare/v1.7...v1.7.1
+[v1.7]: https://github.com/ejbills/DockDoor/compare/v1.6.2...v1.7
+[v1.6.2]: https://github.com/ejbills/DockDoor/compare/v1.6.1...v1.6.2
+[v1.6.1]: https://github.com/ejbills/DockDoor/compare/v1.6...v1.6.1
+[v1.6]: https://github.com/ejbills/DockDoor/compare/v1.5.1...v1.6
+[v1.5.1]: https://github.com/ejbills/DockDoor/compare/v1.5...v1.5.1
+[v1.5]: https://github.com/ejbills/DockDoor/compare/v1.4...v1.5
+[v1.4]: https://github.com/ejbills/DockDoor/compare/v1.3.3...v1.4
+[v1.3.3]: https://github.com/ejbills/DockDoor/compare/v1.3.2...v1.3.3
+[v1.3.2]: https://github.com/ejbills/DockDoor/compare/v1.3.1...v1.3.2
+[v1.3.1]: https://github.com/ejbills/DockDoor/compare/v1.3...v1.3.1
+[v1.3]: https://github.com/ejbills/DockDoor/compare/v1.2.9...v1.3
+[v1.2.9]: https://github.com/ejbills/DockDoor/compare/v1.2.8...v1.2.9
+[v1.2.8]: https://github.com/ejbills/DockDoor/compare/v1.2.7...v1.2.8
+[v1.2.7]: https://github.com/ejbills/DockDoor/compare/v1.2.6...v1.2.7
+[v1.2.6]: https://github.com/ejbills/DockDoor/compare/v1.2.5...v1.2.6
+[v1.2.5]: https://github.com/ejbills/DockDoor/compare/v1.2.3...v1.2.5
+[v1.2.3]: https://github.com/ejbills/DockDoor/compare/v1.2.2...v1.2.3
+[v1.2.2]: https://github.com/ejbills/DockDoor/compare/v1.2.1...v1.2.2
+[v1.2.1]: https://github.com/ejbills/DockDoor/compare/v1.2.0...v1.2.1
+[v1.2.0]: https://github.com/ejbills/DockDoor/compare/v1.1.6...v1.2.0
+[v1.1.6]: https://github.com/ejbills/DockDoor/compare/v1.1.5...v1.1.6
+[v1.1.5]: https://github.com/ejbills/DockDoor/compare/v1.1.4...v1.1.5
+[v1.1.4]: https://github.com/ejbills/DockDoor/compare/v1.1.3...v1.1.4
+[v1.1.3]: https://github.com/ejbills/DockDoor/compare/v1.1.2...v1.1.3
+[v1.1.2]: https://github.com/ejbills/DockDoor/compare/v1.1.1...v1.1.2
+[v1.1.1]: https://github.com/ejbills/DockDoor/compare/v1.1.0...v1.1.1
+[v1.1.0]: https://github.com/ejbills/DockDoor/compare/v1.0.17...v1.1.0
+[v1.0.17]: https://github.com/ejbills/DockDoor/compare/v1.0.16...v1.0.17
+[v1.0.16]: https://github.com/ejbills/DockDoor/compare/v1.0.15...v1.0.16
+[v1.0.15]: https://github.com/ejbills/DockDoor/compare/v1.0.14...v1.0.15
+[v1.0.14]: https://github.com/ejbills/DockDoor/compare/v1.0.13...v1.0.14
+[v1.0.13]: https://github.com/ejbills/DockDoor/compare/v1.0.12...v1.0.13
+[v1.0.12]: https://github.com/ejbills/DockDoor/compare/v1.0.11...v1.0.12
+[v1.0.11]: https://github.com/ejbills/DockDoor/compare/v1.0.10...v1.0.11
+[v1.0.10]: https://github.com/ejbills/DockDoor/compare/v1.0.9...v1.0.10
+[v1.0.9]: https://github.com/ejbills/DockDoor/compare/v1.0.7patch2...v1.0.9
+[v1.0.7patch2]: https://github.com/ejbills/DockDoor/compare/v1.0.7...v1.0.7patch2
+[v1.0.7]: https://github.com/ejbills/DockDoor/compare/v1.0.6...v1.0.7
+[v1.0.6]: https://github.com/ejbills/DockDoor/compare/v1.0.5...v1.0.6
+[v1.0.5]: https://github.com/ejbills/DockDoor/compare/v1.0.4...v1.0.5
+[v1.0.4]: https://github.com/ejbills/DockDoor/compare/v1.0.3...v1.0.4
+[v1.0.3]: https://github.com/ejbills/DockDoor/compare/v1.0.1...v1.0.3
+[v1.0.1]: https://github.com/ejbills/DockDoor/compare/releases...v1.0.1
+[releases]: https://github.com/ejbills/DockDoor/tree/releases
+
+<!-- Generated by https://github.com/rhysd/changelog-from-release v3.9.1 -->
