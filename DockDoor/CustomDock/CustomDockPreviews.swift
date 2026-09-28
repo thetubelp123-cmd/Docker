@@ -69,7 +69,7 @@ enum CustomDockPreviews {
         // The preview sits right above the icon. DockDoor adds its "buffer from dock"
         // on top of the anchor, so the anchor is stretched to cancel that out.
         let lift = max(0, -Defaults[.bufferFromDock]) + 6
-        let anchorFrame: CGRect = switch placement {
+        let anchorFrame = switch placement {
         case .bottom: CGRect(x: anchor.minX, y: anchor.minY, width: anchor.width, height: anchor.height + lift)
         case .left: CGRect(x: anchor.minX, y: anchor.minY, width: anchor.width + lift, height: anchor.height)
         case .right: CGRect(x: anchor.minX - lift, y: anchor.minY, width: anchor.width + lift, height: anchor.height)

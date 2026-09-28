@@ -290,7 +290,7 @@ final class CustomDockController {
         let sf = screen.frame
         // Side docks stay below the menu bar.
         let top = min(sf.maxY, screen.visibleFrame.maxY)
-        let frame: NSRect = switch edge {
+        let frame = switch edge {
         case .bottom: NSRect(x: sf.minX, y: sf.minY, width: sf.width, height: depth)
         case .left: NSRect(x: sf.minX, y: sf.minY, width: depth, height: top - sf.minY)
         case .right: NSRect(x: sf.maxX - depth, y: sf.minY, width: depth, height: top - sf.minY)
