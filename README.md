@@ -1,5 +1,7 @@
 # Docker
 
+**Deutsch** · [English](README.en.md)
+
 **Docker ersetzt das macOS-Dock durch ein eigenes, frei gestaltbares Dock.** Es zeigt Apps, Ordner, Widgets und minimierte Fenster, kann unten, links oder rechts am Bildschirmrand sitzen und passt sich per Profil an das an, woran du gerade arbeitest. Dazu kommen Fenstervorschauen beim Überfahren und ein schneller Fensterumschalter.
 
 Docker ist eine private macOS-App (macOS 13 oder neuer) und läuft unauffällig über ein Symbol in der Menüleiste.
