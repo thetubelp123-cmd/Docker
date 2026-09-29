@@ -222,7 +222,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         if let icon = NSImage(named: .logo)?.copy() as? NSImage {
             // Same visual height as the system menu bar symbols (Wi-Fi, Control Center …),
             // so the crane sits on the same baseline instead of overhanging it.
-            let glyphHeight: CGFloat = 13
+            let glyphHeight: CGFloat = 14
             let aspect = icon.size.height > 0 ? icon.size.width / icon.size.height : 1
             icon.size = NSSize(width: (glyphHeight * aspect).rounded(), height: glyphHeight)
             icon.isTemplate = true
