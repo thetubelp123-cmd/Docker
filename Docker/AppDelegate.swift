@@ -213,17 +213,21 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     func setupMenuBar() {
         guard statusBarItem == nil else { return }
 
-        statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.squareLength)
+        statusBarItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
         guard let button = statusBarItem?.button else {
             print("Failed to create status bar button")
             return
         }
 
-        if let icon = NSImage(named: .logo) {
-            let iconSize = NSStatusBar.system.thickness * 0.9
-            let resizedIcon = icon.resizedToFit(in: NSSize(width: iconSize, height: iconSize))
-            resizedIcon.isTemplate = true
-            button.image = resizedIcon
+        if let icon = NSImage(named: .logo)?.copy() as? NSImage {
+            // Same visual height as the system menu bar symbols (Wi-Fi, Control Center …),
+            // so the crane sits on the same baseline instead of overhanging it.
+            let glyphHeight: CGFloat = 13
+            let aspect = icon.size.height > 0 ? icon.size.width / icon.size.height : 1
+            icon.size = NSSize(width: (glyphHeight * aspect).rounded(), height: glyphHeight)
+            icon.isTemplate = true
+            button.image = icon
+            button.imagePosition = .imageOnly
         } else {
             print("Failed to load icon")
         }
