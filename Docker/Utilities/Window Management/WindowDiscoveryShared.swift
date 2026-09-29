@@ -534,6 +534,23 @@ enum WindowSpaces {
         }
     }
 
+    /// True when the Space currently shown on this screen belongs to a full-screen app
+    /// (native full screen or Split View).
+    static func isFullscreenSpace(on screen: NSScreen) -> Bool {
+        guard let displays = CGSCopyManagedDisplaySpaces(CGSMainConnectionID()) as? [[String: AnyObject]],
+              !displays.isEmpty
+        else { return false }
+        let identifiers = Set(displayIdentifiers(for: screen).map { $0.lowercased() })
+        let display = displays.first { display in
+            identifiers.contains(((display["Display Identifier"] as? String) ?? "").lowercased())
+        } ?? (displays.count == 1 ? displays[0] : nil)
+        guard let current = display?["Current Space"] as? [String: AnyObject] else { return false }
+        if let type = (current["type"] as? NSNumber)?.intValue {
+            return type == 4
+        }
+        return current["TileLayoutManager"] != nil
+    }
+
     static func currentManagedSpaceID(mouseLocation: CGPoint = NSEvent.mouseLocation) -> CGSSpaceID? {
         let displays = managedDisplays()
         guard !displays.isEmpty else { return nil }

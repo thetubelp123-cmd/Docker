@@ -91,6 +91,11 @@ final class CustomDockController {
     private var cancellables: Set<AnyCancellable> = []
     private var defaultsTask: Task<Void, Never>?
     private var screenObserver: NSObjectProtocol?
+    private var spaceObserver: NSObjectProtocol?
+    /// True while a full-screen app occupies this dock's screen: the dock then hides
+    /// like the macOS Dock and only comes back when the pointer reaches the screen edge.
+    private var isFullscreenSpace = false
+    private var lastSpaceCheck = Date.distantPast
 
     private var metrics = CustomDockController.currentMetrics()
     private var edge = Defaults[.customDockPosition]
@@ -140,7 +145,9 @@ final class CustomDockController {
         panel.ignoresMouseEvents = true
         applyAppearance()
 
-        isRevealed = !Defaults[.customDockAutoHide]
+        if let screen = dockScreen { isFullscreenSpace = WindowSpaces.isFullscreenSpace(on: screen) }
+        lastSpaceCheck = Date()
+        isRevealed = !autoHideActive
         ui.isHidden = !isRevealed
 
         updatePanelFrame()
@@ -178,6 +185,16 @@ final class CustomDockController {
         ) { [weak self] _ in
             self?.updatePanelFrame()
             self?.relayout()
+        }
+
+        spaceObserver = NSWorkspace.shared.notificationCenter.addObserver(
+            forName: NSWorkspace.activeSpaceDidChangeNotification,
+            object: nil,
+            queue: .main
+        ) { [weak self] _ in
+            self?.updateFullscreenState()
+            // The Space type can settle only after the switch animation.
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) { self?.updateFullscreenState() }
         }
 
         let keys: [Defaults._AnyKey] = [
@@ -231,6 +248,8 @@ final class CustomDockController {
         cancellables.removeAll()
         if let screenObserver { NotificationCenter.default.removeObserver(screenObserver) }
         screenObserver = nil
+        if let spaceObserver { NSWorkspace.shared.notificationCenter.removeObserver(spaceObserver) }
+        spaceObserver = nil
         CustomDockPreviews.hide()
         stackController.close()
         popoverController.close()
@@ -271,6 +290,7 @@ final class CustomDockController {
         CustomDockPreviews.hide()
         updatePanelFrame()
         relayout()
+        updateFullscreenState()
     }
 
     func setProfile(_ id: String?) {
@@ -298,7 +318,7 @@ final class CustomDockController {
         }
         CustomDockPreviews.placement = edge
         applyAppearance()
-        if !Defaults[.customDockAutoHide] {
+        if !autoHideActive {
             isRevealed = true
             ui.isHidden = false
         }
@@ -445,8 +465,35 @@ final class CustomDockController {
     // MARK: - Pointer tracking
 
     private func tick() {
+        if Date().timeIntervalSince(lastSpaceCheck) > 0.5 { updateFullscreenState() }
         trackPointer()
         adaptTickRate()
+    }
+
+    /// Auto-hide applies when it is switched on, and always on a full-screen Space.
+    private var autoHideActive: Bool {
+        Defaults[.customDockAutoHide] || isFullscreenSpace
+    }
+
+    private func updateFullscreenState() {
+        lastSpaceCheck = Date()
+        guard let screen = dockScreen else { return }
+        let fullscreen = WindowSpaces.isFullscreenSpace(on: screen)
+        guard fullscreen != isFullscreenSpace else { return }
+        isFullscreenSpace = fullscreen
+        DockerDoorLog.write(fullscreen ? "Vollbild erkannt: Dock ausgeblendet" : "Vollbild beendet")
+        if fullscreen {
+            stackController.close()
+            popoverController.close()
+            CustomDockPreviews.hide()
+            guard !isLetterMode else { return }
+            isRevealed = false
+            ui.isHidden = true
+            lastKeepVisible = .distantPast
+        } else if !Defaults[.customDockAutoHide] {
+            isRevealed = true
+            ui.isHidden = false
+        }
     }
 
     private func trackPointer() {
@@ -465,7 +512,7 @@ final class CustomDockController {
         let layout = layoutV
 
         // Auto-hide
-        if Defaults[.customDockAutoHide] {
+        if autoHideActive {
             let sf = screen.frame
             let atEdge: Bool = switch edge {
             case .bottom: mouse.y <= sf.minY + 1.5 && mouse.x >= sf.minX && mouse.x <= sf.maxX
